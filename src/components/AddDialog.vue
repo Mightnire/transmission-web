@@ -1,14 +1,22 @@
 <template>
   <div class="md-dialog-overlay" v-if="state.addDialogOpen" @click.self="state.addDialogOpen = false">
-    <div class="md-dialog">
-      <h2 class="md-dialog-title">{{ t('addDialog.title') }}</h2>
+    <div class="md-dialog add-dialog">
+      <div class="dialog-header">
+        <div class="header-title-row">
+          <span class="material-icons header-icon">add_circle_outline</span>
+          <h2 class="md-dialog-title">{{ t('addDialog.title') }}</h2>
+        </div>
+        <button class="dialog-close-btn" @click="state.addDialogOpen = false" :title="t('common.close')">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
 
       <div class="md-dialog-content">
         <!-- 选项一：磁力链或 URL -->
         <div class="form-group">
           <label class="form-label">{{ t('addDialog.magnetOrUrl') }}</label>
           <textarea
-            class="md-textarea"
+            class="fluent-textarea"
             rows="3"
             :placeholder="t('addDialog.magnetPlaceholder')"
             v-model="magnetUrl"
@@ -45,18 +53,18 @@
         </div>
 
         <!-- 保存目录 -->
-        <div class="form-group" style="margin-top: 16px;">
+        <div class="form-group" style="margin-top: 14px;">
           <label class="form-label">{{ t('addDialog.downloadDir') }}</label>
           <input
             type="text"
-            class="md-input"
+            class="fluent-input"
             v-model="downloadDir"
             :placeholder="state.session?.['download-dir'] || '/media/AiDisk_a1/Downloads'"
           />
         </div>
 
         <!-- 选项：立即开始 -->
-        <label class="checkbox-label" style="margin-top: 12px;">
+        <label class="checkbox-label" style="margin-top: 10px;">
           <input type="checkbox" v-model="startNow" />
           <span>{{ t('addDialog.startNow') }}</span>
         </label>
@@ -147,43 +155,99 @@ async function submit() {
 </script>
 
 <style scoped>
+.add-dialog {
+  width: 500px;
+  max-width: 95vw;
+}
+
+.dialog-header {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-icon {
+  font-size: 18px;
+  color: var(--fluent-accent);
+}
+
+.dialog-close-btn {
+  background: transparent;
+  border: none;
+  border-radius: var(--fluent-radius);
+  color: var(--md-text-secondary);
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dialog-close-btn:hover {
+  background-color: var(--fluent-bg-hover);
+  color: var(--md-text-primary);
+}
+
+.dialog-close-btn .material-icons {
+  font-size: 16px;
+}
+
+.add-dialog .md-dialog-title {
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-text-primary);
+}
+
 .form-group {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .form-label {
   display: block;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--md-text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.md-input,
-.md-textarea {
+.fluent-input,
+.fluent-textarea {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--md-divider);
-  border-radius: 2px;
-  background-color: var(--md-surface);
+  padding: 6px 10px;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-subtle);
   color: var(--md-text-primary);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 12px;
   outline: none;
-  transition: border-color 0.2s;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
 }
 
-.md-input:focus,
-.md-textarea:focus {
-  border-color: var(--md-primary);
+.fluent-input:focus,
+.fluent-textarea:focus {
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
 .or-divider {
   text-align: center;
   position: relative;
-  margin: 12px 0;
-  font-size: 12px;
-  color: var(--md-text-secondary);
+  margin: 10px 0;
+  font-size: 11px;
+  color: var(--md-text-disabled);
 }
 
 .or-divider::before,
@@ -191,9 +255,9 @@ async function submit() {
   content: '';
   position: absolute;
   top: 50%;
-  width: 42%;
+  width: 44%;
   height: 1px;
-  background-color: var(--md-divider);
+  background-color: var(--fluent-border-subtle);
 }
 
 .or-divider::before {
@@ -205,36 +269,37 @@ async function submit() {
 }
 
 .file-drop-zone {
-  border: 2px dashed var(--md-divider);
-  border-radius: 4px;
-  padding: 20px;
+  border: 1px dashed var(--fluent-border-divider);
+  border-radius: 6px;
+  padding: 16px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  background-color: var(--fluent-bg-subtle);
 }
 
 .file-drop-zone:hover,
 .file-drop-zone.active {
-  border-color: var(--md-primary);
-  background-color: rgba(63, 81, 181, 0.04);
+  border-color: var(--fluent-accent);
+  background-color: var(--fluent-bg-hover);
 }
 
 .file-drop-zone.has-file {
   border-color: var(--md-success);
-  background-color: rgba(76, 175, 80, 0.04);
+  background-color: rgba(76, 175, 80, 0.05);
 }
 
 .upload-icon {
-  font-size: 36px;
-  color: var(--md-primary);
+  font-size: 28px;
+  color: var(--fluent-accent);
 }
 
 .upload-tip {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--md-text-secondary);
 }
 
@@ -242,7 +307,13 @@ async function submit() {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 12px;
+  color: var(--md-text-primary);
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: var(--fluent-accent);
   cursor: pointer;
 }
 </style>

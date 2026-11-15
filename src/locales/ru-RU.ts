@@ -80,6 +80,7 @@ export default {
       queue: 'Очередь',
       bandwidth: 'Скорость',
       tools: 'Инструменты',
+      torrentProps: 'Свойства торрента',
     },
     groups: {
       basic: 'Основные',
@@ -90,6 +91,9 @@ export default {
       rules: 'Приоритет',
       location: 'Папка и имя',
       system: 'Система',
+      torrentLimits: 'Ограничения',
+      torrentSeed: 'Раздача',
+      torrentMeta: 'Свойства',
     },
     collapse: 'Свернуть ленту (Ctrl+F1)',
     expand: 'Развернуть ленту (Ctrl+F1)',
@@ -102,6 +106,8 @@ export default {
     highPriority: 'Высокий приоритет',
     normalPriority: 'Обычный приоритет',
     lowPriority: 'Низкий приоритет',
+    limitDown: 'Ограничить прием',
+    limitUp: 'Ограничить отдачу',
   },
   sidebar: {
     filters: 'Фильтры',

@@ -230,41 +230,42 @@ body {
   background-color: var(--md-error);
 }
 
-/* MD1 Buttons */
+/* Fluent 2 Buttons */
 .md-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 2px;
-  font-size: 14px;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: var(--fluent-radius);
+  font-size: 12px;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border: none;
+  text-transform: none;
+  letter-spacing: normal;
+  border: 1px solid transparent;
   outline: none;
   cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
+  transition: all 0.15s ease;
 }
 
 .md-btn-flat {
   background: transparent;
-  color: var(--md-primary);
+  border-color: var(--fluent-border-subtle);
+  color: var(--md-text-primary);
 }
 
 .md-btn-flat:hover {
-  background-color: rgba(63, 81, 181, 0.08);
+  background-color: var(--fluent-bg-hover);
 }
 
 .md-btn-raised {
-  background-color: var(--md-primary);
+  background-color: var(--fluent-accent);
   color: #ffffff;
-  box-shadow: var(--md-shadow-1dp);
+  border-color: transparent;
 }
 
 .md-btn-raised:hover {
-  box-shadow: var(--md-shadow-2dp);
+  background-color: var(--fluent-accent-hover);
 }
 
 /* Badges & Tags */
@@ -293,52 +294,57 @@ body {
   color: var(--md-info);
 }
 
-/* Modal Overlay & Dialog */
+/* Modal Overlay & Fluent ContentDialog */
 .md-dialog-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.54);
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: mdFadeIn 0.2s var(--md-transition-standard);
+  animation: mdFadeIn 0.15s ease-out;
 }
 
 .md-dialog {
-  background-color: var(--md-surface);
-  border-radius: 2px;
-  box-shadow: var(--md-shadow-8dp);
+  background-color: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
   max-width: 90vw;
-  width: 520px;
+  width: 540px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: mdZoomIn 0.24s var(--md-transition-decel);
+  animation: mdZoomIn 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+  color: var(--md-text-primary);
 }
 
 .md-dialog-title {
-  padding: 24px 24px 20px;
-  font-size: 20px;
-  font-weight: 500;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .md-dialog-content {
-  padding: 0 24px 24px;
+  padding: 0 18px 18px;
   overflow-y: auto;
   flex: 1;
 }
 
 .md-dialog-actions {
-  padding: 8px 16px;
+  padding: 10px 18px;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  border-top: 1px solid var(--md-divider);
+  border-top: 1px solid var(--fluent-border-subtle);
+  background-color: var(--fluent-bg-subtle);
 }
 
 @keyframes mdFadeIn {

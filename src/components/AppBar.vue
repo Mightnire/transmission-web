@@ -54,6 +54,18 @@
           <span class="material-icons tab-icon">build</span>
           <span>{{ t('ribbon.tabs.tools') }}</span>
         </button>
+
+        <!-- 上下文标签页：类似 Word 图片格式 (选中种子时高亮出现) -->
+        <button
+          class="ribbon-tab-btn contextual-tab"
+          v-if="hasSelection"
+          :class="{ active: currentTab === 'torrentProps' && !isRibbonCollapsed }"
+          @click.stop="selectTab('torrentProps')"
+          :title="t('ribbon.tabs.torrentProps')"
+        >
+          <span class="material-icons tab-icon">tune</span>
+          <span>{{ t('ribbon.tabs.torrentProps') }}</span>
+        </button>
       </nav>
 
       <!-- 右侧：系统状态与快捷工具 -->
@@ -456,6 +468,186 @@
           <div class="group-title">{{ t('ribbon.groups.system') }}</div>
         </div>
       </div>
+
+      <!-- 2.5 选中种子专属上下文画板 (Contextual Ribbon Pane - 类似 Word 图片格式) -->
+      <div class="ribbon-tab-pane contextual-pane" v-else-if="currentTab === 'torrentProps'">
+        <!-- 优先级与连接数 -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls">
+            <div class="priority-btn-group">
+              <button
+                class="priority-btn"
+                :class="{ active: currentTorrentPriority === 1 }"
+                @click="setTorrentPriority(1)"
+                :title="t('ribbon.highPriority')"
+              >
+                <span class="material-icons text-danger">arrow_upward</span>
+                <span>{{ t('table.priorityHigh') }}</span>
+              </button>
+              <button
+                class="priority-btn"
+                :class="{ active: currentTorrentPriority === 0 }"
+                @click="setTorrentPriority(0)"
+                :title="t('ribbon.normalPriority')"
+              >
+                <span class="material-icons text-info">remove</span>
+                <span>{{ t('table.priorityNormal') }}</span>
+              </button>
+              <button
+                class="priority-btn"
+                :class="{ active: currentTorrentPriority === -1 }"
+                @click="setTorrentPriority(-1)"
+                :title="t('ribbon.lowPriority')"
+              >
+                <span class="material-icons text-secondary">arrow_downward</span>
+                <span>{{ t('table.priorityLow') }}</span>
+              </button>
+            </div>
+
+            <!-- 最大连接数 -->
+            <div class="fluent-input-compact">
+              <span class="input-prefix-label">{{ t('propsDialog.maxPeers') }}:</span>
+              <input
+                type="number"
+                class="num-field"
+                :value="currentTorrentPeerLimit"
+                @change="onTorrentPeerLimitChange"
+                min="1"
+                max="1000"
+              />
+            </div>
+          </div>
+          <div class="group-title">{{ t('ribbon.groups.rules') }}</div>
+        </div>
+
+        <!-- 独立限速 (Down/Up) -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls limits-col">
+            <!-- 下载限速 -->
+            <div class="limit-row">
+              <label class="fluent-check-label">
+                <input
+                  type="checkbox"
+                  :checked="currentTorrentDownloadLimited"
+                  @change="onTorrentDownloadLimitedToggle"
+                />
+                <span>{{ t('ribbon.limitDown') }}</span>
+              </label>
+              <input
+                type="number"
+                class="num-field limit-num"
+                :disabled="!currentTorrentDownloadLimited"
+                :value="currentTorrentDownloadLimit"
+                @change="onTorrentDownloadLimitChange"
+                min="0"
+                step="50"
+              />
+              <span class="unit-txt">KB/s</span>
+            </div>
+
+            <!-- 上传限速 -->
+            <div class="limit-row">
+              <label class="fluent-check-label">
+                <input
+                  type="checkbox"
+                  :checked="currentTorrentUploadLimited"
+                  @change="onTorrentUploadLimitedToggle"
+                />
+                <span>{{ t('ribbon.limitUp') }}</span>
+              </label>
+              <input
+                type="number"
+                class="num-field limit-num"
+                :disabled="!currentTorrentUploadLimited"
+                :value="currentTorrentUploadLimit"
+                @change="onTorrentUploadLimitChange"
+                min="0"
+                step="50"
+              />
+              <span class="unit-txt">KB/s</span>
+            </div>
+
+            <!-- 遵循全局限制 -->
+            <label class="fluent-check-label mini-check">
+              <input
+                type="checkbox"
+                :checked="currentTorrentHonorsSession"
+                @change="onTorrentHonorsSessionToggle"
+              />
+              <span>{{ t('propsDialog.honorsSession') }}</span>
+            </label>
+          </div>
+          <div class="group-title">{{ t('ribbon.groups.torrentLimits') }}</div>
+        </div>
+
+        <!-- 做种停止规则 -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls seed-rules-col">
+            <!-- 分享率 -->
+            <div class="seed-row">
+              <span class="input-prefix-label">{{ t('propsDialog.ratioMode') }}:</span>
+              <select class="fluent-select-mini" :value="currentTorrentSeedRatioMode" @change="onTorrentRatioModeChange">
+                <option :value="0">{{ t('propsDialog.modeGlobal') }}</option>
+                <option :value="1">{{ t('propsDialog.modeSingle') }}</option>
+                <option :value="2">{{ t('propsDialog.modeUnlimited') }}</option>
+              </select>
+              <input
+                v-if="currentTorrentSeedRatioMode === 1"
+                type="number"
+                class="num-field seed-num"
+                :value="currentTorrentSeedRatioLimit"
+                @change="onTorrentRatioLimitChange"
+                step="0.1"
+                min="0"
+              />
+            </div>
+
+            <!-- 空闲超时 -->
+            <div class="seed-row">
+              <span class="input-prefix-label">{{ t('propsDialog.idleMode') }}:</span>
+              <select class="fluent-select-mini" :value="currentTorrentSeedIdleMode" @change="onTorrentIdleModeChange">
+                <option :value="0">{{ t('propsDialog.modeGlobal') }}</option>
+                <option :value="1">{{ t('propsDialog.modeSingle') }}</option>
+                <option :value="2">{{ t('propsDialog.modeUnlimited') }}</option>
+              </select>
+              <div class="idle-input-wrap" v-if="currentTorrentSeedIdleMode === 1">
+                <input
+                  type="number"
+                  class="num-field seed-num"
+                  :value="currentTorrentSeedIdleLimit"
+                  @change="onTorrentIdleLimitChange"
+                  min="1"
+                />
+                <span class="unit-txt">min</span>
+              </div>
+            </div>
+          </div>
+          <div class="group-title">{{ t('ribbon.groups.torrentSeed') }}</div>
+        </div>
+
+        <!-- 存储、信息与操作 -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls">
+            <button class="fluent-btn-small" @click="handleSetLocation" :title="t('ribbon.setLocation')">
+              <span class="material-icons">folder_open</span>
+              <span>{{ t('ribbon.setLocation') }}</span>
+            </button>
+            <button class="fluent-btn-small" @click="handleRename" :title="t('ribbon.rename')">
+              <span class="material-icons">edit</span>
+              <span>{{ t('ribbon.rename') }}</span>
+            </button>
+            <button class="fluent-btn-small" @click="copyMagnet" :title="t('detail.general.copyMagnet')">
+              <span class="material-icons">link</span>
+              <span>{{ t('detail.general.copyMagnet') }}</span>
+            </button>
+            <button class="fluent-btn-small primary" @click="openProps" :title="t('table.properties')">
+              <span class="material-icons">tune</span>
+              <span>{{ t('table.properties') }}...</span>
+            </button>
+          </div>
+          <div class="group-title">{{ t('ribbon.groups.torrentMeta') }}</div>
+        </div>
+      </div>
     </div>
 
     <!-- 3. 移动端紧凑工具条 (仅屏幕 < 768px 显示) -->
@@ -485,7 +677,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted } from 'vue';
+import { ref, computed, reactive, onMounted, onUnmounted, watch } from 'vue';
 import {
   state,
   formatSpeed,
@@ -501,7 +693,7 @@ import { rpc } from '../api/rpc';
 import { t, currentLocale, setLocale, LocaleKey } from '../locales';
 
 const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
-const currentTab = ref<'tasks' | 'queue' | 'bandwidth' | 'tools'>('tasks');
+const currentTab = ref<'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps'>('tasks');
 const isRibbonCollapsed = ref(localStorage.getItem('ribbon_collapsed') === 'true');
 
 // 下拉菜单浮层状态
@@ -533,7 +725,115 @@ const selectedTorrentId = computed(() => {
   return null;
 });
 
-function selectTab(tab: 'tasks' | 'queue' | 'bandwidth' | 'tools') {
+const targetTorrentIds = computed<number[]>(() => {
+  if (state.selectedIds.length > 0) return state.selectedIds;
+  if (state.selectedId !== null) return [state.selectedId];
+  return [];
+});
+
+const primaryTorrent = computed(() => {
+  if (selectedTorrentId.value === null) return null;
+  return state.torrents.find((t) => t.id === selectedTorrentId.value) || null;
+});
+
+const currentTorrentPriority = computed(() => primaryTorrent.value?.bandwidthPriority ?? 0);
+const currentTorrentPeerLimit = computed(() => (primaryTorrent.value as any)?.['peer-limit'] ?? primaryTorrent.value?.peerLimit ?? 60);
+const currentTorrentDownloadLimited = computed(() => primaryTorrent.value?.downloadLimited ?? false);
+const currentTorrentDownloadLimit = computed(() => primaryTorrent.value?.downloadLimit ?? 100);
+const currentTorrentUploadLimited = computed(() => primaryTorrent.value?.uploadLimited ?? false);
+const currentTorrentUploadLimit = computed(() => primaryTorrent.value?.uploadLimit ?? 100);
+const currentTorrentHonorsSession = computed(() => primaryTorrent.value?.honorsSessionLimits ?? true);
+const currentTorrentSeedRatioMode = computed(() => primaryTorrent.value?.seedRatioMode ?? 0);
+const currentTorrentSeedRatioLimit = computed(() => primaryTorrent.value?.seedRatioLimit ?? 2.0);
+const currentTorrentSeedIdleMode = computed(() => primaryTorrent.value?.seedIdleMode ?? 0);
+const currentTorrentSeedIdleLimit = computed(() => primaryTorrent.value?.seedIdleLimit ?? 30);
+
+// 当没有选中任何种子且当前在上下文标签页时，自动切回主任务标签
+watch(hasSelection, (newVal) => {
+  if (!newVal && currentTab.value === 'torrentProps') {
+    currentTab.value = 'tasks';
+  }
+});
+
+async function updateSelectedTorrents(props: Record<string, any>) {
+  const ids = targetTorrentIds.value;
+  if (ids.length === 0) return;
+  for (const id of ids) {
+    const item = state.torrents.find((t) => t.id === id);
+    if (item) Object.assign(item, props);
+  }
+  try {
+    await rpc.torrentSet({ ids, ...props });
+  } catch (err: any) {
+    alert(t('common.failed', { error: err.message || err }));
+  }
+}
+
+function setTorrentPriority(p: number) {
+  updateSelectedTorrents({ bandwidthPriority: p });
+}
+
+function onTorrentPeerLimitChange(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value, 10);
+  if (!isNaN(val) && val > 0) {
+    updateSelectedTorrents({ 'peer-limit': val });
+  }
+}
+
+function onTorrentDownloadLimitedToggle(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked;
+  updateSelectedTorrents({ downloadLimited: checked });
+}
+
+function onTorrentDownloadLimitChange(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value, 10);
+  if (!isNaN(val) && val >= 0) {
+    updateSelectedTorrents({ downloadLimit: val });
+  }
+}
+
+function onTorrentUploadLimitedToggle(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked;
+  updateSelectedTorrents({ uploadLimited: checked });
+}
+
+function onTorrentUploadLimitChange(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value, 10);
+  if (!isNaN(val) && val >= 0) {
+    updateSelectedTorrents({ uploadLimit: val });
+  }
+}
+
+function onTorrentHonorsSessionToggle(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked;
+  updateSelectedTorrents({ honorsSessionLimits: checked });
+}
+
+function onTorrentRatioModeChange(e: Event) {
+  const val = parseInt((e.target as HTMLSelectElement).value, 10);
+  updateSelectedTorrents({ seedRatioMode: val });
+}
+
+function onTorrentRatioLimitChange(e: Event) {
+  const val = parseFloat((e.target as HTMLInputElement).value);
+  if (!isNaN(val) && val >= 0) {
+    updateSelectedTorrents({ seedRatioLimit: val });
+  }
+}
+
+function onTorrentIdleModeChange(e: Event) {
+  const val = parseInt((e.target as HTMLSelectElement).value, 10);
+  updateSelectedTorrents({ seedIdleMode: val });
+}
+
+function onTorrentIdleLimitChange(e: Event) {
+  const val = parseInt((e.target as HTMLInputElement).value, 10);
+  if (!isNaN(val) && val > 0) {
+    updateSelectedTorrents({ seedIdleLimit: val });
+  }
+}
+
+function selectTab(tab: 'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps') {
   if (currentTab.value === tab && !isRibbonCollapsed.value) {
     // 已经选中同一个 Tab 时不处理
     return;
@@ -785,6 +1085,25 @@ function onLocaleChange(e: Event) {
   border-bottom-color: var(--fluent-accent);
   background-color: var(--fluent-bg-canvas);
   font-weight: 600;
+}
+
+/* Word 风格上下文标签 */
+.ribbon-tab-btn.contextual-tab {
+  background-color: rgba(0, 120, 212, 0.08);
+  color: var(--fluent-accent);
+  font-weight: 600;
+  border-bottom: 2px solid rgba(0, 120, 212, 0.4);
+}
+
+.ribbon-tab-btn.contextual-tab:hover {
+  background-color: rgba(0, 120, 212, 0.16);
+  color: var(--fluent-accent-hover);
+}
+
+.ribbon-tab-btn.contextual-tab.active {
+  background-color: var(--fluent-bg-canvas);
+  color: var(--fluent-accent);
+  border-bottom-color: var(--fluent-accent);
 }
 
 .tab-icon {
@@ -1153,6 +1472,146 @@ function onLocaleChange(e: Event) {
 .text-warning { color: var(--md-warning) !important; }
 .text-danger { color: var(--md-error) !important; }
 .text-secondary { color: var(--md-text-secondary) !important; }
+
+/* 上下文面板控件组 */
+.priority-btn-group {
+  display: flex;
+  gap: 2px;
+  background-color: var(--fluent-bg-subtle);
+  border-radius: var(--fluent-radius);
+  padding: 2px;
+  border: 1px solid var(--fluent-border-subtle);
+}
+
+.priority-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border: none;
+  background: transparent;
+  border-radius: var(--fluent-radius);
+  font-size: 11px;
+  color: var(--md-text-secondary);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.priority-btn:hover {
+  background-color: var(--fluent-bg-hover);
+  color: var(--md-text-primary);
+}
+
+.priority-btn.active {
+  background-color: var(--fluent-bg-canvas);
+  color: var(--fluent-accent);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.priority-btn .material-icons {
+  font-size: 14px;
+}
+
+.fluent-input-compact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--md-text-secondary);
+}
+
+.input-prefix-label {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.num-field {
+  width: 54px;
+  padding: 2px 6px;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-canvas);
+  color: var(--md-text-primary);
+  font-size: 11px;
+  outline: none;
+  font-family: monospace;
+  text-align: right;
+  transition: border-color 0.15s;
+}
+
+.num-field:focus {
+  border-color: var(--fluent-accent);
+}
+
+.num-field:disabled {
+  opacity: 0.5;
+  background-color: var(--fluent-bg-subtle);
+}
+
+.limits-col, .seed-rules-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+}
+
+.limit-row, .seed-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+}
+
+.fluent-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--md-text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fluent-check-label input[type="checkbox"] {
+  accent-color: var(--fluent-accent);
+  cursor: pointer;
+}
+
+.limit-num {
+  width: 50px;
+}
+
+.unit-txt {
+  font-size: 10px;
+  color: var(--md-text-disabled);
+}
+
+.mini-check {
+  font-size: 10px;
+  color: var(--md-text-secondary);
+}
+
+.fluent-select-mini {
+  padding: 1px 4px;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-canvas);
+  color: var(--md-text-primary);
+  font-size: 11px;
+  outline: none;
+  cursor: pointer;
+}
+
+.seed-num {
+  width: 44px;
+}
+
+.idle-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
 
 /* 3. 移动端紧凑模式 */
 .mobile-compact-bar {

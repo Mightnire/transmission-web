@@ -177,7 +177,7 @@ const counts = computed(() => {
     error: 0,
   };
   for (const item of state.torrents) {
-    if (item.error !== 0 || item.corruptEver > 0) c.error++;
+    if (item.error !== 0) c.error++;
     if (item.rateDownload > 0 || item.rateUpload > 0) c.active++;
     if (item.status === TorrentStatus.DOWNLOAD || item.status === TorrentStatus.DOWNLOAD_WAIT) c.downloading++;
     if (item.status === TorrentStatus.SEED || item.status === TorrentStatus.SEED_WAIT) c.seeding++;

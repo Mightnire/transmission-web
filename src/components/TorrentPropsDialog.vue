@@ -232,16 +232,20 @@ async function saveProps() {
 
 <style scoped>
 .props-dialog {
-  width: 540px;
+  width: 520px;
   max-width: 95vw;
+  background-color: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
 }
 
 .dialog-header {
-  padding: 16px 20px 12px;
+  padding: 12px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--md-divider);
+  border-bottom: 1px solid var(--fluent-border-subtle);
 }
 
 .header-title-row {
@@ -253,26 +257,26 @@ async function saveProps() {
 }
 
 .header-icon {
-  font-size: 20px;
-  color: var(--md-primary);
+  font-size: 18px;
+  color: var(--fluent-accent);
 }
 
 .props-dialog .md-dialog-title {
   padding: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 420px;
+  color: var(--md-text-primary);
 }
 
 .sub-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--md-primary);
-  margin: 12px 0 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fluent-accent);
+  margin: 14px 0 8px;
+  letter-spacing: 0.02em;
 }
 
 .form-row {
@@ -280,17 +284,23 @@ async function saveProps() {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: 12px;
+  color: var(--md-text-primary);
 }
 
 .form-group {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .form-check {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+}
+
+.form-check input[type="checkbox"] {
+  accent-color: var(--fluent-accent);
   cursor: pointer;
 }
 
@@ -301,45 +311,68 @@ async function saveProps() {
 }
 
 .unit-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--md-text-secondary);
 }
 
 .num-input {
   width: 90px;
   padding: 4px 8px;
-  border: 1px solid var(--md-divider);
-  border-radius: 3px;
-  background-color: var(--md-surface);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-subtle);
   color: var(--md-text-primary);
   text-align: right;
   font-family: monospace;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.num-input:focus {
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
 .text-input {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid var(--md-divider);
-  border-radius: 3px;
-  background-color: var(--md-surface);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-subtle);
   color: var(--md-text-primary);
   box-sizing: border-box;
-  font-size: 13px;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.text-input:focus {
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
 .select-input {
   padding: 4px 8px;
-  border: 1px solid var(--md-divider);
-  border-radius: 3px;
-  background-color: var(--md-surface);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-subtle);
   color: var(--md-text-primary);
   font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.select-input:focus {
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
 .divider {
   height: 1px;
-  background-color: var(--md-divider);
-  margin: 12px 0;
+  background-color: var(--fluent-border-subtle);
+  margin: 10px 0;
 }
 
 .mt-2 { margin-top: 8px; }

@@ -690,14 +690,18 @@ async function saveSettings() {
 .session-dialog {
   width: 660px;
   max-width: 95vw;
+  background-color: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
 }
 
 .dialog-header {
-  padding: 16px 20px 12px;
+  padding: 12px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--md-divider);
+  border-bottom: 1px solid var(--fluent-border-subtle);
 }
 
 .header-title-row {
@@ -707,52 +711,59 @@ async function saveSettings() {
 }
 
 .header-icon {
-  font-size: 22px;
-  color: var(--md-primary);
+  font-size: 18px;
+  color: var(--fluent-accent);
 }
 
 .session-dialog .md-dialog-title {
   padding: 0;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
+  color: var(--md-text-primary);
 }
 
 .session-tabs {
   display: flex;
-  border-bottom: 1px solid var(--md-divider);
-  margin-bottom: 16px;
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: var(--fluent-bg-subtle);
+  border-radius: 6px;
+  padding: 3px;
+  gap: 2px;
+  margin: 12px 0 16px;
+  border: 1px solid var(--fluent-border-subtle);
 }
 
 .tab-btn {
-  padding: 10px 14px;
+  flex: 1;
+  padding: 6px 0;
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--md-text-secondary);
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
+  text-align: center;
 }
 
 .tab-btn:hover {
-  color: var(--md-primary);
+  color: var(--md-text-primary);
+  background-color: var(--fluent-bg-hover);
 }
 
 .tab-btn.active {
-  color: var(--md-primary);
-  border-bottom-color: var(--md-primary);
+  background-color: var(--fluent-bg-canvas);
+  color: var(--fluent-accent);
   font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .sub-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--md-primary);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fluent-accent);
   margin: 14px 0 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
 }
 
 .form-row {
@@ -760,16 +771,16 @@ async function saveSettings() {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .form-group {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .form-label {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--md-text-secondary);
   margin-bottom: 4px;
@@ -779,6 +790,11 @@ async function saveSettings() {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+}
+
+.form-check input[type="checkbox"] {
+  accent-color: var(--fluent-accent);
   cursor: pointer;
 }
 
@@ -801,52 +817,82 @@ async function saveSettings() {
 }
 
 .unit-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--md-text-secondary);
 }
 
 .num-input {
   width: 90px;
   padding: 4px 8px;
-  border: 1px solid var(--md-divider);
-  border-radius: 3px;
-  background-color: var(--md-surface);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-subtle);
   color: var(--md-text-primary);
   text-align: right;
   font-family: monospace;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.num-input:focus {
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
 .text-input {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid var(--md-divider);
-  border-radius: 3px;
-  background-color: var(--md-surface);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-subtle);
   color: var(--md-text-primary);
   box-sizing: border-box;
-  font-size: 13px;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.text-input:focus {
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
 .textarea-input {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid var(--md-divider);
-  border-radius: 3px;
-  background-color: var(--md-surface);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-subtle);
   color: var(--md-text-primary);
   box-sizing: border-box;
   font-family: monospace;
-  font-size: 12px;
+  font-size: 11px;
   resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.textarea-input:focus {
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
 .select-input {
   padding: 4px 8px;
-  border: 1px solid var(--md-divider);
-  border-radius: 3px;
-  background-color: var(--md-surface);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-subtle);
   color: var(--md-text-primary);
   font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.select-input:focus {
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
 .port-input-group {
@@ -865,10 +911,11 @@ async function saveSettings() {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 11px;
   padding: 6px 10px;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+  background: var(--fluent-bg-subtle);
+  border: 1px solid var(--fluent-border-subtle);
   margin-top: 6px;
 }
 
@@ -876,21 +923,23 @@ async function saveSettings() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  padding: 4px 8px;
-  background: rgba(63, 81, 181, 0.08);
-  border-radius: 3px;
-  color: var(--md-primary);
+  font-size: 11px;
+  padding: 3px 8px;
+  background: rgba(0, 120, 212, 0.08);
+  border: 1px solid rgba(0, 120, 212, 0.2);
+  border-radius: 4px;
+  color: var(--fluent-accent);
 }
 
 .free-space-badge .material-icons {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .sub-box {
-  background-color: rgba(0, 0, 0, 0.03);
-  border-radius: 4px;
-  padding: 10px 14px;
+  background-color: var(--fluent-bg-subtle);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 6px;
+  padding: 8px 12px;
   margin-top: 6px;
 }
 
@@ -902,17 +951,17 @@ async function saveSettings() {
 
 .time-input {
   padding: 3px 6px;
-  border: 1px solid var(--md-divider);
-  border-radius: 3px;
-  background-color: var(--md-surface);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   font-family: monospace;
 }
 
 .divider {
   height: 1px;
-  background-color: var(--md-divider);
-  margin: 14px 0;
+  background-color: var(--fluent-border-subtle);
+  margin: 12px 0;
 }
 
 .mt-1 { margin-top: 4px; }

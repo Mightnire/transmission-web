@@ -251,7 +251,7 @@ export const filteredTorrents = computed(() => {
         case 'finished':
           return t.isFinished || t.percentDone >= 1.0;
         case 'error':
-          return t.error !== 0 || t.corruptEver > 0;
+          return t.error !== 0;
         default:
           return true;
       }

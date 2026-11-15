@@ -427,20 +427,20 @@ async function handleSetLocation() {
 <style scoped>
 .desktop-detail-dock {
   height: 280px;
-  background-color: var(--md-surface);
-  border-top: 2px solid var(--md-primary);
+  background-color: var(--fluent-bg-canvas);
+  border-top: 1px solid var(--fluent-border-divider);
   display: flex;
   flex-direction: column;
   user-select: none;
   flex-shrink: 0;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   z-index: 50;
 }
 
 .dock-header {
-  height: 36px;
-  background-color: rgba(0, 0, 0, 0.03);
-  border-bottom: 1px solid var(--md-divider);
+  height: 34px;
+  background-color: var(--fluent-bg-subtle);
+  border-bottom: 1px solid var(--fluent-border-subtle);
   padding: 0 12px;
   display: flex;
   align-items: center;
@@ -457,7 +457,7 @@ async function handleSetLocation() {
 
 .info-icon {
   font-size: 16px;
-  color: var(--md-primary);
+  color: var(--fluent-accent);
 }
 
 .error-icon-red {
@@ -577,6 +577,7 @@ async function handleSetLocation() {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 450px;
+  color: var(--md-text-primary);
 }
 
 .dock-meta {
@@ -595,15 +596,16 @@ async function handleSetLocation() {
   cursor: pointer;
   width: 24px;
   height: 24px;
-  border-radius: 3px;
+  border-radius: var(--fluent-radius);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--md-text-secondary);
+  transition: all 0.15s;
 }
 
 .dock-btn:hover {
-  background-color: rgba(0, 0, 0, 0.08);
+  background-color: var(--fluent-bg-hover);
   color: var(--md-text-primary);
 }
 
@@ -613,18 +615,18 @@ async function handleSetLocation() {
 
 /* 标签栏 */
 .dock-tabs {
-  height: 34px;
+  height: 32px;
   display: flex;
-  border-bottom: 1px solid var(--md-divider);
-  background-color: var(--md-surface);
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  background-color: var(--fluent-bg-subtle);
   padding: 0 8px;
 }
 
 .tab-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 14px;
+  gap: 5px;
+  padding: 0 12px;
   height: 100%;
   background: transparent;
   border: none;
@@ -633,21 +635,24 @@ async function handleSetLocation() {
   font-weight: 500;
   color: var(--md-text-secondary);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.12s ease;
+  border-radius: 4px 4px 0 0;
 }
 
 .tab-item:hover {
-  color: var(--md-primary);
+  background-color: var(--fluent-bg-hover);
+  color: var(--md-text-primary);
 }
 
 .tab-item.active {
-  color: var(--md-primary);
-  border-bottom-color: var(--md-primary);
+  color: var(--fluent-accent);
+  border-bottom-color: var(--fluent-accent);
+  background-color: var(--fluent-bg-canvas);
   font-weight: 600;
 }
 
 .tab-icon {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .tab-badge {
@@ -660,10 +665,11 @@ async function handleSetLocation() {
   flex: 1;
   overflow: auto;
   position: relative;
+  background-color: var(--fluent-bg-canvas);
 }
 
 .tab-pane {
-  padding: 12px;
+  padding: 10px 14px;
   height: 100%;
   box-sizing: border-box;
 }
@@ -672,30 +678,29 @@ async function handleSetLocation() {
 .general-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .info-card {
-  background-color: rgba(0, 0, 0, 0.02);
-  border: 1px solid var(--md-divider);
-  border-radius: 4px;
-  padding: 10px 14px;
+  background-color: var(--fluent-bg-subtle);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 6px;
+  padding: 8px 12px;
 }
 
 .card-title {
   font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--md-primary);
-  margin-bottom: 8px;
-  letter-spacing: 0.03em;
+  font-weight: 600;
+  color: var(--fluent-accent);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
-  margin-bottom: 4px;
+  font-size: 11px;
+  margin-bottom: 3px;
 }
 
 .info-row .label {
@@ -715,7 +720,7 @@ async function handleSetLocation() {
   align-items: center;
   justify-content: center;
   padding: 2px 4px;
-  border-radius: 2px;
+  border-radius: var(--fluent-radius);
   transition: all 0.15s;
 }
 
@@ -728,10 +733,10 @@ async function handleSetLocation() {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(63, 81, 181, 0.08);
-  border: 1px solid rgba(63, 81, 181, 0.2);
-  color: var(--md-primary);
-  border-radius: 3px;
+  background: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  color: var(--fluent-accent);
+  border-radius: var(--fluent-radius);
   padding: 2px 8px;
   font-size: 11px;
   cursor: pointer;
@@ -739,7 +744,7 @@ async function handleSetLocation() {
 }
 
 .copy-magnet-btn:hover {
-  background: rgba(63, 81, 181, 0.16);
+  background: var(--fluent-bg-hover);
 }
 
 .selectable {
@@ -766,23 +771,27 @@ async function handleSetLocation() {
 .detail-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 11px;
   text-align: left;
 }
 
 .detail-table th {
-  border-bottom: 1px solid var(--md-divider);
-  padding: 6px 10px;
+  border-bottom: 1px solid var(--fluent-border-divider);
+  padding: 5px 8px;
   color: var(--md-text-secondary);
   font-weight: 600;
   position: sticky;
   top: 0;
-  background-color: var(--md-surface);
+  background-color: var(--fluent-bg-subtle);
 }
 
 .detail-table td {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  padding: 6px 10px;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  padding: 5px 8px;
+}
+
+.detail-table tbody tr:hover {
+  background-color: var(--fluent-bg-hover);
 }
 
 .down-val { color: #2e7d32; font-family: monospace; }
@@ -790,19 +799,21 @@ async function handleSetLocation() {
 
 .tracker-res-badge {
   font-size: 11px;
-  padding: 2px 6px;
+  padding: 1px 6px;
   border-radius: 3px;
-  background-color: rgba(76, 175, 80, 0.15);
+  background-color: rgba(76, 175, 80, 0.12);
   color: #2e7d32;
 }
 
 .tracker-res-badge.wait {
-  background-color: rgba(0, 0, 0, 0.06);
+  background-color: var(--fluent-bg-hover);
   color: var(--md-text-secondary);
 }
 
 .tracker-actions-bar {
   margin-bottom: 8px;
+  display: flex;
+  gap: 6px;
 }
 
 .empty-hint {
@@ -812,12 +823,12 @@ async function handleSetLocation() {
   justify-content: center;
   height: 140px;
   color: var(--md-text-secondary);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .empty-hint .material-icons {
-  font-size: 36px;
+  font-size: 32px;
   margin-bottom: 6px;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 </style>
