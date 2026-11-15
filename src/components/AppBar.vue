@@ -410,6 +410,13 @@ function onLocaleChange(e: Event) {
 
 @media (max-width: 600px) {
   .toolbar-group {
+    gap: 2px;
+  }
+  /* 移动端/小窗保留顶部核心添加按钮，隐藏次级批量操作 */
+  .toolbar-btn:not(.primary) {
+    display: none;
+  }
+  .toolbar-divider {
     display: none;
   }
   .search-box {
