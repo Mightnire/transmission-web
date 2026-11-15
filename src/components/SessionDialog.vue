@@ -1,79 +1,189 @@
 <template>
   <div class="md-dialog-overlay" v-if="state.sessionDialogOpen" @click.self="state.sessionDialogOpen = false">
-    <div class="md-dialog">
-      <h2 class="md-dialog-title">{{ t('sessionDialog.title') }}</h2>
+    <div class="md-dialog session-dialog">
+      <h2 class="md-dialog-title">Transmission 首选项</h2>
 
       <div class="md-dialog-content">
-        <!-- 语言设置 (响应用户需求) -->
-        <div class="form-group">
-          <label class="form-label">{{ t('app.language') }}</label>
-          <select class="md-select" :value="currentLocale" @change="onLocaleChange">
-            <option value="zh-CN">简体中文 (Chinese)</option>
-            <option value="en-US">English (US)</option>
-            <option value="ru-RU">Русский (Russian)</option>
-          </select>
+        <!-- 标签导航 -->
+        <div class="session-tabs">
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === 'speed' }"
+            @click="activeTab = 'speed'"
+          >
+            速度
+          </button>
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === 'network' }"
+            @click="activeTab = 'network'"
+          >
+            网络与端口
+          </button>
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === 'storage' }"
+            @click="activeTab = 'storage'"
+          >
+            存储与目录
+          </button>
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === 'privacy' }"
+            @click="activeTab = 'privacy'"
+          >
+            对等与黑名单
+          </button>
         </div>
 
-        <div class="divider"></div>
+        <!-- 1. 速度限制 -->
+        <div v-if="activeTab === 'speed'" class="tab-body">
+          <h4 class="sub-title">常规速度限制</h4>
+          <div class="form-row">
+            <label class="form-check">
+              <input type="checkbox" v-model="form.speedLimitDownEnabled" />
+              <span>下载速度上限 (KB/s):</span>
+            </label>
+            <input
+              type="number"
+              class="num-input"
+              v-model.number="form.speedLimitDown"
+              :disabled="!form.speedLimitDownEnabled"
+            />
+          </div>
 
-        <!-- 常规限速 -->
-        <h4 class="section-title">{{ t('sessionDialog.speedLimits') }}</h4>
-        <div class="form-row">
-          <label class="form-label-inline">
-            <input type="checkbox" v-model="form.speedLimitDownEnabled" />
-            <span>{{ t('sessionDialog.downloadLimit') }}</span>
-          </label>
-          <input
-            type="number"
-            class="md-input-small"
-            v-model.number="form.speedLimitDown"
-            :disabled="!form.speedLimitDownEnabled"
-          />
+          <div class="form-row">
+            <label class="form-check">
+              <input type="checkbox" v-model="form.speedLimitUpEnabled" />
+              <span>上传速度上限 (KB/s):</span>
+            </label>
+            <input
+              type="number"
+              class="num-input"
+              v-model.number="form.speedLimitUp"
+              :disabled="!form.speedLimitUpEnabled"
+            />
+          </div>
+
+          <div class="divider"></div>
+
+          <h4 class="sub-title">乌龟临时限速模式 (Turtle Mode)</h4>
+          <div class="form-row">
+            <span>乌龟模式下载上限 (KB/s):</span>
+            <input type="number" class="num-input" v-model.number="form.altSpeedDown" />
+          </div>
+          <div class="form-row">
+            <span>乌龟模式上传上限 (KB/s):</span>
+            <input type="number" class="num-input" v-model.number="form.altSpeedUp" />
+          </div>
         </div>
 
-        <div class="form-row">
-          <label class="form-label-inline">
-            <input type="checkbox" v-model="form.speedLimitUpEnabled" />
-            <span>{{ t('sessionDialog.uploadLimit') }}</span>
-          </label>
-          <input
-            type="number"
-            class="md-input-small"
-            v-model.number="form.speedLimitUp"
-            :disabled="!form.speedLimitUpEnabled"
-          />
+        <!-- 2. 网络与端口 (包含 port-test 官方功能) -->
+        <div v-else-if="activeTab === 'network'" class="tab-body">
+          <h4 class="sub-title">入站对等连接端口</h4>
+          <div class="form-row">
+            <span>监听端口:</span>
+            <div class="port-input-group">
+              <input type="number" class="num-input" v-model.number="form.peerPort" />
+              <button class="md-btn md-btn-flat btn-sm" @click="testPort" :disabled="testingPort">
+                <span class="material-icons" style="font-size: 16px;">{{ testingPort ? 'sync' : 'network_check' }}</span>
+                {{ testingPort ? '正在检测...' : '测试端口' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="port-status-box" v-if="portStatus !== null">
+            <span class="material-icons" :style="{ color: portStatus ? 'var(--md-success)' : 'var(--md-error)' }">
+              {{ portStatus ? 'check_circle' : 'cancel' }}
+            </span>
+            <span>{{ portStatus ? '入站端口正常通畅 (Port is OPEN)' : '入站端口被阻断或关闭 (Port is CLOSED)' }}</span>
+          </div>
+
+          <div class="form-row mt-2">
+            <label class="form-check">
+              <input type="checkbox" v-model="form.peerPortRandomOnStart" />
+              <span>启动时使用随机端口</span>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label class="form-check">
+              <input type="checkbox" v-model="form.portForwardingEnabled" />
+              <span>使用 UPnP / NAT-PMP 自动映射路由端口</span>
+            </label>
+          </div>
         </div>
 
-        <div class="divider"></div>
+        <!-- 3. 存储与目录 (包含 free-space 空间探测) -->
+        <div v-else-if="activeTab === 'storage'" class="tab-body">
+          <h4 class="sub-title">存储路径</h4>
+          <div class="form-group">
+            <label class="form-label">默认下载保存目录:</label>
+            <input type="text" class="text-input" v-model="form.downloadDir" @blur="checkFreeSpace" />
+          </div>
 
-        <!-- 乌龟模式限速 -->
-        <h4 class="section-title">{{ t('sessionDialog.altSpeedLimits') }}</h4>
-        <div class="form-row">
-          <span class="label-text">{{ t('sessionDialog.altDownloadLimit') }}</span>
-          <input type="number" class="md-input-small" v-model.number="form.altSpeedDown" />
+          <div class="free-space-badge" v-if="freeSpaceBytes !== null">
+            <span class="material-icons">storage</span>
+            <span>该分区剩余可用空间: <b>{{ formatBytes(freeSpaceBytes) }}</b></span>
+          </div>
+
+          <div class="form-group mt-2">
+            <label class="form-check">
+              <input type="checkbox" v-model="form.incompleteDirEnabled" />
+              <span>未完成的任务保存在独立目录:</span>
+            </label>
+            <input
+              type="text"
+              class="text-input mt-1"
+              v-model="form.incompleteDir"
+              :disabled="!form.incompleteDirEnabled"
+            />
+          </div>
         </div>
 
-        <div class="form-row">
-          <span class="label-text">{{ t('sessionDialog.altUploadLimit') }}</span>
-          <input type="number" class="md-input-small" v-model.number="form.altSpeedUp" />
-        </div>
+        <!-- 4. 对等网络与黑名单 (包含 blocklist-update) -->
+        <div v-else-if="activeTab === 'privacy'" class="tab-body">
+          <h4 class="sub-title">连接数限制</h4>
+          <div class="form-row">
+            <span>全局最大连接数:</span>
+            <input type="number" class="num-input" v-model.number="form.peerLimitGlobal" />
+          </div>
+          <div class="form-row">
+            <span>每个种子最大连接数:</span>
+            <input type="number" class="num-input" v-model.number="form.peerLimitPerTorrent" />
+          </div>
 
-        <div class="divider"></div>
+          <div class="divider"></div>
 
-        <!-- 存储目录 -->
-        <h4 class="section-title">{{ t('sessionDialog.directories') }}</h4>
-        <div class="form-group">
-          <label class="form-label">{{ t('sessionDialog.downloadDir') }}</label>
-          <input type="text" class="md-input" v-model="form.downloadDir" />
+          <h4 class="sub-title">IP 黑名单防护</h4>
+          <div class="form-row">
+            <label class="form-check">
+              <input type="checkbox" v-model="form.blocklistEnabled" />
+              <span>启用 IP 黑名单 (Blocklist)</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">黑名单更新 URL:</label>
+            <input type="text" class="text-input" v-model="form.blocklistUrl" :disabled="!form.blocklistEnabled" />
+          </div>
+          <div class="blocklist-action-row">
+            <button class="md-btn md-btn-flat" @click="updateBlocklist" :disabled="updatingBlocklist || !form.blocklistEnabled">
+              <span class="material-icons">security</span>
+              {{ updatingBlocklist ? '正在拉取...' : '立即更新黑名单' }}
+            </button>
+            <span class="blocklist-size" v-if="state.session?.['blocklist-size']">
+              当前已加载规则: {{ state.session['blocklist-size'] }} 条
+            </span>
+          </div>
         </div>
       </div>
 
       <div class="md-dialog-actions">
         <button class="md-btn md-btn-flat" @click="state.sessionDialogOpen = false">
-          {{ t('common.cancel') }}
+          取消
         </button>
         <button class="md-btn md-btn-raised" @click="saveSettings">
-          {{ t('common.save') }}
+          保存首选项
         </button>
       </div>
     </div>
@@ -81,10 +191,15 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue';
-import { state, fetchSession } from '../stores/transmission';
-import { t, currentLocale, setLocale, LocaleKey } from '../locales';
+import { ref, reactive, watch } from 'vue';
+import { state, fetchSession, formatBytes } from '../stores/transmission';
 import { rpc } from '../api/rpc';
+
+const activeTab = ref<'speed' | 'network' | 'storage' | 'privacy'>('speed');
+const testingPort = ref(false);
+const portStatus = ref<boolean | null>(null);
+const freeSpaceBytes = ref<number | null>(null);
+const updatingBlocklist = ref(false);
 
 const form = reactive({
   speedLimitDown: 0,
@@ -93,122 +208,249 @@ const form = reactive({
   speedLimitUpEnabled: false,
   altSpeedDown: 50,
   altSpeedUp: 50,
+  peerPort: 51413,
+  peerPortRandomOnStart: false,
+  portForwardingEnabled: true,
   downloadDir: '',
+  incompleteDirEnabled: false,
+  incompleteDir: '',
+  peerLimitGlobal: 240,
+  peerLimitPerTorrent: 60,
+  blocklistEnabled: false,
+  blocklistUrl: '',
 });
 
 watch(
   () => state.session,
   (s) => {
-    if (s) {
-      form.speedLimitDown = s.speedLimitDown;
-      form.speedLimitDownEnabled = s.speedLimitDownEnabled;
-      form.speedLimitUp = s.speedLimitUp;
-      form.speedLimitUpEnabled = s.speedLimitUpEnabled;
-      form.altSpeedDown = s.altSpeedDown;
-      form.altSpeedUp = s.altSpeedUp;
-      form.downloadDir = s.downloadDir;
+    if (!s) return;
+    form.speedLimitDown = s['speed-limit-down'] || 0;
+    form.speedLimitDownEnabled = s['speed-limit-down-enabled'] || false;
+    form.speedLimitUp = s['speed-limit-up'] || 0;
+    form.speedLimitUpEnabled = s['speed-limit-up-enabled'] || false;
+    form.altSpeedDown = s['alt-speed-down'] || 50;
+    form.altSpeedUp = s['alt-speed-up'] || 50;
+    form.peerPort = s['peer-port'] || 51413;
+    form.peerPortRandomOnStart = s['peer-port-random-on-start'] || false;
+    form.portForwardingEnabled = s['port-forwarding-enabled'] || false;
+    form.downloadDir = s['download-dir'] || '';
+    form.incompleteDirEnabled = s['incomplete-dir-enabled'] || false;
+    form.incompleteDir = s['incomplete-dir'] || '';
+    form.peerLimitGlobal = s['peer-limit-global'] || 240;
+    form.peerLimitPerTorrent = s['peer-limit-per-torrent'] || 60;
+    form.blocklistEnabled = s['blocklist-enabled'] || false;
+    form.blocklistUrl = s['blocklist-url'] || '';
+
+    if (form.downloadDir) {
+      checkFreeSpace();
     }
   },
   { immediate: true }
 );
 
-function onLocaleChange(e: Event) {
-  const target = e.target as HTMLSelectElement;
-  setLocale(target.value as LocaleKey);
+async function checkFreeSpace() {
+  if (!form.downloadDir) return;
+  try {
+    const res = await rpc.freeSpace(form.downloadDir);
+    if (res && res['size-bytes'] !== undefined) {
+      freeSpaceBytes.value = res['size-bytes'];
+    }
+  } catch (e) {
+    console.warn('Free space check failed:', e);
+  }
+}
+
+async function testPort() {
+  testingPort.value = true;
+  portStatus.value = null;
+  try {
+    const res = await rpc.portTest();
+    portStatus.value = res['port-is-open'];
+  } catch (e) {
+    portStatus.value = false;
+  } finally {
+    testingPort.value = false;
+  }
+}
+
+async function updateBlocklist() {
+  updatingBlocklist.value = true;
+  try {
+    const res = await rpc.blocklistUpdate();
+    alert(`IP 黑名单更新完成！已同步加载 ${res['blocklist-size']} 条屏蔽规则。`);
+    await fetchSession();
+  } catch (e) {
+    alert('黑名单更新失败，请检查 URL 是否有效。');
+  } finally {
+    updatingBlocklist.value = false;
+  }
 }
 
 async function saveSettings() {
-  try {
-    await rpc.setSession({
-      speedLimitDown: form.speedLimitDown,
-      speedLimitDownEnabled: form.speedLimitDownEnabled,
-      speedLimitUp: form.speedLimitUp,
-      speedLimitUpEnabled: form.speedLimitUpEnabled,
-      altSpeedDown: form.altSpeedDown,
-      altSpeedUp: form.altSpeedUp,
-      downloadDir: form.downloadDir,
-    });
-    await fetchSession();
-    state.sessionDialogOpen = false;
-  } catch (err: any) {
-    alert('保存设置失败: ' + err.message);
-  }
+  await rpc.sessionSet({
+    'speed-limit-down': form.speedLimitDown,
+    'speed-limit-down-enabled': form.speedLimitDownEnabled,
+    'speed-limit-up': form.speedLimitUp,
+    'speed-limit-up-enabled': form.speedLimitUpEnabled,
+    'alt-speed-down': form.altSpeedDown,
+    'alt-speed-up': form.altSpeedUp,
+    'peer-port': form.peerPort,
+    'peer-port-random-on-start': form.peerPortRandomOnStart,
+    'port-forwarding-enabled': form.portForwardingEnabled,
+    'download-dir': form.downloadDir,
+    'incomplete-dir-enabled': form.incompleteDirEnabled,
+    'incomplete-dir': form.incompleteDir,
+    'peer-limit-global': form.peerLimitGlobal,
+    'peer-limit-per-torrent': form.peerLimitPerTorrent,
+    'blocklist-enabled': form.blocklistEnabled,
+    'blocklist-url': form.blocklistUrl,
+  });
+
+  state.sessionDialogOpen = false;
+  await fetchSession();
 }
 </script>
 
 <style scoped>
-.section-title {
+.session-dialog {
+  width: 600px;
+  max-width: 95vw;
+}
+
+.session-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--md-divider);
+  margin-bottom: 16px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
   font-size: 13px;
   font-weight: 500;
+  color: var(--md-text-secondary);
+  cursor: pointer;
+}
+
+.tab-btn.active {
   color: var(--md-primary);
-  margin-bottom: 8px;
-  text-transform: uppercase;
+  border-bottom-color: var(--md-primary);
+  font-weight: 600;
 }
 
-.divider {
-  height: 1px;
-  background-color: var(--md-divider);
-  margin: 16px 0;
-}
-
-.form-group {
-  margin-bottom: 12px;
+.sub-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--md-primary);
+  margin: 12px 0 8px;
 }
 
 .form-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 14px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.form-group {
+  margin-bottom: 12px;
 }
 
 .form-label {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--md-text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.form-label-inline {
+.form-check {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
 }
 
-.md-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--md-divider);
-  border-radius: 2px;
-  background-color: var(--md-surface);
-  color: var(--md-text-primary);
-  font-size: 14px;
-  outline: none;
-}
-
-.md-input-small {
+.num-input {
   width: 100px;
-  padding: 6px 8px;
+  padding: 4px 8px;
   border: 1px solid var(--md-divider);
-  border-radius: 2px;
+  border-radius: 3px;
   background-color: var(--md-surface);
   color: var(--md-text-primary);
-  font-size: 13px;
   text-align: right;
-  outline: none;
+  font-family: monospace;
 }
 
-.md-select {
+.text-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border: 1px solid var(--md-divider);
-  border-radius: 2px;
+  border-radius: 3px;
   background-color: var(--md-surface);
   color: var(--md-text-primary);
-  font-size: 14px;
-  outline: none;
+  box-sizing: border-box;
+}
+
+.port-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-sm {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.port-status-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.04);
+  margin-top: 6px;
+}
+
+.free-space-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 8px;
+  background: rgba(63, 81, 181, 0.08);
+  border-radius: 3px;
+  color: var(--md-primary);
+}
+
+.free-space-badge .material-icons {
+  font-size: 16px;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--md-divider);
+  margin: 12px 0;
+}
+
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 8px; }
+
+.blocklist-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.blocklist-size {
+  font-size: 12px;
+  color: var(--md-text-secondary);
 }
 </style>

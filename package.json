@@ -1,8 +1,8 @@
 {
-  "name": "transmission-web-md1",
-  "version": "0.1.0",
+  "name": "transmission-web",
+  "version": "1.0.0",
   "private": true,
-  "description": "A lightweight, zero-bloat Transmission Web UI designed with classic Material Design 1 (MD1) for routers and low-spec devices.",
+  "description": "Transmission Web - A lightweight, robust, and classic desktop-grade Web Client for Transmission BT.",
   "type": "module",
   "scripts": {
     "dev": "vite",

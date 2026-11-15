@@ -1,89 +1,85 @@
 <template>
-  <div>
-    <!-- 背景遮罩 -->
-    <div class="md-drawer-backdrop" v-if="state.drawerOpen" @click="state.drawerOpen = false"></div>
+  <aside class="desktop-sidebar" :class="{ 'mobile-open': state.sidebarOpen }">
+    <!-- 移动端遮罩 -->
+    <div class="mobile-backdrop" v-if="state.sidebarOpen" @click="state.sidebarOpen = false"></div>
 
-    <!-- 抽屉容器 -->
-    <aside class="md-drawer" :class="{ open: state.drawerOpen }">
-      <!-- 头部 Banner -->
-      <div class="md-drawer-header">
-        <h2 class="title">Transmission MD1</h2>
-        <p class="subtitle">v{{ state.session?.version || '3.00+' }} · 极轻量路由器专版</p>
-      </div>
+    <div class="sidebar-inner">
+      <!-- 状态筛选区 -->
+      <div class="sidebar-section">
+        <div class="section-header">{{ t('filter.title') }}</div>
 
-      <!-- 导航列表 -->
-      <div class="md-drawer-content">
-        <div class="section-title">状态筛选</div>
-        
         <div
-          class="nav-item"
+          class="sidebar-nav-item"
           :class="{ active: state.filter.status === 'all' }"
           @click="setStatusFilter('all')"
-          v-ripple
         >
-          <span class="material-icons">all_inclusive</span>
-          <span class="label">全部任务</span>
-          <span class="count">{{ state.torrents.length }}</span>
+          <span class="material-icons item-icon">all_inclusive</span>
+          <span class="item-label">{{ t('filter.all') }}</span>
+          <span class="item-badge">{{ state.torrents.length }}</span>
         </div>
 
         <div
-          class="nav-item"
+          class="sidebar-nav-item"
           :class="{ active: state.filter.status === 'downloading' }"
           @click="setStatusFilter('downloading')"
-          v-ripple
         >
-          <span class="material-icons" style="color: var(--md-info);">arrow_downward</span>
-          <span class="label">正在下载</span>
-          <span class="count">{{ counts.downloading }}</span>
+          <span class="material-icons item-icon down-color">arrow_downward</span>
+          <span class="item-label">{{ t('filter.downloading') }}</span>
+          <span class="item-badge" v-if="counts.downloading > 0">{{ counts.downloading }}</span>
         </div>
 
         <div
-          class="nav-item"
+          class="sidebar-nav-item"
           :class="{ active: state.filter.status === 'seeding' }"
           @click="setStatusFilter('seeding')"
-          v-ripple
         >
-          <span class="material-icons" style="color: var(--md-success);">arrow_upward</span>
-          <span class="label">正在做种</span>
-          <span class="count">{{ counts.seeding }}</span>
+          <span class="material-icons item-icon up-color">arrow_upward</span>
+          <span class="item-label">{{ t('filter.seeding') }}</span>
+          <span class="item-badge" v-if="counts.seeding > 0">{{ counts.seeding }}</span>
         </div>
 
         <div
-          class="nav-item"
+          class="sidebar-nav-item"
           :class="{ active: state.filter.status === 'finished' }"
           @click="setStatusFilter('finished')"
-          v-ripple
         >
-          <span class="material-icons" style="color: #8bc34a;">check_circle</span>
-          <span class="label">已完成</span>
-          <span class="count">{{ counts.finished }}</span>
+          <span class="material-icons item-icon finish-color">check_circle</span>
+          <span class="item-label">{{ t('filter.finished') }}</span>
+          <span class="item-badge" v-if="counts.finished > 0">{{ counts.finished }}</span>
         </div>
 
         <div
-          class="nav-item"
+          class="sidebar-nav-item"
           :class="{ active: state.filter.status === 'paused' }"
           @click="setStatusFilter('paused')"
-          v-ripple
         >
-          <span class="material-icons" style="color: var(--md-text-secondary);">pause</span>
-          <span class="label">已暂停</span>
-          <span class="count">{{ counts.paused }}</span>
+          <span class="material-icons item-icon pause-color">pause</span>
+          <span class="item-label">{{ t('filter.paused') }}</span>
+          <span class="item-badge" v-if="counts.paused > 0">{{ counts.paused }}</span>
         </div>
 
         <div
-          class="nav-item"
+          class="sidebar-nav-item"
           :class="{ active: state.filter.status === 'error' }"
           @click="setStatusFilter('error')"
-          v-ripple
         >
-          <span class="material-icons" style="color: var(--md-error);">error</span>
-          <span class="label">异常与警告</span>
-          <span class="count">{{ counts.error }}</span>
+          <span class="material-icons item-icon error-color">error</span>
+          <span class="item-label">{{ t('filter.error') }}</span>
+          <span class="item-badge error-badge" v-if="counts.error > 0">{{ counts.error }}</span>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- 排序管理 -->
+      <div class="sidebar-section">
+        <div class="section-header-flex">
+          <span>{{ t('filter.sortBy') }}</span>
+          <button class="sort-order-btn" @click="state.filter.sortAsc = !state.filter.sortAsc" :title="state.filter.sortAsc ? '升序' : '降序'">
+            <span class="material-icons">{{ state.filter.sortAsc ? 'arrow_upward' : 'arrow_downward' }}</span>
+          </button>
         </div>
 
-        <div class="divider"></div>
-
-        <div class="section-title">排序方式</div>
         <div class="sort-options">
           <label class="sort-radio" v-for="opt in sortOptions" :key="opt.value">
             <input
@@ -95,181 +91,269 @@
             <span>{{ opt.label }}</span>
           </label>
         </div>
+      </div>
 
-        <div class="sort-order-toggle" @click="state.filter.sortAsc = !state.filter.sortAsc" v-ripple>
-          <span class="material-icons">{{ state.filter.sortAsc ? 'arrow_upward' : 'arrow_downward' }}</span>
-          <span>{{ state.filter.sortAsc ? '正序升序' : '倒序降序' }}</span>
+      <!-- 底部统计面板 (BiglyBT 风格) -->
+      <div class="sidebar-footer" v-if="state.stats">
+        <div class="footer-title">会话统计</div>
+        <div class="footer-stat-line">
+          <span>已下载:</span>
+          <b>{{ formatBytes(state.stats['current-stats'].downloadedBytes) }}</b>
+        </div>
+        <div class="footer-stat-line">
+          <span>已上传:</span>
+          <b>{{ formatBytes(state.stats['current-stats'].uploadedBytes) }}</b>
+        </div>
+        <div class="footer-stat-line">
+          <span>分享率:</span>
+          <b>{{ getRatio() }}</b>
         </div>
       </div>
-    </aside>
-  </div>
+    </div>
+  </aside>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { state } from '../stores/transmission';
+import { state, formatBytes } from '../stores/transmission';
+import { TorrentStatus } from '../api/types';
+import { t } from '../locales';
+
+const counts = computed(() => {
+  const c = {
+    downloading: 0,
+    seeding: 0,
+    finished: 0,
+    paused: 0,
+    error: 0,
+  };
+  for (const item of state.torrents) {
+    if (item.error !== 0 || item.corruptEver > 0) c.error++;
+    if (item.status === TorrentStatus.DOWNLOAD || item.status === TorrentStatus.DOWNLOAD_WAIT) c.downloading++;
+    if (item.status === TorrentStatus.SEED || item.status === TorrentStatus.SEED_WAIT) c.seeding++;
+    if (item.status === TorrentStatus.STOPPED) c.paused++;
+    if (item.isFinished || item.percentDone >= 1.0) c.finished++;
+  }
+  return c;
+});
+
+const sortOptions = computed(() => [
+  { value: 'addedDate', label: t('common.addedDate') },
+  { value: 'name', label: t('common.name') },
+  { value: 'percentDone', label: t('common.progress') },
+  { value: 'rateDownload', label: t('common.downSpeed') },
+  { value: 'totalSize', label: t('common.size') },
+  { value: 'uploadRatio', label: t('common.ratio') },
+]);
 
 function setStatusFilter(status: any) {
   state.filter.status = status;
-  state.drawerOpen = false;
+  if (window.innerWidth < 768) {
+    state.sidebarOpen = false;
+  }
 }
 
-const counts = computed(() => {
-  let downloading = 0;
-  let seeding = 0;
-  let finished = 0;
-  let paused = 0;
-  let error = 0;
-
-  for (const t of state.torrents) {
-    if (t.error !== 0) error++;
-    if (t.status === 4 || t.status === 3) downloading++;
-    else if (t.status === 6 || t.status === 5) seeding++;
-    else if (t.status === 0) paused++;
-    if (t.percentDone >= 1.0) finished++;
-  }
-
-  return { downloading, seeding, finished, paused, error };
-});
-
-const sortOptions = [
-  { label: '添加时间', value: 'addedDate' },
-  { label: '真实进度', value: 'percentDone' },
-  { label: '下载速度', value: 'rateDownload' },
-  { label: '上传速度', value: 'rateUpload' },
-  { label: '种子名称', value: 'name' },
-  { label: '文件大小', value: 'totalSize' },
-];
+function getRatio(): string {
+  if (!state.stats) return '0.00';
+  const down = state.stats['current-stats'].downloadedBytes;
+  const up = state.stats['current-stats'].uploadedBytes;
+  if (!down || down === 0) return up > 0 ? '∞' : '0.00';
+  return (up / down).toFixed(2);
+}
 </script>
 
 <style scoped>
-.md-drawer-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.54);
-  z-index: 200;
-}
-
-.md-drawer {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 280px;
+.desktop-sidebar {
+  width: 210px;
   background-color: var(--md-surface);
-  box-shadow: var(--md-shadow-8dp);
-  z-index: 201;
-  transform: translateX(-100%);
-  transition: transform 0.28s var(--md-transition-standard);
+  border-right: 1px solid var(--md-divider);
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  user-select: none;
+  height: 100%;
 }
 
-.md-drawer.open {
-  transform: translateX(0);
-}
-
-.md-drawer-header {
-  height: 140px;
-  background-color: var(--md-primary);
-  color: #ffffff;
-  padding: 24px 16px 16px;
+.sidebar-inner {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  box-shadow: var(--md-shadow-1dp);
-}
-
-.md-drawer-header .title {
-  font-size: 20px;
-  font-weight: 500;
-}
-
-.md-drawer-header .subtitle {
-  font-size: 12px;
-  opacity: 0.8;
-  margin-top: 4px;
-}
-
-.md-drawer-content {
-  flex: 1;
+  height: 100%;
   overflow-y: auto;
+}
+
+.sidebar-section {
   padding: 8px 0;
 }
 
-.section-title {
-  padding: 12px 16px 4px;
-  font-size: 12px;
-  font-weight: 500;
+.section-header {
+  padding: 8px 16px 4px;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--md-text-secondary);
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.nav-item {
+.section-header-flex {
+  padding: 8px 16px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--md-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   display: flex;
   align-items: center;
-  height: 48px;
+  justify-content: space-between;
+}
+
+.sort-order-btn {
+  background: transparent;
+  border: none;
+  color: var(--md-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.sort-order-btn .material-icons {
+  font-size: 16px;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  height: 36px;
   padding: 0 16px;
   cursor: pointer;
   color: var(--md-text-primary);
-  transition: background-color 0.2s;
-  gap: 16px;
+  font-size: 13px;
+  transition: background-color 0.15s;
+  gap: 10px;
 }
 
-.nav-item:hover {
+.sidebar-nav-item:hover {
   background-color: rgba(0, 0, 0, 0.04);
 }
 
-.nav-item.active {
+.sidebar-nav-item.active {
   background-color: rgba(63, 81, 181, 0.12);
   color: var(--md-primary);
+  font-weight: 600;
+  border-left: 3px solid var(--md-primary);
+}
+
+.item-icon {
+  font-size: 18px;
+  opacity: 0.8;
+}
+
+.down-color { color: var(--md-info); }
+.up-color { color: var(--md-success); }
+.finish-color { color: #8bc34a; }
+.pause-color { color: var(--md-text-secondary); }
+.error-color { color: var(--md-error); }
+
+.item-label {
+  flex: 1;
+}
+
+.item-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background-color: var(--md-divider);
+  color: var(--md-text-secondary);
   font-weight: 500;
 }
 
-.nav-item .label {
-  flex: 1;
-  font-size: 14px;
+.error-badge {
+  background-color: var(--md-error);
+  color: #ffffff;
 }
 
-.nav-item .count {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: var(--md-divider);
-}
-
-.divider {
+.sidebar-divider {
   height: 1px;
   background-color: var(--md-divider);
-  margin: 8px 0;
+  margin: 6px 12px;
 }
 
 .sort-options {
   padding: 4px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sort-radio {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--md-text-secondary);
+}
+
+.sort-radio input {
   cursor: pointer;
 }
 
-.sort-order-toggle {
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px 16px;
+  border-top: 1px solid var(--md-divider);
+  background-color: rgba(0, 0, 0, 0.02);
+  font-size: 11px;
+  color: var(--md-text-secondary);
+}
+
+.footer-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.footer-stat-line {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  margin-top: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--md-primary);
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.footer-stat-line b {
+  color: var(--md-text-primary);
+}
+
+/* 移动端媒体查询：只有在小屏幕时才作为悬浮抽屉 */
+@media (max-width: 768px) {
+  .desktop-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 260px;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    visibility: hidden;
+    pointer-events: none;
+    box-shadow: none; /* 彻底根除未激活时的左侧阴影泄漏！ */
+  }
+
+  .desktop-sidebar.mobile-open {
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+    box-shadow: var(--md-shadow-8dp);
+  }
+
+  .mobile-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 199;
+  }
 }
 </style>

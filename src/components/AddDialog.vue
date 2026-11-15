@@ -51,7 +51,7 @@
             type="text"
             class="md-input"
             v-model="downloadDir"
-            :placeholder="state.session?.downloadDir || '/media/AiDisk_a1/Downloads'"
+            :placeholder="state.session?.['download-dir'] || '/media/AiDisk_a1/Downloads'"
           />
         </div>
 
@@ -81,7 +81,7 @@ import { t } from '../locales';
 import { rpc } from '../api/rpc';
 
 const magnetUrl = ref('');
-const downloadDir = ref(state.session?.downloadDir || '');
+const downloadDir = ref(state.session?.['download-dir'] || '');
 const startNow = ref(true);
 const isDragging = ref(false);
 const fileInputRef = ref<HTMLInputElement | null>(null);

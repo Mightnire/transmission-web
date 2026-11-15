@@ -5,7 +5,7 @@ import { rpc } from '../api/rpc';
 export interface TorrentFilter {
   status: 'all' | 'downloading' | 'seeding' | 'paused' | 'error' | 'finished';
   search: string;
-  sortBy: 'name' | 'percentDone' | 'rateDownload' | 'rateUpload' | 'totalSize' | 'addedDate';
+  sortBy: 'name' | 'percentDone' | 'rateDownload' | 'rateUpload' | 'totalSize' | 'addedDate' | 'uploadRatio';
   sortAsc: boolean;
 }
 
@@ -14,17 +14,21 @@ export const state = reactive<{
   session: SessionInfo | null;
   stats: SessionStats | null;
   selectedId: number | null;
+  selectedIds: number[];
   activeTorrentDetail: Torrent | null;
   filter: TorrentFilter;
-  drawerOpen: boolean;
+  sidebarOpen: boolean;
   addDialogOpen: boolean;
   sessionDialogOpen: boolean;
+  detailOpen: boolean;
   isPolling: boolean;
+  viewMode: 'table' | 'cards';
 }>({
   torrents: [],
   session: null,
   stats: null,
   selectedId: null,
+  selectedIds: [],
   activeTorrentDetail: null,
   filter: {
     status: 'all',
@@ -32,24 +36,28 @@ export const state = reactive<{
     sortBy: 'addedDate',
     sortAsc: false,
   },
-  drawerOpen: false,
+  sidebarOpen: false,
   addDialogOpen: false,
   sessionDialogOpen: false,
+  detailOpen: false,
   isPolling: false,
+  viewMode: 'table',
 });
 
 let pollTimer: any = null;
 
+// 获取种子列表与刷新当前选中详情
 export async function fetchTorrents() {
   try {
     const list = await rpc.getTorrents();
     state.torrents = list;
 
-    // 如果当前选中的种子正在查看详情，同步刷新它的详情
-    if (state.selectedId !== null) {
+    // 如果选中了某个任务且详情面板打开，刷新其详细属性
+    if (state.selectedId !== null && state.detailOpen) {
+      const basic = state.torrents.find((t) => t.id === state.selectedId);
       const detail = await rpc.getTorrentDetail(state.selectedId);
       if (detail) {
-        state.activeTorrentDetail = detail;
+        state.activeTorrentDetail = { ...(basic || {}), ...detail };
       }
     }
   } catch (e) {
@@ -86,9 +94,93 @@ export function stopPolling() {
   state.isPolling = false;
 }
 
+// 选中管理
+export function selectTorrent(id: number, multi = false) {
+  if (!multi) {
+    state.selectedIds = [id];
+    state.selectedId = id;
+  } else {
+    const idx = state.selectedIds.indexOf(id);
+    if (idx > -1) {
+      state.selectedIds.splice(idx, 1);
+      state.selectedId = state.selectedIds[state.selectedIds.length - 1] || null;
+    } else {
+      state.selectedIds.push(id);
+      state.selectedId = id;
+    }
+  }
+
+  // 选中后加载详细元数据
+  if (state.selectedId !== null && state.detailOpen) {
+    rpc.getTorrentDetail(state.selectedId).then((detail) => {
+      const basic = state.torrents.find((t) => t.id === state.selectedId);
+      if (detail) {
+        state.activeTorrentDetail = { ...(basic || {}), ...detail };
+      }
+    });
+  }
+}
+
+export function toggleDetail(id?: number) {
+  if (id !== undefined && id !== null) {
+    selectTorrent(id);
+    state.detailOpen = true;
+  } else {
+    state.detailOpen = !state.detailOpen;
+  }
+
+  if (state.detailOpen && state.selectedId !== null) {
+    rpc.getTorrentDetail(state.selectedId).then((detail) => {
+      const basic = state.torrents.find((t) => t.id === state.selectedId);
+      if (detail) {
+        state.activeTorrentDetail = { ...(basic || {}), ...detail };
+      }
+    });
+  }
+}
+
+// 批量操作
+export async function startSelected() {
+  const ids = state.selectedIds.length > 0 ? state.selectedIds : (state.selectedId ? [state.selectedId] : []);
+  if (ids.length === 0) return;
+  await rpc.startTorrents(ids);
+  await fetchTorrents();
+}
+
+export async function stopSelected() {
+  const ids = state.selectedIds.length > 0 ? state.selectedIds : (state.selectedId ? [state.selectedId] : []);
+  if (ids.length === 0) return;
+  await rpc.stopTorrents(ids);
+  await fetchTorrents();
+}
+
+export async function verifySelected() {
+  const ids = state.selectedIds.length > 0 ? state.selectedIds : (state.selectedId ? [state.selectedId] : []);
+  if (ids.length === 0) return;
+  await rpc.verifyTorrents(ids);
+  await fetchTorrents();
+}
+
+export async function removeSelected(deleteLocalData = false) {
+  const ids = state.selectedIds.length > 0 ? state.selectedIds : (state.selectedId ? [state.selectedId] : []);
+  if (ids.length === 0) return;
+  await rpc.removeTorrents(ids, deleteLocalData);
+  state.selectedIds = [];
+  state.selectedId = null;
+  state.activeTorrentDetail = null;
+  await fetchTorrents();
+}
+
+export async function toggleTurtleMode() {
+  if (!state.session) return;
+  const newMode = !state.session['alt-speed-enabled'];
+  await rpc.setSession({ 'alt-speed-enabled': newMode });
+  state.session['alt-speed-enabled'] = newMode;
+}
+
 // 格式化函数工具箱
-export function formatBytes(bytes: number, decimals = 1): string {
-  if (!bytes || bytes === 0) return '0 B';
+export function formatBytes(bytes?: number, decimals = 1): string {
+  if (bytes === undefined || bytes === null || bytes === 0 || isNaN(bytes)) return '0 B';
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
@@ -96,54 +188,89 @@ export function formatBytes(bytes: number, decimals = 1): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export function formatSpeed(bytesPerSec: number): string {
+export function formatSpeed(bytesPerSec?: number): string {
+  if (!bytesPerSec || bytesPerSec === 0) return '0 B/s';
   return formatBytes(bytesPerSec) + '/s';
 }
 
-export function formatETA(seconds: number): string {
-  if (seconds < 0) return '∞';
+export function formatETA(seconds?: number): string {
+  if (seconds === undefined || seconds === null || seconds < 0) return '—';
   if (seconds === 0) return '完成';
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  if (days > 0) return `${days}天 ${hours}时`;
-  if (hours > 0) return `${hours}时 ${minutes}分`;
-  if (minutes > 0) return `${minutes}分 ${secs}秒`;
-  return `${secs}秒`;
+  if (seconds > 86400 * 30) return '∞';
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (d > 0) return `${d}天 ${h}时`;
+  if (h > 0) return `${h}时 ${m}分`;
+  if (m > 0) return `${m}分 ${s}秒`;
+  return `${s}秒`;
 }
 
-// 过滤与排序后的种子列表
+export function getStatusText(status: number): string {
+  switch (status) {
+    case 0: return '已暂停';
+    case 1: return '等待校验';
+    case 2: return '正在校验';
+    case 3: return '等待下载';
+    case 4: return '正在下载';
+    case 5: return '等待做种';
+    case 6: return '正在做种';
+    default: return '未知状态';
+  }
+}
+
+// 计算过滤与排序后的种子列表
 export const filteredTorrents = computed(() => {
-  return state.torrents
-    .filter((t) => {
-      // 状态筛选
-      if (state.filter.status === 'downloading') {
-        if (t.status !== TorrentStatus.DOWNLOAD && t.status !== TorrentStatus.DOWNLOAD_WAIT) return false;
-      } else if (state.filter.status === 'seeding') {
-        if (t.status !== TorrentStatus.SEED && t.status !== TorrentStatus.SEED_WAIT) return false;
-      } else if (state.filter.status === 'paused') {
-        if (t.status !== TorrentStatus.STOPPED) return false;
-      } else if (state.filter.status === 'error') {
-        if (t.error === 0) return false;
-      } else if (state.filter.status === 'finished') {
-        if (t.percentDone < 1.0) return false;
-      }
+  let list = state.torrents;
 
-      // 关键字搜索
-      if (state.filter.search) {
-        const query = state.filter.search.toLowerCase();
-        return t.name.toLowerCase().includes(query);
+  // 状态筛选
+  if (state.filter.status !== 'all') {
+    list = list.filter((t) => {
+      switch (state.filter.status) {
+        case 'downloading':
+          return t.status === TorrentStatus.DOWNLOAD || t.status === TorrentStatus.DOWNLOAD_WAIT;
+        case 'seeding':
+          return t.status === TorrentStatus.SEED || t.status === TorrentStatus.SEED_WAIT;
+        case 'paused':
+          return t.status === TorrentStatus.STOPPED;
+        case 'finished':
+          return t.isFinished || t.percentDone >= 1.0;
+        case 'error':
+          return t.error !== 0 || t.corruptEver > 0;
+        default:
+          return true;
       }
-
-      return true;
-    })
-    .sort((a, b) => {
-      const field = state.filter.sortBy;
-      const factor = state.filter.sortAsc ? 1 : -1;
-      if (field === 'name') {
-        return a.name.localeCompare(b.name) * factor;
-      }
-      return ((a[field] as number) - (b[field] as number)) * factor;
     });
+  }
+
+  // 搜索关键字筛选
+  if (state.filter.search.trim()) {
+    const q = state.filter.search.trim().toLowerCase();
+    list = list.filter((t) => t.name.toLowerCase().includes(q));
+  }
+
+  // 排序
+  const { sortBy, sortAsc } = state.filter;
+  list = [...list].sort((a, b) => {
+    let cmp = 0;
+    if (sortBy === 'name') {
+      cmp = a.name.localeCompare(b.name);
+    } else if (sortBy === 'percentDone') {
+      cmp = a.percentDone - b.percentDone;
+    } else if (sortBy === 'rateDownload') {
+      cmp = a.rateDownload - b.rateDownload;
+    } else if (sortBy === 'rateUpload') {
+      cmp = a.rateUpload - b.rateUpload;
+    } else if (sortBy === 'totalSize') {
+      cmp = a.totalSize - b.totalSize;
+    } else if (sortBy === 'uploadRatio') {
+      cmp = a.uploadRatio - b.uploadRatio;
+    } else if (sortBy === 'addedDate') {
+      cmp = a.addedDate - b.addedDate;
+    }
+    return sortAsc ? cmp : -cmp;
+  });
+
+  return list;
 });
