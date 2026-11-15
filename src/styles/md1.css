@@ -39,6 +39,18 @@
   --md-transition-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
   --md-transition-decel: cubic-bezier(0.0, 0.0, 0.2, 1);
   --md-transition-accel: cubic-bezier(0.4, 0.0, 1, 1);
+
+  /* Fluent UI 2.0 Tokens */
+  --fluent-bg-subtle: #f3f3f3;
+  --fluent-bg-canvas: #ffffff;
+  --fluent-bg-hover: rgba(0, 0, 0, 0.05);
+  --fluent-bg-active: rgba(0, 0, 0, 0.09);
+  --fluent-accent: #0078d4;
+  --fluent-accent-hover: #106ebe;
+  --fluent-accent-active: #005a9e;
+  --fluent-border-subtle: rgba(0, 0, 0, 0.08);
+  --fluent-border-divider: rgba(0, 0, 0, 0.14);
+  --fluent-radius: 4px;
 }
 
 /* Dark Mode Theme */
@@ -52,6 +64,18 @@
   --md-divider: rgba(255, 255, 255, 0.12);
   --md-shadow-1dp: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.6);
   --md-shadow-2dp: 0 3px 6px rgba(0,0,0,0.6), 0 3px 6px rgba(0,0,0,0.7);
+
+  /* Fluent UI 2.0 Tokens Dark */
+  --fluent-bg-subtle: #202020;
+  --fluent-bg-canvas: #2c2c2c;
+  --fluent-bg-hover: rgba(255, 255, 255, 0.08);
+  --fluent-bg-active: rgba(255, 255, 255, 0.12);
+  --fluent-accent: #2886de;
+  --fluent-accent-hover: #4797e2;
+  --fluent-accent-active: #1a76c8;
+  --fluent-border-subtle: rgba(255, 255, 255, 0.08);
+  --fluent-border-divider: rgba(255, 255, 255, 0.14);
+  --fluent-radius: 4px;
 }
 
 /* Global Reset */
