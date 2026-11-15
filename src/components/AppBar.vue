@@ -56,6 +56,15 @@
           <span class="tab-text">{{ t('ribbon.tabs.tools') }}</span>
         </button>
 
+        <button
+          class="ribbon-tab-btn"
+          :class="{ active: currentTab === 'view' && !isRibbonCollapsed }"
+          @click.stop="selectTab('view')"
+        >
+          <span class="material-icons tab-icon">tune</span>
+          <span class="tab-text">{{ t('ribbon.tabs.view') }}</span>
+        </button>
+
         <!-- 上下文标签页：类似 Word 图片格式 (选中种子时高亮出现) -->
         <button
           class="ribbon-tab-btn contextual-tab"
@@ -95,22 +104,11 @@
         <div class="lang-dropdown-wrapper">
           <button
             class="fluent-tool-btn"
-            @click.stop="toggleMenu('lang')"
+            @click.stop="toggleMenu('lang', $event)"
             :title="t('app.language')"
           >
             <span class="material-icons">translate</span>
           </button>
-          <div class="fluent-dropdown-menu lang-dropdown-menu" v-if="menus.lang">
-            <div class="menu-opt" :class="{ active: currentLocale === 'zh-CN' }" @click="selectLocale('zh-CN')">
-              <span>简体中文</span>
-            </div>
-            <div class="menu-opt" :class="{ active: currentLocale === 'en-US' }" @click="selectLocale('en-US')">
-              <span>English</span>
-            </div>
-            <div class="menu-opt" :class="{ active: currentLocale === 'ru-RU' }" @click="selectLocale('ru-RU')">
-              <span>Русский</span>
-            </div>
-          </div>
         </div>
 
         <!-- Ribbon 展开/折叠图钉按钮 (支持 Ctrl+F1) -->
@@ -151,21 +149,10 @@
               <button
                 class="split-arrow-btn"
                 :disabled="state.torrents.length === 0"
-                @click.stop="toggleMenu('start')"
+                @click.stop="toggleMenu('start', $event)"
               >
                 <span class="material-icons">arrow_drop_down</span>
               </button>
-              <!-- 下拉浮动菜单 -->
-              <div class="fluent-dropdown-menu" v-if="menus.start">
-                <div class="menu-opt" @click="handleStartAll">
-                  <span class="material-icons">fast_forward</span>
-                  <span>{{ t('toolbar.startAll') }}</span>
-                </div>
-                <div class="menu-opt" :class="{ disabled: !hasSelection }" @click="handleStartNow">
-                  <span class="material-icons">bolt</span>
-                  <span>{{ t('ribbon.startNow') }}</span>
-                </div>
-              </div>
             </div>
 
             <!-- 暂停 (Split Button) -->
@@ -182,16 +169,10 @@
               <button
                 class="split-arrow-btn"
                 :disabled="state.torrents.length === 0"
-                @click.stop="toggleMenu('stop')"
+                @click.stop="toggleMenu('stop', $event)"
               >
                 <span class="material-icons">arrow_drop_down</span>
               </button>
-              <div class="fluent-dropdown-menu" v-if="menus.stop">
-                <div class="menu-opt" @click="handleStopAll">
-                  <span class="material-icons">pause_circle_outline</span>
-                  <span>{{ t('toolbar.pauseAll') }}</span>
-                </div>
-              </div>
             </div>
 
             <!-- 删除 (Split Button) -->
@@ -208,16 +189,10 @@
               <button
                 class="split-arrow-btn"
                 :disabled="!hasSelection"
-                @click.stop="toggleMenu('delete')"
+                @click.stop="toggleMenu('delete', $event)"
               >
                 <span class="material-icons">arrow_drop_down</span>
               </button>
-              <div class="fluent-dropdown-menu" v-if="menus.delete">
-                <div class="menu-opt text-danger" @click="handleRemove(true)">
-                  <span class="material-icons">delete_forever</span>
-                  <span>{{ t('ribbon.deleteWithData') }}</span>
-                </div>
-              </div>
             </div>
           </div>
           <div class="group-title">{{ t('ribbon.groups.basic') }}</div>
@@ -471,7 +446,91 @@
         </div>
       </div>
 
-      <!-- 2.5 选中种子专属上下文画板 (Contextual Ribbon Pane - 类似 Word 图片格式) -->
+      <!-- 2.5 视图与首选项画板 -->
+      <div class="ribbon-tab-pane" v-else-if="currentTab === 'view'">
+        <!-- 侧边栏与分组 -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls view-prefs-col">
+            <label class="fluent-check-label">
+              <input
+                type="checkbox"
+                v-model="state.uiPreferences.showTrackerGroup"
+                @change="saveUIPreferences"
+              />
+              <span>{{ t('ribbon.showTrackers') }}</span>
+            </label>
+            <label class="fluent-check-label">
+              <input
+                type="checkbox"
+                v-model="state.uiPreferences.showTagGroup"
+                @change="saveUIPreferences"
+              />
+              <span>{{ t('ribbon.showTags') }}</span>
+            </label>
+          </div>
+          <div class="group-title">{{ t('ribbon.groups.sidebarView') }}</div>
+        </div>
+
+        <!-- 刷新频率 -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls view-prefs-col">
+            <div class="poll-row">
+              <span class="input-prefix-label">{{ t('ribbon.pollTorrents') }}</span>
+              <select
+                class="fluent-select-mini"
+                v-model.number="state.uiPreferences.pollIntervalTorrents"
+                @change="saveUIPreferences"
+              >
+                <option :value="1">{{ t('ribbon.sec1s') }}</option>
+                <option :value="2">{{ t('ribbon.sec2s') }}</option>
+                <option :value="3">{{ t('ribbon.sec3s') }}</option>
+                <option :value="5">{{ t('ribbon.sec5s') }}</option>
+                <option :value="10">{{ t('ribbon.sec10s') }}</option>
+              </select>
+            </div>
+            <div class="poll-row">
+              <span class="input-prefix-label">{{ t('ribbon.pollStats') }}</span>
+              <select
+                class="fluent-select-mini"
+                v-model.number="state.uiPreferences.pollIntervalStats"
+                @change="saveUIPreferences"
+              >
+                <option :value="1">{{ t('ribbon.sec1s') }}</option>
+                <option :value="2">{{ t('ribbon.sec2s') }}</option>
+                <option :value="3">{{ t('ribbon.sec3s') }}</option>
+                <option :value="5">{{ t('ribbon.sec5s') }}</option>
+                <option :value="10">{{ t('ribbon.sec10s') }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="group-title">{{ t('ribbon.groups.polling') }}</div>
+        </div>
+
+        <!-- 表格列自定义 -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls">
+            <button
+              class="fluent-btn-small"
+              @click.stop="toggleMenu('columns', $event)"
+              :title="t('ribbon.customizeCols')"
+            >
+              <span class="material-icons">view_column</span>
+              <span>{{ t('ribbon.customizeCols') }}</span>
+            </button>
+            <button
+              class="fluent-btn-small"
+              @click="handleResetColumns"
+              :title="t('ribbon.resetCols')"
+            >
+              <span class="material-icons">restart_alt</span>
+              <span>{{ t('ribbon.resetCols') }}</span>
+            </button>
+          </div>
+          <div class="group-title">{{ t('ribbon.groups.columns') }}</div>
+        </div>
+      </div>
+
+      <!-- 2.6 选中种子专属上下文画板 (Contextual Ribbon Pane - 类似 Word 图片格式) -->
       <div class="ribbon-tab-pane contextual-pane" v-else-if="currentTab === 'torrentProps'">
         <!-- 优先级与连接数 -->
         <div class="ribbon-group">
@@ -675,6 +734,86 @@
         />
       </div>
     </div>
+
+    <!-- 全局 Teleport 浮层下拉菜单：彻底逃离 Ribbon 裁剪与 z-index 层叠 -->
+    <Teleport to="body">
+      <!-- 开始菜单 -->
+      <div
+        class="fluent-dropdown-menu teleported"
+        v-if="menus.start"
+        :style="{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999 }"
+        @click.stop
+      >
+        <div class="menu-opt" @click="handleStartAll">
+          <span class="material-icons">fast_forward</span>
+          <span>{{ t('toolbar.startAll') }}</span>
+        </div>
+        <div class="menu-opt" :class="{ disabled: !hasSelection }" @click="handleStartNow">
+          <span class="material-icons">bolt</span>
+          <span>{{ t('ribbon.startNow') }}</span>
+        </div>
+      </div>
+
+      <!-- 暂停菜单 -->
+      <div
+        class="fluent-dropdown-menu teleported"
+        v-if="menus.stop"
+        :style="{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999 }"
+        @click.stop
+      >
+        <div class="menu-opt" @click="handleStopAll">
+          <span class="material-icons">pause_circle_outline</span>
+          <span>{{ t('toolbar.pauseAll') }}</span>
+        </div>
+      </div>
+
+      <!-- 删除菜单 -->
+      <div
+        class="fluent-dropdown-menu teleported"
+        v-if="menus.delete"
+        :style="{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999 }"
+        @click.stop
+      >
+        <div class="menu-opt text-danger" @click="handleRemove(true)">
+          <span class="material-icons">delete_forever</span>
+          <span>{{ t('ribbon.deleteWithData') }}</span>
+        </div>
+      </div>
+
+      <!-- 语言菜单 -->
+      <div
+        class="fluent-dropdown-menu teleported lang-dropdown-menu"
+        v-if="menus.lang"
+        :style="{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999 }"
+        @click.stop
+      >
+        <div class="menu-opt" :class="{ active: currentLocale === 'zh-CN' }" @click="selectLocale('zh-CN')">
+          <span>简体中文</span>
+        </div>
+        <div class="menu-opt" :class="{ active: currentLocale === 'en-US' }" @click="selectLocale('en-US')">
+          <span>English</span>
+        </div>
+        <div class="menu-opt" :class="{ active: currentLocale === 'ru-RU' }" @click="selectLocale('ru-RU')">
+          <span>Русский</span>
+        </div>
+      </div>
+
+      <!-- 表格列选择菜单 -->
+      <div
+        class="fluent-dropdown-menu teleported columns-dropdown-menu"
+        v-if="menus.columns"
+        :style="{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 9999 }"
+        @click.stop
+      >
+        <div class="cols-menu-header">{{ t('ribbon.colsMenuTitle') }}</div>
+        <div class="cols-menu-list">
+          <label class="cols-menu-item" v-for="col in state.columns" :key="col.id">
+            <input type="checkbox" v-model="col.visible" @change="saveColumns" />
+            <span>{{ t(col.labelKey) }}</span>
+          </label>
+        </div>
+      </div>
+    </Teleport>
   </header>
 </template>
 
@@ -690,12 +829,15 @@ import {
   removeSelected,
   openTorrentProps,
   fetchTorrents,
+  saveColumns,
+  resetColumns,
+  saveUIPreferences,
 } from '../stores/transmission';
 import { rpc } from '../api/rpc';
 import { t, currentLocale, setLocale, LocaleKey } from '../locales';
 
 const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
-const currentTab = ref<'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps'>('tasks');
+const currentTab = ref<'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps' | 'view'>('tasks');
 const isRibbonCollapsed = ref(localStorage.getItem('ribbon_collapsed') === 'true');
 
 // 下拉菜单浮层状态
@@ -704,19 +846,38 @@ const menus = reactive({
   stop: false,
   delete: false,
   lang: false,
+  columns: false,
 });
+
+const menuPos = reactive({ top: 0, left: 0 });
 
 function closeAllMenus() {
   menus.start = false;
   menus.stop = false;
   menus.delete = false;
   menus.lang = false;
+  menus.columns = false;
 }
 
-function toggleMenu(type: 'start' | 'stop' | 'delete' | 'lang') {
+function toggleMenu(type: 'start' | 'stop' | 'delete' | 'lang' | 'columns', event?: MouseEvent) {
   const current = menus[type];
   closeAllMenus();
+  if (!current && event) {
+    const el = (event.currentTarget as HTMLElement).closest(
+      '.fluent-split-btn, .lang-dropdown-wrapper, .fluent-btn-small'
+    );
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      menuPos.top = rect.bottom + 2;
+      menuPos.left = Math.max(8, Math.min(rect.left, window.innerWidth - 200));
+    }
+  }
   menus[type] = !current;
+}
+
+function handleResetColumns() {
+  resetColumns();
+  menus.columns = false;
 }
 
 function selectLocale(loc: LocaleKey) {
@@ -856,7 +1017,7 @@ function onTorrentIdleLimitChange(e: Event) {
   }
 }
 
-function selectTab(tab: 'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps') {
+function selectTab(tab: 'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps' | 'view') {
   currentTab.value = tab;
   state.ribbonTab = tab;
   if (isRibbonCollapsed.value) {
@@ -1076,6 +1237,12 @@ function onLocaleChange(e: Event) {
   height: 100%;
   gap: 2px;
   flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ribbon-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .ribbon-tab-btn {
@@ -1093,6 +1260,8 @@ function onLocaleChange(e: Event) {
   cursor: pointer;
   border-radius: 0;
   transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .ribbon-tab-btn:hover {
@@ -1214,13 +1383,15 @@ function onLocaleChange(e: Event) {
   cursor: pointer;
 }
 
-/* 2. 第二层：Ribbon 命令画板 (高度 72px) */
+/* 2. 第二层：Ribbon 命令画板 (高度 80px，支持水平滚动) */
 .ribbon-body {
-  height: 72px;
+  height: 80px;
   background-color: var(--fluent-bg-canvas);
   display: flex;
-  padding: 4px 10px;
-  overflow: visible;
+  padding: 3px 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .ribbon-tab-pane {
@@ -1228,6 +1399,7 @@ function onLocaleChange(e: Event) {
   align-items: stretch;
   gap: 8px;
   height: 100%;
+  flex-shrink: 0;
 }
 
 /* 磁贴功能组 (Command Group) */
@@ -1238,6 +1410,7 @@ function onLocaleChange(e: Event) {
   border-right: 1px solid var(--fluent-border-divider);
   padding-right: 8px;
   position: relative;
+  flex-shrink: 0;
 }
 
 .ribbon-group:last-child {
@@ -1555,15 +1728,17 @@ function onLocaleChange(e: Event) {
 
 .priority-btn.active {
   background-color: var(--fluent-bg-canvas);
-  color: #7719aa;
-  border: 1px solid rgba(119, 25, 170, 0.3);
+  color: var(--md-text-primary);
+  border: none;
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 [data-theme="dark"] .priority-btn.active {
-  color: #b197fc;
-  border-color: rgba(177, 151, 252, 0.3);
+  background-color: var(--fluent-bg-active);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .priority-btn .material-icons {
@@ -1606,18 +1781,60 @@ function onLocaleChange(e: Event) {
   background-color: var(--fluent-bg-subtle);
 }
 
-.limits-col, .seed-rules-col {
+.limits-col, .seed-rules-col, .view-prefs-col {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   justify-content: center;
 }
 
-.limit-row, .seed-row {
+.limit-row, .seed-row, .poll-row {
   display: flex;
   align-items: center;
   gap: 5px;
   font-size: 11px;
+  height: 20px;
+}
+
+.columns-dropdown-menu {
+  min-width: 170px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.cols-menu-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fluent-accent);
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  margin-bottom: 4px;
+}
+
+.cols-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cols-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  font-size: 11px;
+  border-radius: var(--fluent-radius);
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+
+.cols-menu-item:hover {
+  background-color: var(--fluent-bg-hover);
+}
+
+.cols-menu-item input[type="checkbox"] {
+  accent-color: var(--fluent-accent);
 }
 
 .fluent-check-label {

@@ -10,6 +10,70 @@ export interface TorrentFilter {
   sortAsc: boolean;
 }
 
+export interface TableColumnConfig {
+  id: string;
+  labelKey: string;
+  visible: boolean;
+  width: number;
+  minWidth: number;
+}
+
+export interface UIPreferences {
+  showTrackerGroup: boolean;
+  showTagGroup: boolean;
+  pollIntervalTorrents: number;
+  pollIntervalStats: number;
+}
+
+const DEFAULT_COLUMNS: TableColumnConfig[] = [
+  { id: 'status', labelKey: 'common.status', visible: true, width: 38, minWidth: 30 },
+  { id: 'name', labelKey: 'common.name', visible: true, width: 340, minWidth: 160 },
+  { id: 'size', labelKey: 'common.size', visible: true, width: 85, minWidth: 60 },
+  { id: 'progress', labelKey: 'common.progress', visible: true, width: 140, minWidth: 90 },
+  { id: 'statustext', labelKey: 'common.status', visible: true, width: 110, minWidth: 70 },
+  { id: 'downSpeed', labelKey: 'common.downSpeed', visible: true, width: 85, minWidth: 60 },
+  { id: 'upSpeed', labelKey: 'common.upSpeed', visible: true, width: 85, minWidth: 60 },
+  { id: 'eta', labelKey: 'common.eta', visible: true, width: 85, minWidth: 60 },
+  { id: 'ratio', labelKey: 'common.ratio', visible: true, width: 68, minWidth: 50 },
+  { id: 'peers', labelKey: 'common.peers', visible: true, width: 75, minWidth: 50 },
+  { id: 'corrupt', labelKey: 'common.corrupt', visible: false, width: 85, minWidth: 60 },
+];
+
+function loadSavedColumns(): TableColumnConfig[] {
+  try {
+    const raw = localStorage.getItem('torrent_table_columns');
+    if (raw) {
+      const parsed: TableColumnConfig[] = JSON.parse(raw);
+      return DEFAULT_COLUMNS.map((def) => {
+        const found = parsed.find((p) => p.id === def.id);
+        return found ? { ...def, visible: found.visible, width: found.width } : { ...def };
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to parse saved columns:', e);
+  }
+  return DEFAULT_COLUMNS.map((c) => ({ ...c }));
+}
+
+const DEFAULT_UI_PREFS: UIPreferences = {
+  showTrackerGroup: true,
+  showTagGroup: true,
+  pollIntervalTorrents: 3,
+  pollIntervalStats: 3,
+};
+
+function loadSavedUIPreferences(): UIPreferences {
+  try {
+    const raw = localStorage.getItem('ui_preferences');
+    if (raw) {
+      return { ...DEFAULT_UI_PREFS, ...JSON.parse(raw) };
+    }
+  } catch (e) {
+    console.warn('Failed to parse saved UI preferences:', e);
+  }
+  return { ...DEFAULT_UI_PREFS };
+}
+
 export const state = reactive<{
   torrents: Torrent[];
   session: SessionInfo | null;
@@ -20,7 +84,10 @@ export const state = reactive<{
   filter: TorrentFilter;
   sidebarOpen: boolean;
   sidebarCollapsed: boolean;
-  ribbonTab: 'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps';
+  ribbonTab: 'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps' | 'view';
+  columns: TableColumnConfig[];
+  uiPreferences: UIPreferences;
+  columnsDialogOpen: boolean;
   selectedTag: string | null;
   selectedTracker: string | null;
   addDialogOpen: boolean;
@@ -46,6 +113,9 @@ export const state = reactive<{
   sidebarOpen: false,
   sidebarCollapsed: localStorage.getItem('sidebar_collapsed') === 'true',
   ribbonTab: 'tasks',
+  columns: loadSavedColumns(),
+  uiPreferences: loadSavedUIPreferences(),
+  columnsDialogOpen: false,
   selectedTag: null,
   selectedTracker: null,
   addDialogOpen: false,
@@ -57,7 +127,22 @@ export const state = reactive<{
   viewMode: 'table',
 });
 
-let pollTimer: any = null;
+export function saveColumns() {
+  localStorage.setItem('torrent_table_columns', JSON.stringify(state.columns));
+}
+
+export function resetColumns() {
+  state.columns = DEFAULT_COLUMNS.map((c) => ({ ...c }));
+  saveColumns();
+}
+
+export function saveUIPreferences() {
+  localStorage.setItem('ui_preferences', JSON.stringify(state.uiPreferences));
+  restartPolling();
+}
+
+let torrentTimer: any = null;
+let statsTimer: any = null;
 
 // 获取种子列表与刷新当前选中详情
 export async function fetchTorrents() {
@@ -88,21 +173,42 @@ export async function fetchSession() {
   }
 }
 
-export function startPolling(intervalMs = 3000) {
-  if (pollTimer) clearInterval(pollTimer);
+export function restartPolling() {
+  if (torrentTimer) clearInterval(torrentTimer);
+  if (statsTimer) clearInterval(statsTimer);
   state.isPolling = true;
+
   fetchTorrents();
   fetchSession();
-  pollTimer = setInterval(() => {
+
+  const tInt = Math.max(1, state.uiPreferences.pollIntervalTorrents || 3) * 1000;
+  const sInt = Math.max(1, state.uiPreferences.pollIntervalStats || 3) * 1000;
+
+  torrentTimer = setInterval(() => {
     fetchTorrents();
+  }, tInt);
+
+  statsTimer = setInterval(() => {
     fetchSession();
-  }, intervalMs);
+  }, sInt);
+}
+
+export function startPolling(intervalMs?: number) {
+  if (intervalMs && !localStorage.getItem('ui_preferences')) {
+    state.uiPreferences.pollIntervalTorrents = Math.round(intervalMs / 1000);
+    state.uiPreferences.pollIntervalStats = Math.round(intervalMs / 1000);
+  }
+  restartPolling();
 }
 
 export function stopPolling() {
-  if (pollTimer) {
-    clearInterval(pollTimer);
-    pollTimer = null;
+  if (torrentTimer) {
+    clearInterval(torrentTimer);
+    torrentTimer = null;
+  }
+  if (statsTimer) {
+    clearInterval(statsTimer);
+    statsTimer = null;
   }
   state.isPolling = false;
 }

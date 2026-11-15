@@ -9,263 +9,284 @@
     <div class="nav-pane-inner">
       <!-- 状态筛选组 (Fluent Navigation Items) -->
       <div class="nav-section">
-        <div class="section-label">{{ t('sidebar.filters') }}</div>
-
-        <!-- 全部任务 -->
-        <div
-          class="fluent-nav-item"
-          :class="{ active: state.filter.status === 'all' && !state.selectedTag && !state.selectedTracker }"
-          @click="setStatusFilter('all')"
-          :title="t('sidebar.all')"
-        >
-          <div class="active-indicator"></div>
-          <span class="material-icons nav-icon">all_inclusive</span>
-          <span class="nav-label">{{ t('sidebar.all') }}</span>
-          <span class="nav-badge">{{ state.torrents.length }}</span>
+        <div class="section-header-flex clickable" @click="filterCollapsed = !filterCollapsed">
+          <span class="section-label">{{ t('sidebar.filters') }}</span>
+          <button class="section-collapse-btn" @click.stop="filterCollapsed = !filterCollapsed">
+            <span class="material-icons">{{ filterCollapsed ? 'chevron_right' : 'expand_more' }}</span>
+          </button>
         </div>
 
-        <!-- 活跃传输 -->
-        <div
-          class="fluent-nav-item"
-          :class="{ active: state.filter.status === 'active' }"
-          @click="setStatusFilter('active')"
-          :title="t('sidebar.active')"
-        >
-          <div class="active-indicator"></div>
-          <span class="material-icons nav-icon text-info">sync_alt</span>
-          <span class="nav-label">{{ t('sidebar.active') }}</span>
-          <span class="nav-badge badge-active" v-if="counts.active > 0">{{ counts.active }}</span>
-        </div>
+        <div class="nav-items-group" v-show="!filterCollapsed">
+          <!-- 全部任务 -->
+          <div
+            class="fluent-nav-item"
+            :class="{ active: state.filter.status === 'all' && !state.selectedTag && !state.selectedTracker }"
+            @click="setStatusFilter('all')"
+            :title="t('sidebar.all')"
+          >
+            <div class="active-indicator"></div>
+            <span class="material-icons nav-icon">all_inclusive</span>
+            <span class="nav-label">{{ t('sidebar.all') }}</span>
+            <span class="nav-badge">{{ state.torrents.length }}</span>
+          </div>
 
-        <!-- 正在下载 -->
-        <div
-          class="fluent-nav-item"
-          :class="{ active: state.filter.status === 'downloading' }"
-          @click="setStatusFilter('downloading')"
-          :title="t('sidebar.downloading')"
-        >
-          <div class="active-indicator"></div>
-          <span class="material-icons nav-icon text-info">arrow_downward</span>
-          <span class="nav-label">{{ t('sidebar.downloading') }}</span>
-          <span class="nav-badge" v-if="counts.downloading > 0">{{ counts.downloading }}</span>
-        </div>
+          <!-- 活跃传输 -->
+          <div
+            class="fluent-nav-item"
+            :class="{ active: state.filter.status === 'active' }"
+            @click="setStatusFilter('active')"
+            :title="t('sidebar.active')"
+          >
+            <div class="active-indicator"></div>
+            <span class="material-icons nav-icon text-info">sync_alt</span>
+            <span class="nav-label">{{ t('sidebar.active') }}</span>
+            <span class="nav-badge badge-active" v-if="counts.active > 0">{{ counts.active }}</span>
+          </div>
 
-        <!-- 正在做种 -->
-        <div
-          class="fluent-nav-item"
-          :class="{ active: state.filter.status === 'seeding' }"
-          @click="setStatusFilter('seeding')"
-          :title="t('sidebar.seeding')"
-        >
-          <div class="active-indicator"></div>
-          <span class="material-icons nav-icon text-success">arrow_upward</span>
-          <span class="nav-label">{{ t('sidebar.seeding') }}</span>
-          <span class="nav-badge" v-if="counts.seeding > 0">{{ counts.seeding }}</span>
-        </div>
+          <!-- 正在下载 -->
+          <div
+            class="fluent-nav-item"
+            :class="{ active: state.filter.status === 'downloading' }"
+            @click="setStatusFilter('downloading')"
+            :title="t('sidebar.downloading')"
+          >
+            <div class="active-indicator"></div>
+            <span class="material-icons nav-icon text-info">arrow_downward</span>
+            <span class="nav-label">{{ t('sidebar.downloading') }}</span>
+            <span class="nav-badge" v-if="counts.downloading > 0">{{ counts.downloading }}</span>
+          </div>
 
-        <!-- 排队等待 -->
-        <div
-          class="fluent-nav-item"
-          :class="{ active: state.filter.status === 'queued' }"
-          @click="setStatusFilter('queued')"
-          :title="t('sidebar.queued')"
-        >
-          <div class="active-indicator"></div>
-          <span class="material-icons nav-icon text-warning">low_priority</span>
-          <span class="nav-label">{{ t('sidebar.queued') }}</span>
-          <span class="nav-badge badge-queued" v-if="counts.queued > 0">{{ counts.queued }}</span>
-        </div>
+          <!-- 正在做种 -->
+          <div
+            class="fluent-nav-item"
+            :class="{ active: state.filter.status === 'seeding' }"
+            @click="setStatusFilter('seeding')"
+            :title="t('sidebar.seeding')"
+          >
+            <div class="active-indicator"></div>
+            <span class="material-icons nav-icon text-success">arrow_upward</span>
+            <span class="nav-label">{{ t('sidebar.seeding') }}</span>
+            <span class="nav-badge" v-if="counts.seeding > 0">{{ counts.seeding }}</span>
+          </div>
 
-        <!-- 已完成 -->
-        <div
-          class="fluent-nav-item"
-          :class="{ active: state.filter.status === 'finished' }"
-          @click="setStatusFilter('finished')"
-          :title="t('sidebar.finished')"
-        >
-          <div class="active-indicator"></div>
-          <span class="material-icons nav-icon text-muted">check_circle_outline</span>
-          <span class="nav-label">{{ t('sidebar.finished') }}</span>
-          <span class="nav-badge" v-if="counts.finished > 0">{{ counts.finished }}</span>
-        </div>
+          <!-- 排队等待 -->
+          <div
+            class="fluent-nav-item"
+            :class="{ active: state.filter.status === 'queued' }"
+            @click="setStatusFilter('queued')"
+            :title="t('sidebar.queued')"
+          >
+            <div class="active-indicator"></div>
+            <span class="material-icons nav-icon text-warning">low_priority</span>
+            <span class="nav-label">{{ t('sidebar.queued') }}</span>
+            <span class="nav-badge badge-queued" v-if="counts.queued > 0">{{ counts.queued }}</span>
+          </div>
 
-        <!-- 已暂停 -->
-        <div
-          class="fluent-nav-item"
-          :class="{ active: state.filter.status === 'paused' }"
-          @click="setStatusFilter('paused')"
-          :title="t('sidebar.paused')"
-        >
-          <div class="active-indicator"></div>
-          <span class="material-icons nav-icon text-muted">pause</span>
-          <span class="nav-label">{{ t('sidebar.paused') }}</span>
-          <span class="nav-badge" v-if="counts.paused > 0">{{ counts.paused }}</span>
-        </div>
+          <!-- 已完成 -->
+          <div
+            class="fluent-nav-item"
+            :class="{ active: state.filter.status === 'finished' }"
+            @click="setStatusFilter('finished')"
+            :title="t('sidebar.finished')"
+          >
+            <div class="active-indicator"></div>
+            <span class="material-icons nav-icon text-muted">check_circle_outline</span>
+            <span class="nav-label">{{ t('sidebar.finished') }}</span>
+            <span class="nav-badge" v-if="counts.finished > 0">{{ counts.finished }}</span>
+          </div>
 
-        <!-- 异常任务 -->
-        <div
-          class="fluent-nav-item"
-          :class="{ active: state.filter.status === 'error' }"
-          @click="setStatusFilter('error')"
-          :title="t('sidebar.errors')"
-        >
-          <div class="active-indicator"></div>
-          <span class="material-icons nav-icon text-danger">error_outline</span>
-          <span class="nav-label">{{ t('sidebar.errors') }}</span>
-          <span class="nav-badge badge-error" v-if="counts.error > 0">{{ counts.error }}</span>
+          <!-- 已暂停 -->
+          <div
+            class="fluent-nav-item"
+            :class="{ active: state.filter.status === 'paused' }"
+            @click="setStatusFilter('paused')"
+            :title="t('sidebar.paused')"
+          >
+            <div class="active-indicator"></div>
+            <span class="material-icons nav-icon text-muted">pause</span>
+            <span class="nav-label">{{ t('sidebar.paused') }}</span>
+            <span class="nav-badge" v-if="counts.paused > 0">{{ counts.paused }}</span>
+          </div>
+
+          <!-- 异常任务 -->
+          <div
+            class="fluent-nav-item"
+            :class="{ active: state.filter.status === 'error' }"
+            @click="setStatusFilter('error')"
+            :title="t('sidebar.errors')"
+          >
+            <div class="active-indicator"></div>
+            <span class="material-icons nav-icon text-danger">error_outline</span>
+            <span class="nav-label">{{ t('sidebar.errors') }}</span>
+            <span class="nav-badge badge-error" v-if="counts.error > 0">{{ counts.error }}</span>
+          </div>
         </div>
       </div>
 
       <!-- 标签分组 (按标签多级层级树) -->
-      <template v-if="tagGroups.length > 0">
+      <template v-if="state.uiPreferences.showTagGroup && tagGroups.length > 0">
         <div class="fluent-divider"></div>
         <div class="nav-section">
-          <div class="section-header-flex">
+          <div class="section-header-flex clickable" @click="tagCollapsed = !tagCollapsed">
             <span class="section-label">{{ t('sidebar.tags') }}</span>
-            <button
-              class="clear-filter-btn"
-              v-if="state.selectedTag"
-              @click.stop="clearGroupFilter"
-              title="Clear"
-            >
-              <span class="material-icons">close</span>
-            </button>
+            <div class="header-actions">
+              <button
+                class="clear-filter-btn"
+                v-if="state.selectedTag"
+                @click.stop="clearGroupFilter"
+                title="Clear"
+              >
+                <span class="material-icons">close</span>
+              </button>
+              <button class="section-collapse-btn" @click.stop="tagCollapsed = !tagCollapsed">
+                <span class="material-icons">{{ tagCollapsed ? 'chevron_right' : 'expand_more' }}</span>
+              </button>
+            </div>
           </div>
 
-          <div
-            class="fluent-nav-item"
-            v-for="tg in tagGroups"
-            :key="tg.name"
-            :class="{ active: state.selectedTag === tg.name }"
-            @click="toggleTag(tg.name)"
-            :title="tg.name"
-          >
-            <div class="active-indicator"></div>
-            <span class="material-icons nav-icon text-accent">local_offer</span>
-            <span class="nav-label">{{ tg.name }}</span>
-            <span class="nav-badge">{{ tg.count }}</span>
+          <div class="nav-items-group" v-show="!tagCollapsed">
+            <div
+              class="fluent-nav-item"
+              v-for="tg in tagGroups"
+              :key="tg.name"
+              :class="{ active: state.selectedTag === tg.name }"
+              @click="toggleTag(tg.name)"
+              :title="tg.name"
+            >
+              <div class="active-indicator"></div>
+              <span class="material-icons nav-icon text-accent">local_offer</span>
+              <span class="nav-label">{{ tg.name }}</span>
+              <span class="nav-badge">{{ tg.count }}</span>
+            </div>
           </div>
         </div>
       </template>
 
       <!-- Tracker 分组 (按域名层级树) -->
-      <template v-if="trackerGroups.length > 0">
+      <template v-if="state.uiPreferences.showTrackerGroup && trackerGroups.length > 0">
         <div class="fluent-divider"></div>
         <div class="nav-section">
-          <div class="section-header-flex">
+          <div class="section-header-flex clickable" @click="trackerCollapsed = !trackerCollapsed">
             <span class="section-label">{{ t('sidebar.trackers') }}</span>
-            <button
-              class="clear-filter-btn"
-              v-if="state.selectedTracker"
-              @click.stop="clearGroupFilter"
-              title="Clear"
-            >
-              <span class="material-icons">close</span>
-            </button>
+            <div class="header-actions">
+              <button
+                class="clear-filter-btn"
+                v-if="state.selectedTracker"
+                @click.stop="clearGroupFilter"
+                title="Clear"
+              >
+                <span class="material-icons">close</span>
+              </button>
+              <button class="section-collapse-btn" @click.stop="trackerCollapsed = !trackerCollapsed">
+                <span class="material-icons">{{ trackerCollapsed ? 'chevron_right' : 'expand_more' }}</span>
+              </button>
+            </div>
           </div>
 
-          <div
-            class="fluent-nav-item"
-            v-for="tr in trackerGroups"
-            :key="tr.host"
-            :class="{ active: state.selectedTracker === tr.host }"
-            @click="toggleTracker(tr.host)"
-            :title="tr.host"
-          >
-            <div class="active-indicator"></div>
-            <span class="material-icons nav-icon text-muted">dns</span>
-            <span class="nav-label">{{ tr.host }}</span>
-            <span class="nav-badge">{{ tr.count }}</span>
+          <div class="nav-items-group" v-show="!trackerCollapsed">
+            <div
+              class="fluent-nav-item"
+              v-for="tr in trackerGroups"
+              :key="tr.host"
+              :class="{ active: state.selectedTracker === tr.host }"
+              @click="toggleTracker(tr.host)"
+              :title="tr.host"
+            >
+              <div class="active-indicator"></div>
+              <span class="material-icons nav-icon text-muted">dns</span>
+              <span class="nav-label">{{ tr.host }}</span>
+              <span class="nav-badge">{{ tr.count }}</span>
+            </div>
           </div>
         </div>
       </template>
+    </div>
 
-      <!-- 底部系统会话磁贴卡片 (实时速率融合 + 折叠 + 微型限速弹层) -->
-      <div class="nav-footer" v-if="state.stats">
-        <div class="footer-card" :class="{ collapsed: statsCollapsed }">
-          <div class="footer-card-header">
-            <div class="header-left">
-              <span class="material-icons card-icon">insights</span>
-              <span class="card-title">{{ t('sidebar.stats') }}</span>
-            </div>
-            <button
-              class="collapse-card-btn"
-              @click.stop="statsCollapsed = !statsCollapsed"
-              :title="statsCollapsed ? t('ribbon.expand') : t('ribbon.collapse')"
-            >
-              <span class="material-icons">{{ statsCollapsed ? 'expand_less' : 'expand_more' }}</span>
+    <!-- 底部固定悬浮会话磁贴卡片 (默认悬浮在底部显示，不随列表滚动) -->
+    <div class="nav-footer" v-if="state.stats">
+      <div class="footer-card" :class="{ collapsed: statsCollapsed }">
+        <div class="footer-card-header">
+          <div class="header-left">
+            <span class="material-icons card-icon">insights</span>
+            <span class="card-title">{{ t('sidebar.stats') }}</span>
+          </div>
+          <button
+            class="collapse-card-btn"
+            @click.stop="statsCollapsed = !statsCollapsed"
+            :title="statsCollapsed ? t('ribbon.expand') : t('ribbon.collapse')"
+          >
+            <span class="material-icons">{{ statsCollapsed ? 'expand_less' : 'expand_more' }}</span>
+          </button>
+        </div>
+
+        <!-- 实时双向速度行 (固定宽度，防跳动；点击弹出快捷限速) -->
+        <div class="stat-speeds-row">
+          <div
+            class="speed-box down"
+            @click.stop="toggleSpeedFlyout('down')"
+            :title="t('sidebar.speedLimitFlyout')"
+          >
+            <span class="material-icons speed-icon">arrow_downward</span>
+            <span class="speed-fixed-val">{{ formatSpeed(state.stats?.downloadSpeed) }}</span>
+          </div>
+          <div
+            class="speed-box up"
+            @click.stop="toggleSpeedFlyout('up')"
+            :title="t('sidebar.speedLimitFlyout')"
+          >
+            <span class="material-icons speed-icon">arrow_upward</span>
+            <span class="speed-fixed-val">{{ formatSpeed(state.stats?.uploadSpeed) }}</span>
+          </div>
+        </div>
+
+        <!-- 展开时显示的累计统计项 -->
+        <div class="stat-grid" v-show="!statsCollapsed">
+          <div class="stat-item">
+            <span class="stat-k">{{ t('sidebar.downloaded') }}</span>
+            <span class="stat-v">{{ formatBytes(state.stats['current-stats'].downloadedBytes) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-k">{{ t('sidebar.uploaded') }}</span>
+            <span class="stat-v">{{ formatBytes(state.stats['current-stats'].uploadedBytes) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-k">{{ t('sidebar.ratio') }}</span>
+            <span class="stat-v stat-accent">{{ getRatio() }}</span>
+          </div>
+        </div>
+
+        <!-- 快捷限速微型 Flyout 气泡 (朝上弹出，严格限定在侧边栏内部) -->
+        <div class="speed-flyout" v-if="speedFlyout.open" @click.stop>
+          <div class="flyout-header">
+            <span>{{ speedFlyout.type === 'down' ? t('sidebar.downLimit') : t('sidebar.upLimit') }}</span>
+            <button class="flyout-close-btn" @click="speedFlyout.open = false">
+              <span class="material-icons">close</span>
             </button>
           </div>
-
-          <!-- 实时双向速度行 (固定宽度，防跳动；点击弹出快捷限速) -->
-          <div class="stat-speeds-row">
-            <div
-              class="speed-box down"
-              @click.stop="toggleSpeedFlyout('down')"
-              :title="t('sidebar.speedLimitFlyout')"
-            >
-              <span class="material-icons speed-icon">arrow_downward</span>
-              <span class="speed-fixed-val">{{ formatSpeed(state.stats?.downloadSpeed) }}</span>
-            </div>
-            <div
-              class="speed-box up"
-              @click.stop="toggleSpeedFlyout('up')"
-              :title="t('sidebar.speedLimitFlyout')"
-            >
-              <span class="material-icons speed-icon">arrow_upward</span>
-              <span class="speed-fixed-val">{{ formatSpeed(state.stats?.uploadSpeed) }}</span>
+          <div class="flyout-body">
+            <label class="fluent-check-label">
+              <input type="checkbox" v-model="speedFlyout.enabled" />
+              <span>{{ t('common.enabled') }}</span>
+            </label>
+            <div class="flyout-input-row">
+              <input
+                type="number"
+                class="num-input flyout-num"
+                v-model.number="speedFlyout.limit"
+                :disabled="!speedFlyout.enabled"
+                min="0"
+                step="50"
+              />
+              <span class="unit-txt">KB/s</span>
             </div>
           </div>
-
-          <!-- 展开时显示的累计统计项 -->
-          <div class="stat-grid" v-show="!statsCollapsed">
-            <div class="stat-item">
-              <span class="stat-k">{{ t('sidebar.downloaded') }}</span>
-              <span class="stat-v">{{ formatBytes(state.stats['current-stats'].downloadedBytes) }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-k">{{ t('sidebar.uploaded') }}</span>
-              <span class="stat-v">{{ formatBytes(state.stats['current-stats'].uploadedBytes) }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-k">{{ t('sidebar.ratio') }}</span>
-              <span class="stat-v stat-accent">{{ getRatio() }}</span>
-            </div>
-          </div>
-
-          <!-- 快捷限速微型 Flyout 气泡 -->
-          <div class="speed-flyout" v-if="speedFlyout.open" @click.stop>
-            <div class="flyout-header">
-              <span>{{ speedFlyout.type === 'down' ? t('sidebar.downLimit') : t('sidebar.upLimit') }}</span>
-              <button class="flyout-close-btn" @click="speedFlyout.open = false">
-                <span class="material-icons">close</span>
-              </button>
-            </div>
-            <div class="flyout-body">
-              <label class="fluent-check-label">
-                <input type="checkbox" v-model="speedFlyout.enabled" />
-                <span>{{ t('common.enabled') }}</span>
-              </label>
-              <div class="flyout-input-row">
-                <input
-                  type="number"
-                  class="num-input flyout-num"
-                  v-model.number="speedFlyout.limit"
-                  :disabled="!speedFlyout.enabled"
-                  min="0"
-                  step="50"
-                />
-                <span class="unit-txt">KB/s</span>
-              </div>
-            </div>
-            <div class="flyout-footer">
-              <button class="md-btn md-btn-flat mini" @click="speedFlyout.open = false">
-                {{ t('common.cancel') }}
-              </button>
-              <button class="md-btn md-btn-raised mini" @click="saveSpeedLimit">
-                {{ t('common.save') }}
-              </button>
-            </div>
+          <div class="flyout-footer">
+            <button class="md-btn md-btn-flat mini" @click="speedFlyout.open = false">
+              {{ t('common.cancel') }}
+            </button>
+            <button class="md-btn md-btn-raised mini" @click="saveSpeedLimit">
+              {{ t('common.save') }}
+            </button>
           </div>
         </div>
       </div>
@@ -279,6 +300,21 @@ import { state, formatBytes, formatSpeed } from '../stores/transmission';
 import { rpc } from '../api/rpc';
 import { TorrentStatus } from '../api/types';
 import { t } from '../locales';
+
+const filterCollapsed = ref(localStorage.getItem('filter_collapsed') === 'true');
+watch(filterCollapsed, (val) => {
+  localStorage.setItem('filter_collapsed', String(val));
+});
+
+const tagCollapsed = ref(localStorage.getItem('tag_collapsed') === 'true');
+watch(tagCollapsed, (val) => {
+  localStorage.setItem('tag_collapsed', String(val));
+});
+
+const trackerCollapsed = ref(localStorage.getItem('tracker_collapsed') === 'true');
+watch(trackerCollapsed, (val) => {
+  localStorage.setItem('tracker_collapsed', String(val));
+});
 
 const statsCollapsed = ref(localStorage.getItem('stats_collapsed') === 'true');
 watch(statsCollapsed, (val) => {
@@ -464,9 +500,10 @@ function getRatio(): string {
 .nav-pane-inner {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   padding: 8px 6px;
   overflow-y: auto;
+  overflow-x: hidden;
   gap: 12px;
 }
 
@@ -476,11 +513,17 @@ function getRatio(): string {
   gap: 2px;
 }
 
+.nav-items-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .section-label {
   font-size: 11px;
   font-weight: 600;
   color: var(--md-text-secondary);
-  padding: 4px 10px;
+  padding: 4px 6px;
   letter-spacing: 0.02em;
 }
 
@@ -488,7 +531,42 @@ function getRatio(): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-right: 6px;
+  padding-right: 4px;
+}
+
+.section-header-flex.clickable {
+  cursor: pointer;
+  border-radius: var(--fluent-radius);
+  transition: background-color 0.12s;
+  padding: 2px 4px;
+}
+
+.section-header-flex.clickable:hover {
+  background-color: var(--fluent-bg-hover);
+}
+
+.section-collapse-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--md-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 3px;
+}
+
+.section-collapse-btn .material-icons {
+  font-size: 16px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .clear-filter-btn {
@@ -670,11 +748,14 @@ function getRatio(): string {
   text-overflow: ellipsis;
 }
 
-/* 底部系统会话磁贴卡片 */
+/* 底部系统会话磁贴卡片 (常驻悬浮于侧栏底部) */
 .nav-footer {
   margin-top: auto;
-  padding: 4px;
+  flex-shrink: 0;
+  padding: 6px;
   position: relative;
+  background-color: var(--fluent-bg-subtle);
+  border-top: 1px solid var(--fluent-border-subtle);
 }
 
 .footer-card {
@@ -682,7 +763,7 @@ function getRatio(): string {
   border: 1px solid var(--fluent-border-subtle);
   border-radius: 6px;
   padding: 8px 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .footer-card-header {
@@ -774,16 +855,16 @@ function getRatio(): string {
   white-space: nowrap;
 }
 
-/* 快捷限速 Flyout 气泡 */
+/* 快捷限速 Flyout 气泡 (朝上悬浮在卡片上方，永远在侧栏内，零溢出零裁剪) */
 .speed-flyout {
   position: absolute;
-  bottom: 8px;
-  left: calc(100% + 8px);
-  width: 190px;
+  bottom: calc(100% + 6px);
+  left: 6px;
+  right: 6px;
   background-color: var(--fluent-bg-canvas);
   border: 1px solid var(--fluent-border-subtle);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.18);
   padding: 10px;
   z-index: 500;
 }

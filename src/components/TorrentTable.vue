@@ -1,7 +1,7 @@
 <template>
   <div class="fluent-table-workspace" @contextmenu.prevent>
     <table class="fluent-desktop-table">
-      <thead>
+      <thead @contextmenu.prevent.stop="openHeaderContextMenu($event)">
         <tr>
           <!-- 全选/全不选 复选框列 (首列) -->
           <th class="col-check" @click.stop="toggleSelectAll">
@@ -27,76 +27,160 @@
           </th>
 
           <!-- 状态图标 -->
-          <th class="col-status" @click="handleSort('status')">
-            <span class="material-icons sort-icon">swap_vert</span>
+          <th
+            class="col-status resizable-col"
+            v-if="isColVisible('status')"
+            :style="{ width: `${getColWidth('status')}px` }"
+            @click="handleSort('status')"
+          >
+            <div class="th-content">
+              <span class="material-icons sort-icon">swap_vert</span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('status', $event)"></div>
           </th>
 
           <!-- 种子名称 -->
-          <th class="col-name" @click="handleSort('name')">
-            {{ t('common.name') }}
-            <span class="sort-indicator" v-if="state.filter.sortBy === 'name'">
-              {{ state.filter.sortAsc ? '▲' : '▼' }}
-            </span>
+          <th
+            class="col-name resizable-col"
+            v-if="isColVisible('name')"
+            :style="{ width: `${getColWidth('name')}px` }"
+            @click="handleSort('name')"
+          >
+            <div class="th-content">
+              <span>{{ t('common.name') }}</span>
+              <span class="sort-indicator" v-if="state.filter.sortBy === 'name'">
+                {{ state.filter.sortAsc ? '▲' : '▼' }}
+              </span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('name', $event)"></div>
           </th>
 
           <!-- 大小 -->
-          <th class="col-size" @click="handleSort('totalSize')">
-            {{ t('common.size') }}
-            <span class="sort-indicator" v-if="state.filter.sortBy === 'totalSize'">
-              {{ state.filter.sortAsc ? '▲' : '▼' }}
-            </span>
+          <th
+            class="col-size resizable-col"
+            v-if="isColVisible('size')"
+            :style="{ width: `${getColWidth('size')}px` }"
+            @click="handleSort('totalSize')"
+          >
+            <div class="th-content">
+              <span>{{ t('common.size') }}</span>
+              <span class="sort-indicator" v-if="state.filter.sortBy === 'totalSize'">
+                {{ state.filter.sortAsc ? '▲' : '▼' }}
+              </span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('size', $event)"></div>
           </th>
 
           <!-- 进度条 -->
-          <th class="col-progress" @click="handleSort('percentDone')">
-            {{ t('common.progress') }}
-            <span class="sort-indicator" v-if="state.filter.sortBy === 'percentDone'">
-              {{ state.filter.sortAsc ? '▲' : '▼' }}
-            </span>
+          <th
+            class="col-progress resizable-col"
+            v-if="isColVisible('progress')"
+            :style="{ width: `${getColWidth('progress')}px` }"
+            @click="handleSort('percentDone')"
+          >
+            <div class="th-content">
+              <span>{{ t('common.progress') }}</span>
+              <span class="sort-indicator" v-if="state.filter.sortBy === 'percentDone'">
+                {{ state.filter.sortAsc ? '▲' : '▼' }}
+              </span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('progress', $event)"></div>
           </th>
 
           <!-- 状态文本 -->
-          <th class="col-statustext">
-            {{ t('common.status') }}
+          <th
+            class="col-statustext resizable-col"
+            v-if="isColVisible('statustext')"
+            :style="{ width: `${getColWidth('statustext')}px` }"
+          >
+            <div class="th-content">
+              <span>{{ t('common.status') }}</span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('statustext', $event)"></div>
           </th>
 
           <!-- 下载速度 -->
-          <th class="col-speed" @click="handleSort('rateDownload')">
-            {{ t('common.downSpeed') }}
-            <span class="sort-indicator" v-if="state.filter.sortBy === 'rateDownload'">
-              {{ state.filter.sortAsc ? '▲' : '▼' }}
-            </span>
+          <th
+            class="col-speed resizable-col"
+            v-if="isColVisible('downSpeed')"
+            :style="{ width: `${getColWidth('downSpeed')}px` }"
+            @click="handleSort('rateDownload')"
+          >
+            <div class="th-content">
+              <span>{{ t('common.downSpeed') }}</span>
+              <span class="sort-indicator" v-if="state.filter.sortBy === 'rateDownload'">
+                {{ state.filter.sortAsc ? '▲' : '▼' }}
+              </span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('downSpeed', $event)"></div>
           </th>
 
           <!-- 上传速度 -->
-          <th class="col-speed" @click="handleSort('rateUpload')">
-            {{ t('common.upSpeed') }}
-            <span class="sort-indicator" v-if="state.filter.sortBy === 'rateUpload'">
-              {{ state.filter.sortAsc ? '▲' : '▼' }}
-            </span>
+          <th
+            class="col-speed resizable-col"
+            v-if="isColVisible('upSpeed')"
+            :style="{ width: `${getColWidth('upSpeed')}px` }"
+            @click="handleSort('rateUpload')"
+          >
+            <div class="th-content">
+              <span>{{ t('common.upSpeed') }}</span>
+              <span class="sort-indicator" v-if="state.filter.sortBy === 'rateUpload'">
+                {{ state.filter.sortAsc ? '▲' : '▼' }}
+              </span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('upSpeed', $event)"></div>
           </th>
 
           <!-- 剩余时间 -->
-          <th class="col-eta">
-            {{ t('common.eta') }}
+          <th
+            class="col-eta resizable-col"
+            v-if="isColVisible('eta')"
+            :style="{ width: `${getColWidth('eta')}px` }"
+          >
+            <div class="th-content">
+              <span>{{ t('common.eta') }}</span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('eta', $event)"></div>
           </th>
 
           <!-- 分享率 -->
-          <th class="col-ratio" @click="handleSort('uploadRatio')">
-            {{ t('common.ratio') }}
-            <span class="sort-indicator" v-if="state.filter.sortBy === 'uploadRatio'">
-              {{ state.filter.sortAsc ? '▲' : '▼' }}
-            </span>
+          <th
+            class="col-ratio resizable-col"
+            v-if="isColVisible('ratio')"
+            :style="{ width: `${getColWidth('ratio')}px` }"
+            @click="handleSort('uploadRatio')"
+          >
+            <div class="th-content">
+              <span>{{ t('common.ratio') }}</span>
+              <span class="sort-indicator" v-if="state.filter.sortBy === 'uploadRatio'">
+                {{ state.filter.sortAsc ? '▲' : '▼' }}
+              </span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('ratio', $event)"></div>
           </th>
 
           <!-- 节点数 -->
-          <th class="col-peers">
-            {{ t('common.peers') }}
+          <th
+            class="col-peers resizable-col"
+            v-if="isColVisible('peers')"
+            :style="{ width: `${getColWidth('peers')}px` }"
+          >
+            <div class="th-content">
+              <span>{{ t('common.peers') }}</span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('peers', $event)"></div>
           </th>
 
           <!-- 坏块损耗 -->
-          <th class="col-corrupt">
-            {{ t('common.corrupt') }}
+          <th
+            class="col-corrupt resizable-col"
+            v-if="isColVisible('corrupt')"
+            :style="{ width: `${getColWidth('corrupt')}px` }"
+          >
+            <div class="th-content">
+              <span>{{ t('common.corrupt') }}</span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('corrupt', $event)"></div>
           </th>
         </tr>
       </thead>
@@ -135,14 +219,14 @@
           </td>
 
           <!-- 状态图标 -->
-          <td class="col-status">
+          <td class="col-status" v-if="isColVisible('status')">
             <span class="material-icons status-ico" :class="getStatusIconClass(torrent)">
               {{ getStatusIcon(torrent) }}
             </span>
           </td>
 
           <!-- 种子名称 -->
-          <td class="col-name" :title="torrent.errorString ? `${torrent.name}\n\n[${t('status.error')}] ${torrent.errorString}` : torrent.name">
+          <td class="col-name" v-if="isColVisible('name')" :title="torrent.errorString ? `${torrent.name}\n\n[${t('status.error')}] ${torrent.errorString}` : torrent.name">
             <div class="name-text">{{ torrent.name }}</div>
             <div class="fluent-error-pill" v-if="torrent.error !== 0 || torrent.errorString" :title="torrent.errorString">
               <span class="material-icons pill-icon">error_outline</span>
@@ -151,10 +235,10 @@
           </td>
 
           <!-- 大小 -->
-          <td class="col-size">{{ formatBytes(torrent.totalSize) }}</td>
+          <td class="col-size" v-if="isColVisible('size')">{{ formatBytes(torrent.totalSize) }}</td>
 
           <!-- 进度条 + 百分比 (Fluent 胶囊进度条) -->
-          <td class="col-progress">
+          <td class="col-progress" v-if="isColVisible('progress')">
             <div class="fluent-progress-cell">
               <div class="fluent-progress-track">
                 <div
@@ -170,35 +254,35 @@
           </td>
 
           <!-- 状态徽章 -->
-          <td class="col-statustext">
+          <td class="col-statustext" v-if="isColVisible('statustext')">
             <span class="fluent-status-badge" :class="getStatusBadgeClass(torrent)" :title="torrent.errorString || ''">
               {{ getStatusDisplayText(torrent) }}
             </span>
           </td>
 
           <!-- 下载速度 -->
-          <td class="col-speed down-val">
+          <td class="col-speed down-val" v-if="isColVisible('downSpeed')">
             {{ torrent.rateDownload > 0 ? formatSpeed(torrent.rateDownload) : '—' }}
           </td>
 
           <!-- 上传速度 -->
-          <td class="col-speed up-val">
+          <td class="col-speed up-val" v-if="isColVisible('upSpeed')">
             {{ torrent.rateUpload > 0 ? formatSpeed(torrent.rateUpload) : '—' }}
           </td>
 
           <!-- 剩余时间 -->
-          <td class="col-eta">{{ formatETA(torrent.eta) }}</td>
+          <td class="col-eta" v-if="isColVisible('eta')">{{ formatETA(torrent.eta) }}</td>
 
           <!-- 分享率 -->
-          <td class="col-ratio">{{ torrent.uploadRatio >= 0 ? torrent.uploadRatio.toFixed(2) : '0.00' }}</td>
+          <td class="col-ratio" v-if="isColVisible('ratio')">{{ torrent.uploadRatio >= 0 ? torrent.uploadRatio.toFixed(2) : '0.00' }}</td>
 
           <!-- 节点数 -->
-          <td class="col-peers">
+          <td class="col-peers" v-if="isColVisible('peers')">
             {{ torrent.peersSendingToUs > 0 ? `${torrent.peersSendingToUs}/` : '' }}{{ torrent.peersConnected }}
           </td>
 
           <!-- 坏块损耗 -->
-          <td class="col-corrupt">
+          <td class="col-corrupt" v-if="isColVisible('corrupt')">
             <span class="corrupt-tag" v-if="torrent.corruptEver > 0" :title="t('table.corruptTitle', { size: formatBytes(torrent.corruptEver) })">
               {{ formatBytes(torrent.corruptEver) }}
             </span>
@@ -208,7 +292,7 @@
 
         <!-- 空数据提示 -->
         <tr v-if="filteredTorrents.length === 0">
-          <td colspan="12" class="empty-table-cell">
+          <td :colspan="visibleColumnCount" class="empty-table-cell">
             <span class="material-icons empty-icon">inbox</span>
             <p>{{ t('table.empty') }}</p>
           </td>
@@ -297,6 +381,29 @@
         <span>{{ t('menu.removeData') }}</span>
       </div>
     </div>
+
+    <!-- 表头右键自定义列菜单 -->
+    <Teleport to="body">
+      <div
+        class="fluent-dropdown-menu header-col-menu"
+        v-if="headerMenu.open"
+        :style="{ position: 'fixed', top: `${headerMenu.y}px`, left: `${headerMenu.x}px`, zIndex: 9999 }"
+        @click.stop
+      >
+        <div class="cols-menu-header">{{ t('ribbon.colsMenuTitle') }}</div>
+        <div class="cols-menu-list">
+          <label class="cols-menu-item" v-for="col in state.columns" :key="col.id">
+            <input type="checkbox" v-model="col.visible" @change="saveColumns" />
+            <span>{{ t(col.labelKey) }}</span>
+          </label>
+        </div>
+        <div class="menu-divider"></div>
+        <div class="menu-item" @click="handleResetColumns">
+          <span class="material-icons">restart_alt</span>
+          <span>{{ t('ribbon.resetCols') }}</span>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -313,10 +420,82 @@ import {
   getStatusText,
   openTorrentProps,
   fetchTorrents,
+  saveColumns,
+  resetColumns,
 } from '../stores/transmission';
 import { Torrent, TorrentStatus } from '../api/types';
 import { t } from '../locales';
 import { rpc } from '../api/rpc';
+
+const headerMenu = reactive({
+  open: false,
+  x: 0,
+  y: 0,
+});
+
+function openHeaderContextMenu(e: MouseEvent) {
+  headerMenu.x = Math.min(e.clientX, window.innerWidth - 200);
+  headerMenu.y = Math.min(e.clientY, window.innerHeight - 300);
+  headerMenu.open = true;
+}
+
+function handleResetColumns() {
+  resetColumns();
+  headerMenu.open = false;
+}
+
+const visibleColumnCount = computed(() => {
+  let count = 1;
+  if (state.ribbonTab === 'queue') count++;
+  count += state.columns.filter((c) => c.visible).length;
+  return count;
+});
+
+function isColVisible(id: string): boolean {
+  const col = state.columns.find((c) => c.id === id);
+  return col ? col.visible : true;
+}
+
+function getColWidth(id: string): number {
+  const col = state.columns.find((c) => c.id === id);
+  return col ? col.width : 100;
+}
+
+let resizingColId: string | null = null;
+let startX = 0;
+let startWidth = 0;
+
+function startResize(colId: string, e: MouseEvent) {
+  resizingColId = colId;
+  startX = e.clientX;
+  const col = state.columns.find((c) => c.id === colId);
+  startWidth = col ? col.width : 100;
+
+  window.addEventListener('mousemove', onResizing);
+  window.addEventListener('mouseup', stopResize);
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+}
+
+function onResizing(e: MouseEvent) {
+  if (!resizingColId) return;
+  const delta = e.clientX - startX;
+  const col = state.columns.find((c) => c.id === resizingColId);
+  if (col) {
+    col.width = Math.max(col.minWidth || 35, startWidth + delta);
+  }
+}
+
+function stopResize() {
+  if (resizingColId) {
+    saveColumns();
+    resizingColId = null;
+  }
+  window.removeEventListener('mousemove', onResizing);
+  window.removeEventListener('mouseup', stopResize);
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+}
 
 const contextMenu = reactive({
   visible: false,
@@ -392,6 +571,7 @@ function openContextMenu(e: MouseEvent, id: number) {
 
 function closeContextMenu() {
   contextMenu.visible = false;
+  headerMenu.open = false;
 }
 
 async function handleAction(action: string) {
@@ -586,11 +766,13 @@ function getStatusBadgeClass(item: Torrent): string {
 }
 
 .fluent-desktop-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 12px;
   text-align: left;
   white-space: nowrap;
+  table-layout: fixed;
 }
 
 /* Fluent 2 表头 */
@@ -606,11 +788,84 @@ function getStatusBadgeClass(item: Torrent): string {
   z-index: 10;
   transition: background-color 0.12s ease;
   font-size: 11px;
+  position: relative;
+  overflow: hidden;
 }
 
 .fluent-desktop-table thead th:hover {
   background-color: var(--fluent-bg-hover);
   color: var(--md-text-primary);
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 20;
+}
+
+.col-resizer:hover,
+.col-resizer:active {
+  background-color: var(--fluent-accent);
+}
+
+.header-col-menu {
+  min-width: 170px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+  background-color: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.cols-menu-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fluent-accent);
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  margin-bottom: 4px;
+}
+
+.cols-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cols-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  font-size: 11px;
+  border-radius: var(--fluent-radius);
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+
+.cols-menu-item:hover {
+  background-color: var(--fluent-bg-hover);
+}
+
+.cols-menu-item input[type="checkbox"] {
+  accent-color: var(--fluent-accent);
 }
 
 .sort-indicator {
@@ -645,6 +900,8 @@ function getStatusBadgeClass(item: Torrent): string {
 .fluent-desktop-table td {
   padding: 4px 8px;
   vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 列宽分配与样式 */
@@ -664,16 +921,7 @@ function getStatusBadgeClass(item: Torrent): string {
 }
 
 .col-queue { width: 44px; text-align: center; font-family: monospace; }
-.col-status { width: 34px; text-align: center; }
-.col-name { min-width: 240px; max-width: 480px; }
-.col-size { width: 75px; }
-.col-progress { width: 140px; }
-.col-statustext { width: 110px; }
-.col-speed { width: 85px; }
-.col-eta { width: 85px; }
-.col-ratio { width: 65px; font-family: monospace; }
-.col-peers { width: 65px; }
-.col-corrupt { width: 85px; }
+.col-ratio { font-family: monospace; }
 
 /* 队列序号徽标 */
 .queue-cell-badge {
