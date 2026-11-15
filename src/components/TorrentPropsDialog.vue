@@ -318,15 +318,15 @@ async function saveProps() {
 .num-input {
   width: 90px;
   padding: 4px 8px;
-  border: 1px solid var(--fluent-border-subtle);
+  border: 1px solid var(--fluent-border-divider);
   border-radius: var(--fluent-radius);
-  background-color: var(--fluent-bg-subtle);
+  background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   text-align: right;
   font-family: monospace;
   font-size: 12px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .num-input:focus {
@@ -334,17 +334,24 @@ async function saveProps() {
   box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
+.num-input:disabled {
+  background-color: var(--fluent-bg-subtle);
+  color: var(--md-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .text-input {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid var(--fluent-border-subtle);
+  border: 1px solid var(--fluent-border-divider);
   border-radius: var(--fluent-radius);
-  background-color: var(--fluent-bg-subtle);
+  background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   box-sizing: border-box;
   font-size: 12px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .text-input:focus {
@@ -352,16 +359,23 @@ async function saveProps() {
   box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
+.text-input:disabled {
+  background-color: var(--fluent-bg-subtle);
+  color: var(--md-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .select-input {
   padding: 4px 8px;
-  border: 1px solid var(--fluent-border-subtle);
+  border: 1px solid var(--fluent-border-divider);
   border-radius: var(--fluent-radius);
-  background-color: var(--fluent-bg-subtle);
+  background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   font-size: 12px;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .select-input:focus {

@@ -130,6 +130,10 @@ export default {
     downloaded: 'Downloaded',
     uploaded: 'Uploaded',
     ratio: 'Ratio',
+    tags: 'Labels',
+    trackers: 'Trackers',
+    noTags: 'No Labels',
+    speedLimitFlyout: 'Quick Limits',
   },
   status: {
     stopped: 'Paused',

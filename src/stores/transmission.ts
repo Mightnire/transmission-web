@@ -19,6 +19,10 @@ export const state = reactive<{
   activeTorrentDetail: Torrent | null;
   filter: TorrentFilter;
   sidebarOpen: boolean;
+  sidebarCollapsed: boolean;
+  ribbonTab: 'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps';
+  selectedTag: string | null;
+  selectedTracker: string | null;
   addDialogOpen: boolean;
   sessionDialogOpen: boolean;
   detailOpen: boolean;
@@ -40,6 +44,10 @@ export const state = reactive<{
     sortAsc: true,
   },
   sidebarOpen: false,
+  sidebarCollapsed: localStorage.getItem('sidebar_collapsed') === 'true',
+  ribbonTab: 'tasks',
+  selectedTag: null,
+  selectedTracker: null,
   addDialogOpen: false,
   sessionDialogOpen: false,
   detailOpen: false,
@@ -262,6 +270,26 @@ export const filteredTorrents = computed(() => {
   if (state.filter.search.trim()) {
     const q = state.filter.search.trim().toLowerCase();
     list = list.filter((t) => t.name.toLowerCase().includes(q));
+  }
+
+  // 标签筛选
+  if (state.selectedTag) {
+    list = list.filter((t) => t.labels && t.labels.includes(state.selectedTag!));
+  }
+
+  // Tracker 筛选
+  if (state.selectedTracker) {
+    list = list.filter((t) => {
+      if (!t.trackers || t.trackers.length === 0) return false;
+      return t.trackers.some((tr) => {
+        try {
+          const u = new URL(tr.announce);
+          return u.hostname.toLowerCase() === state.selectedTracker!.toLowerCase();
+        } catch {
+          return tr.announce.toLowerCase().includes(state.selectedTracker!.toLowerCase());
+        }
+      });
+    });
   }
 
   // 排序

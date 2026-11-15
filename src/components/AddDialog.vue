@@ -225,15 +225,15 @@ async function submit() {
 .fluent-textarea {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid var(--fluent-border-subtle);
+  border: 1px solid var(--fluent-border-divider);
   border-radius: var(--fluent-radius);
-  background-color: var(--fluent-bg-subtle);
+  background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   font-family: inherit;
   font-size: 12px;
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .fluent-input:focus,

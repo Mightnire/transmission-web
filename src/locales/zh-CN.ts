@@ -130,6 +130,10 @@ export default {
     downloaded: '已下载',
     uploaded: '已上传',
     ratio: '分享率',
+    tags: '标签分组',
+    trackers: 'Tracker 分组',
+    noTags: '无标签任务',
+    speedLimitFlyout: '快速限速',
   },
   status: {
     stopped: '已暂停',

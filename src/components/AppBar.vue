@@ -5,7 +5,7 @@
       <!-- 侧边栏切换按钮 (汉堡菜单) -->
       <button
         class="fluent-tool-btn hamburger-btn"
-        @click.stop="state.sidebarOpen = !state.sidebarOpen"
+        @click.stop="toggleSidebar"
         :title="t('app.toggleSidebar')"
       >
         <span class="material-icons">menu</span>
@@ -25,16 +25,17 @@
           @click.stop="selectTab('tasks')"
         >
           <span class="material-icons tab-icon">home</span>
-          <span>{{ t('ribbon.tabs.tasks') }}</span>
+          <span class="tab-text">{{ t('ribbon.tabs.tasks') }}</span>
         </button>
 
         <button
           class="ribbon-tab-btn"
+          v-if="isQueueEnabled"
           :class="{ active: currentTab === 'queue' && !isRibbonCollapsed }"
           @click.stop="selectTab('queue')"
         >
           <span class="material-icons tab-icon">low_priority</span>
-          <span>{{ t('ribbon.tabs.queue') }}</span>
+          <span class="tab-text">{{ t('ribbon.tabs.queue') }}</span>
         </button>
 
         <button
@@ -43,7 +44,7 @@
           @click.stop="selectTab('bandwidth')"
         >
           <span class="material-icons tab-icon">speed</span>
-          <span>{{ t('ribbon.tabs.bandwidth') }}</span>
+          <span class="tab-text">{{ t('ribbon.tabs.bandwidth') }}</span>
         </button>
 
         <button
@@ -52,7 +53,7 @@
           @click.stop="selectTab('tools')"
         >
           <span class="material-icons tab-icon">build</span>
-          <span>{{ t('ribbon.tabs.tools') }}</span>
+          <span class="tab-text">{{ t('ribbon.tabs.tools') }}</span>
         </button>
 
         <!-- 上下文标签页：类似 Word 图片格式 (选中种子时高亮出现) -->
@@ -64,24 +65,12 @@
           :title="t('ribbon.tabs.torrentProps')"
         >
           <span class="material-icons tab-icon">tune</span>
-          <span>{{ t('ribbon.tabs.torrentProps') }}</span>
+          <span class="tab-text">{{ t('ribbon.tabs.torrentProps') }}</span>
         </button>
       </nav>
 
       <!-- 右侧：系统状态与快捷工具 -->
       <div class="ribbon-sys-tools">
-        <!-- 实时全局速率胶囊 -->
-        <div class="speed-capsule" :title="`${t('toolbar.downloadSpeed', { speed: formatSpeed(state.stats?.downloadSpeed) })} | ${t('toolbar.uploadSpeed', { speed: formatSpeed(state.stats?.uploadSpeed) })}`">
-          <span class="speed-part down">
-            <span class="material-icons">arrow_downward</span>
-            {{ formatSpeed(state.stats?.downloadSpeed) }}
-          </span>
-          <span class="speed-part up">
-            <span class="material-icons">arrow_upward</span>
-            {{ formatSpeed(state.stats?.uploadSpeed) }}
-          </span>
-        </div>
-
         <!-- 乌龟临时限速开关 -->
         <button
           class="fluent-tool-btn"
@@ -102,13 +91,26 @@
           <span class="material-icons">{{ isDark ? 'light_mode' : 'dark_mode' }}</span>
         </button>
 
-        <!-- 语言选择 -->
-        <div class="fluent-lang-select">
-          <select :value="currentLocale" @change="onLocaleChange">
-            <option value="zh-CN">简中</option>
-            <option value="en-US">EN</option>
-            <option value="ru-RU">RU</option>
-          </select>
+        <!-- 语言选择 (图标下拉菜单) -->
+        <div class="lang-dropdown-wrapper">
+          <button
+            class="fluent-tool-btn"
+            @click.stop="toggleMenu('lang')"
+            :title="t('app.language')"
+          >
+            <span class="material-icons">translate</span>
+          </button>
+          <div class="fluent-dropdown-menu lang-dropdown-menu" v-if="menus.lang">
+            <div class="menu-opt" :class="{ active: currentLocale === 'zh-CN' }" @click="selectLocale('zh-CN')">
+              <span>简体中文</span>
+            </div>
+            <div class="menu-opt" :class="{ active: currentLocale === 'en-US' }" @click="selectLocale('en-US')">
+              <span>English</span>
+            </div>
+            <div class="menu-opt" :class="{ active: currentLocale === 'ru-RU' }" @click="selectLocale('ru-RU')">
+              <span>Русский</span>
+            </div>
+          </div>
         </div>
 
         <!-- Ribbon 展开/折叠图钉按钮 (支持 Ctrl+F1) -->
@@ -701,19 +703,40 @@ const menus = reactive({
   start: false,
   stop: false,
   delete: false,
+  lang: false,
 });
 
 function closeAllMenus() {
   menus.start = false;
   menus.stop = false;
   menus.delete = false;
+  menus.lang = false;
 }
 
-function toggleMenu(type: 'start' | 'stop' | 'delete') {
+function toggleMenu(type: 'start' | 'stop' | 'delete' | 'lang') {
   const current = menus[type];
   closeAllMenus();
   menus[type] = !current;
 }
+
+function selectLocale(loc: LocaleKey) {
+  setLocale(loc);
+  menus.lang = false;
+}
+
+function toggleSidebar() {
+  if (window.innerWidth >= 768) {
+    state.sidebarCollapsed = !state.sidebarCollapsed;
+    localStorage.setItem('sidebar_collapsed', String(state.sidebarCollapsed));
+  } else {
+    state.sidebarOpen = !state.sidebarOpen;
+  }
+}
+
+const isQueueEnabled = computed(() => {
+  if (!state.session) return true;
+  return !!(state.session['download-queue-enabled'] || state.session['seed-queue-enabled']);
+});
 
 const hasSelection = computed(() => {
   return state.selectedIds.length > 0 || state.selectedId !== null;
@@ -834,11 +857,8 @@ function onTorrentIdleLimitChange(e: Event) {
 }
 
 function selectTab(tab: 'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps') {
-  if (currentTab.value === tab && !isRibbonCollapsed.value) {
-    // 已经选中同一个 Tab 时不处理
-    return;
-  }
   currentTab.value = tab;
+  state.ribbonTab = tab;
   if (isRibbonCollapsed.value) {
     isRibbonCollapsed.value = false;
     localStorage.setItem('ribbon_collapsed', 'false');
@@ -1071,7 +1091,7 @@ function onLocaleChange(e: Event) {
   font-weight: 500;
   color: var(--md-text-secondary);
   cursor: pointer;
-  border-radius: 4px 4px 0 0;
+  border-radius: 0;
   transition: all 0.15s ease;
 }
 
@@ -1115,13 +1135,11 @@ function onLocaleChange(e: Event) {
   background-color: var(--fluent-bg-canvas);
   color: #7719aa;
   border-bottom-color: #7719aa;
-  box-shadow: inset 0 2px 0 0 #7719aa;
 }
 
 [data-theme="dark"] .ribbon-tab-btn.contextual-tab.active {
   color: #b197fc;
   border-bottom-color: #b197fc;
-  box-shadow: inset 0 2px 0 0 #b197fc;
 }
 
 .tab-icon {
@@ -1694,7 +1712,30 @@ function onLocaleChange(e: Event) {
   font-size: 12px;
 }
 
+.lang-dropdown-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.lang-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 120px;
+  z-index: 300;
+}
+
 /* 响应式断点 */
+@media (max-width: 1080px) {
+  .ribbon-tab-btn .tab-text {
+    display: none;
+  }
+  .ribbon-tab-btn {
+    padding: 0 10px;
+  }
+}
+
 @media (max-width: 768px) {
   .desktop-only {
     display: none !important;

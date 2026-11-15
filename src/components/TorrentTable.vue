@@ -3,8 +3,23 @@
     <table class="fluent-desktop-table">
       <thead>
         <tr>
-          <!-- 队列序号 (#) 排序列 -->
-          <th class="col-queue" @click="handleSort('queuePosition')" :title="t('common.queue')">
+          <!-- 全选/全不选 复选框列 (首列) -->
+          <th class="col-check" @click.stop="toggleSelectAll">
+            <input
+              type="checkbox"
+              :checked="isAllSelected"
+              :indeterminate.prop="isSomeSelected"
+              @click.stop="toggleSelectAll"
+            />
+          </th>
+
+          <!-- 队列序号 (#) 排序列：仅在顶部处于“队列与调度”Tab 时显示 -->
+          <th
+            class="col-queue"
+            v-if="state.ribbonTab === 'queue'"
+            @click="handleSort('queuePosition')"
+            :title="t('common.queue')"
+          >
             <span>#</span>
             <span class="sort-indicator" v-if="state.filter.sortBy === 'queuePosition'">
               {{ state.filter.sortAsc ? '▲' : '▼' }}
@@ -99,8 +114,17 @@
           @dblclick="onRowDblClick(torrent.id)"
           @contextmenu.prevent="openContextMenu($event, torrent.id)"
         >
-          <!-- 队列顺序号 (#) -->
-          <td class="col-queue">
+          <!-- 首列复选框：点整个单元格即触发选择 -->
+          <td class="col-check" @click.stop="toggleRowSelection(torrent.id)">
+            <input
+              type="checkbox"
+              :checked="isSelected(torrent.id)"
+              @click.stop="toggleRowSelection(torrent.id)"
+            />
+          </td>
+
+          <!-- 队列顺序号 (#)：仅在处于“队列与调度”Tab 时显示 -->
+          <td class="col-queue" v-if="state.ribbonTab === 'queue'">
             <span
               class="queue-cell-badge"
               :class="{ 'queue-waiting': isQueueWaiting(torrent) }"
@@ -277,7 +301,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, onUnmounted } from 'vue';
+import { ref, computed, reactive, onMounted, onUnmounted } from 'vue';
 import {
   state,
   filteredTorrents,
@@ -303,6 +327,39 @@ const contextMenu = reactive({
 
 function isSelected(id: number) {
   return state.selectedIds.includes(id) || state.selectedId === id;
+}
+
+const isAllSelected = computed(() => {
+  if (filteredTorrents.value.length === 0) return false;
+  return filteredTorrents.value.every((t) => state.selectedIds.includes(t.id));
+});
+
+const isSomeSelected = computed(() => {
+  if (isAllSelected.value) return false;
+  return filteredTorrents.value.some((t) => state.selectedIds.includes(t.id));
+});
+
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    state.selectedIds = [];
+    state.selectedId = null;
+  } else {
+    state.selectedIds = filteredTorrents.value.map((t) => t.id);
+    state.selectedId = state.selectedIds[0] || null;
+  }
+}
+
+function toggleRowSelection(id: number) {
+  const idx = state.selectedIds.indexOf(id);
+  if (idx >= 0) {
+    state.selectedIds.splice(idx, 1);
+    if (state.selectedId === id) {
+      state.selectedId = state.selectedIds[0] || null;
+    }
+  } else {
+    state.selectedIds.push(id);
+    state.selectedId = id;
+  }
 }
 
 function onRowClick(e: MouseEvent, id: number) {
@@ -591,6 +648,21 @@ function getStatusBadgeClass(item: Torrent): string {
 }
 
 /* 列宽分配与样式 */
+.col-check {
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
+  text-align: center;
+  padding: 0 4px !important;
+  cursor: pointer;
+}
+
+.col-check input[type="checkbox"] {
+  accent-color: var(--fluent-accent);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
 .col-queue { width: 44px; text-align: center; font-family: monospace; }
 .col-status { width: 34px; text-align: center; }
 .col-name { min-width: 240px; max-width: 480px; }

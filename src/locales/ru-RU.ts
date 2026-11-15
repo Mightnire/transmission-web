@@ -130,6 +130,10 @@ export default {
     downloaded: 'Загружено',
     uploaded: 'Отдано',
     ratio: 'Рейтинг',
+    tags: 'Метки',
+    trackers: 'Трекеры',
+    noTags: 'Без меток',
+    speedLimitFlyout: 'Лимиты скорости',
   },
   status: {
     stopped: 'Приостановлен',

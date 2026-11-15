@@ -255,23 +255,31 @@
           <div class="divider"></div>
 
           <h4 class="sub-title">{{ t('session.network.protocols') }}</h4>
-          <div class="form-grid">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.dhtEnabled" />
-              <span>{{ t('session.network.dht') }}</span>
-            </label>
-            <label class="form-check">
-              <input type="checkbox" v-model="form.pexEnabled" />
-              <span>{{ t('session.network.pex') }}</span>
-            </label>
-            <label class="form-check">
-              <input type="checkbox" v-model="form.lpdEnabled" />
-              <span>{{ t('session.network.lpd') }}</span>
-            </label>
-            <label class="form-check">
-              <input type="checkbox" v-model="form.utpEnabled" />
-              <span>{{ t('session.network.utp') }}</span>
-            </label>
+          <div class="form-vertical-switches">
+            <div class="form-row">
+              <label class="form-check">
+                <input type="checkbox" v-model="form.dhtEnabled" />
+                <span>{{ t('session.network.dht') }}</span>
+              </label>
+            </div>
+            <div class="form-row">
+              <label class="form-check">
+                <input type="checkbox" v-model="form.pexEnabled" />
+                <span>{{ t('session.network.pex') }}</span>
+              </label>
+            </div>
+            <div class="form-row">
+              <label class="form-check">
+                <input type="checkbox" v-model="form.lpdEnabled" />
+                <span>{{ t('session.network.lpd') }}</span>
+              </label>
+            </div>
+            <div class="form-row">
+              <label class="form-check">
+                <input type="checkbox" v-model="form.utpEnabled" />
+                <span>{{ t('session.network.utp') }}</span>
+              </label>
+            </div>
           </div>
 
           <div class="divider"></div>
@@ -310,10 +318,12 @@
           </div>
 
           <div class="form-group mt-2">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.incompleteDirEnabled" />
-              <span>{{ t('session.storage.incompleteDir') }}</span>
-            </label>
+            <div class="form-row">
+              <label class="form-check">
+                <input type="checkbox" v-model="form.incompleteDirEnabled" />
+                <span>{{ t('session.storage.incompleteDir') }}</span>
+              </label>
+            </div>
             <input
               type="text"
               class="text-input mt-1"
@@ -791,11 +801,18 @@ async function saveSettings() {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  font-size: 12px;
 }
 
 .form-check input[type="checkbox"] {
   accent-color: var(--fluent-accent);
   cursor: pointer;
+}
+
+.form-vertical-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .form-grid {
@@ -824,15 +841,15 @@ async function saveSettings() {
 .num-input {
   width: 90px;
   padding: 4px 8px;
-  border: 1px solid var(--fluent-border-subtle);
+  border: 1px solid var(--fluent-border-divider);
   border-radius: var(--fluent-radius);
-  background-color: var(--fluent-bg-subtle);
+  background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   text-align: right;
   font-family: monospace;
   font-size: 12px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .num-input:focus {
@@ -840,17 +857,24 @@ async function saveSettings() {
   box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
+.num-input:disabled {
+  background-color: var(--fluent-bg-subtle);
+  color: var(--md-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .text-input {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid var(--fluent-border-subtle);
+  border: 1px solid var(--fluent-border-divider);
   border-radius: var(--fluent-radius);
-  background-color: var(--fluent-bg-subtle);
+  background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   box-sizing: border-box;
   font-size: 12px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .text-input:focus {
@@ -858,19 +882,26 @@ async function saveSettings() {
   box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
+.text-input:disabled {
+  background-color: var(--fluent-bg-subtle);
+  color: var(--md-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .textarea-input {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid var(--fluent-border-subtle);
+  border: 1px solid var(--fluent-border-divider);
   border-radius: var(--fluent-radius);
-  background-color: var(--fluent-bg-subtle);
+  background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   box-sizing: border-box;
   font-family: monospace;
   font-size: 11px;
   resize: vertical;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .textarea-input:focus {
@@ -880,14 +911,14 @@ async function saveSettings() {
 
 .select-input {
   padding: 4px 8px;
-  border: 1px solid var(--fluent-border-subtle);
+  border: 1px solid var(--fluent-border-divider);
   border-radius: var(--fluent-radius);
-  background-color: var(--fluent-bg-subtle);
+  background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   font-size: 12px;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .select-input:focus {
