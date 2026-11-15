@@ -29,6 +29,8 @@ export default {
     peersList: '节点',
     general: '常规',
     corrupt: '坏块损耗',
+    cardsView: '卡片视图',
+    tableView: '表格视图',
     day: '天',
     hour: '时',
     min: '分',

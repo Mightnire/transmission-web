@@ -1011,4 +1011,51 @@ async function saveSettings() {
   font-size: 12px;
   color: var(--md-text-secondary);
 }
+
+/* 移动端弹窗响应式适配 */
+@media (max-width: 600px) {
+  .session-dialog {
+    width: calc(100vw - 16px);
+    max-height: 92vh;
+    margin: 8px;
+  }
+
+  .session-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding: 3px;
+  }
+
+  .session-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    flex: 0 0 auto;
+    padding: 6px 14px;
+    font-size: 11.5px;
+  }
+
+  .form-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .unit-group {
+    margin-left: auto;
+  }
+
+  .dialog-header {
+    padding: 10px 14px;
+  }
+
+  .md-dialog-content {
+    padding: 0 14px 14px;
+    max-height: calc(92vh - 110px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
 </style>

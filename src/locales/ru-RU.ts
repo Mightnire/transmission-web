@@ -29,6 +29,8 @@ export default {
     peersList: 'Пиры',
     general: 'Основное',
     corrupt: 'Повреждено',
+    cardsView: 'Вид карточек',
+    tableView: 'Вид таблицы',
     day: 'д',
     hour: 'ч',
     min: 'м',

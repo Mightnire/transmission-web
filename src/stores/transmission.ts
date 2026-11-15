@@ -124,7 +124,8 @@ export const state = reactive<{
   propsDialogOpen: false,
   propsTorrentId: null,
   isPolling: false,
-  viewMode: 'table',
+  viewMode: (typeof window !== 'undefined' && (localStorage.getItem('view_mode') as ('table' | 'cards'))) ||
+    (typeof window !== 'undefined' && window.innerWidth < 768 ? 'cards' : 'table'),
 });
 
 export function saveColumns() {
@@ -424,3 +425,25 @@ export const filteredTorrents = computed(() => {
 
   return list;
 });
+
+export function toggleViewMode() {
+  state.viewMode = state.viewMode === 'table' ? 'cards' : 'table';
+  localStorage.setItem('view_mode', state.viewMode);
+}
+
+export function selectAllTorrents() {
+  const allIds = filteredTorrents.value.map((t) => t.id);
+  if (state.selectedIds.length === allIds.length && allIds.length > 0) {
+    state.selectedIds = [];
+    state.selectedId = null;
+  } else {
+    state.selectedIds = [...allIds];
+    state.selectedId = allIds[0] || null;
+  }
+}
+
+export function clearSelection() {
+  state.selectedIds = [];
+  state.selectedId = null;
+}
+

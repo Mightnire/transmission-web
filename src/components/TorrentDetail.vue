@@ -1,5 +1,19 @@
 <template>
+  <!-- 移动端底面板半透明遮罩 (Teleport 到 body) -->
+  <Teleport to="body">
+    <div
+      class="mobile-detail-backdrop"
+      v-if="state.detailOpen && activeTorrent"
+      @click="closeDetail"
+    ></div>
+  </Teleport>
+
   <div class="desktop-detail-dock" v-if="state.detailOpen && activeTorrent">
+    <!-- 移动端顶部滑动手柄条 -->
+    <div class="sheet-drag-handle-bar mobile-only">
+      <div class="sheet-drag-handle"></div>
+    </div>
+
     <!-- 面板顶部控制与标题 -->
     <div class="dock-header">
       <div class="dock-title-block">
@@ -830,5 +844,90 @@ async function handleSetLocation() {
   font-size: 32px;
   margin-bottom: 6px;
   opacity: 0.4;
+}
+
+/* 移动端底面板遮罩与 Bottom Sheet 样式 */
+.mobile-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 998;
+  animation: backdropFadeIn 0.2s ease-out;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sheet-drag-handle-bar {
+  display: none;
+  width: 100%;
+  height: 14px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+.sheet-drag-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--fluent-border-divider);
+}
+
+@media (max-width: 768px) {
+  .desktop-detail-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 75vh;
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+    z-index: 999;
+    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.35);
+    animation: sheetSlideUp 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  @keyframes sheetSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .sheet-drag-handle-bar {
+    display: flex;
+  }
+
+  .dock-header {
+    height: 38px;
+    padding: 0 14px;
+  }
+
+  .dock-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    flex-shrink: 0;
+    padding: 0 8px;
+  }
+
+  .dock-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-item {
+    flex-shrink: 0;
+    padding: 0 12px;
+    height: 34px;
+    font-size: 12px;
+  }
+
+  .general-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 </style>

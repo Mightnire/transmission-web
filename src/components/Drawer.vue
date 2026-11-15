@@ -1,10 +1,27 @@
 <template>
+  <!-- 移动端全屏半透明毛玻璃遮罩 (Teleport 到 body，彻底解绑 transform 限制) -->
+  <Teleport to="body">
+    <div
+      class="mobile-drawer-backdrop"
+      v-if="state.sidebarOpen"
+      @click="state.sidebarOpen = false"
+    ></div>
+  </Teleport>
+
   <aside
     class="fluent-navigation-pane"
     :class="{ 'mobile-open': state.sidebarOpen, 'is-collapsed': state.sidebarCollapsed }"
   >
-    <!-- 移动端遮罩 -->
-    <div class="mobile-backdrop" v-if="state.sidebarOpen" @click="state.sidebarOpen = false"></div>
+    <!-- 移动端专属侧边栏头部 (带品牌与关闭按钮) -->
+    <div class="mobile-drawer-header mobile-only">
+      <div class="drawer-brand">
+        <span class="material-icons brand-icon">cloud_download</span>
+        <span class="brand-title">Transmission</span>
+      </div>
+      <button class="drawer-close-btn" @click="state.sidebarOpen = false" :title="t('common.close')">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
 
     <div class="nav-pane-inner">
       <!-- 状态筛选组 (Fluent Navigation Items) -->
@@ -979,30 +996,91 @@ function getRatio(): string {
 .text-danger { color: var(--md-error) !important; }
 .text-muted { color: var(--md-text-secondary) !important; }
 
-/* 移动端抽屉遮罩 */
+/* 移动端全屏半透明遮罩 */
+.mobile-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 998;
+  animation: backdropFadeIn 0.2s ease-out;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mobile-drawer-header {
+  display: none;
+  height: 48px;
+  padding: 0 14px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  background-color: var(--fluent-bg-canvas);
+}
+
+.drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-brand .brand-icon {
+  font-size: 20px;
+  color: var(--fluent-accent);
+}
+
+.drawer-brand .brand-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-text-primary);
+}
+
+.drawer-close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--md-text-secondary);
+  border-radius: var(--fluent-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.drawer-close-btn:active {
+  background-color: var(--fluent-bg-hover);
+}
+
+/* 移动端抽屉遮罩与侧边栏 */
 @media (max-width: 768px) {
   .fluent-navigation-pane {
     position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
-    z-index: 200;
+    width: min(300px, 84vw);
+    z-index: 999;
     transform: translateX(-100%);
-    box-shadow: 0 0 16px rgba(0, 0, 0, 0.25);
+    transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+    box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
   }
 
   .fluent-navigation-pane.mobile-open {
     transform: translateX(0);
   }
 
-  .mobile-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: -1;
+  .mobile-drawer-header {
+    display: flex;
+  }
+
+  .fluent-nav-item {
+    height: 38px;
+    padding: 0 12px;
   }
 }
 </style>

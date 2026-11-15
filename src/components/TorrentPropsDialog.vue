@@ -390,4 +390,29 @@ async function saveProps() {
 }
 
 .mt-2 { margin-top: 8px; }
+
+/* 移动端响应式适配 */
+@media (max-width: 600px) {
+  .props-dialog {
+    width: calc(100vw - 16px);
+    max-height: 92vh;
+    margin: 8px;
+  }
+
+  .form-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .title-text {
+    max-width: 240px;
+  }
+
+  .md-dialog-content {
+    padding: 0 14px 14px;
+    max-height: calc(92vh - 110px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
 </style>

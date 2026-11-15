@@ -29,6 +29,8 @@ export default {
     peersList: 'Peers',
     general: 'General',
     corrupt: 'Corrupt',
+    cardsView: 'Cards View',
+    tableView: 'Table View',
     day: 'd',
     hour: 'h',
     min: 'm',

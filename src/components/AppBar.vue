@@ -80,6 +80,15 @@
 
       <!-- 右侧：系统状态与快捷工具 -->
       <div class="ribbon-sys-tools">
+        <!-- 视图切换 (卡片 / 表格) -->
+        <button
+          class="fluent-tool-btn"
+          @click="toggleViewMode"
+          :title="state.viewMode === 'table' ? t('common.cardsView') : t('common.tableView')"
+        >
+          <span class="material-icons">{{ state.viewMode === 'table' ? 'view_agenda' : 'table_chart' }}</span>
+        </button>
+
         <!-- 乌龟临时限速开关 -->
         <button
           class="fluent-tool-btn"
@@ -713,26 +722,62 @@
 
     <!-- 3. 移动端紧凑工具条 (仅屏幕 < 768px 显示) -->
     <div class="mobile-compact-bar mobile-only">
-      <button class="fluent-btn-mobile" @click="state.addDialogOpen = true">
-        <span class="material-icons">add</span>
-      </button>
-      <button class="fluent-btn-mobile" @click="handleStart">
-        <span class="material-icons text-success">play_arrow</span>
-      </button>
-      <button class="fluent-btn-mobile" @click="handleStop">
-        <span class="material-icons text-warning">pause</span>
-      </button>
-      <button class="fluent-btn-mobile" :disabled="!hasSelection" @click="handleRemove(false)">
-        <span class="material-icons text-danger">delete</span>
-      </button>
-      <div class="mobile-search-wrap">
-        <input
-          type="text"
-          class="mobile-search-input"
-          :placeholder="t('app.searchPlaceholder')"
-          v-model="state.filter.search"
-        />
-      </div>
+      <!-- 模式 A：无选中任务时的常规工具条 -->
+      <template v-if="!hasSelection">
+        <button class="fluent-btn-mobile btn-primary" @click="state.addDialogOpen = true" :title="t('toolbar.add')">
+          <span class="material-icons">add</span>
+        </button>
+        <button class="fluent-btn-mobile" @click="handleStartAll" :title="t('toolbar.startAll')">
+          <span class="material-icons text-success">fast_forward</span>
+        </button>
+        <button class="fluent-btn-mobile" @click="handleStopAll" :title="t('toolbar.pauseAll')">
+          <span class="material-icons text-warning">pause_circle_outline</span>
+        </button>
+        <button class="fluent-btn-mobile" @click="selectAllTorrents" :title="t('ribbon.selectAll')">
+          <span class="material-icons">select_all</span>
+        </button>
+        <div class="mobile-search-wrap">
+          <span class="material-icons search-prefix-icon">search</span>
+          <input
+            type="text"
+            class="mobile-search-input"
+            :placeholder="t('app.searchPlaceholder')"
+            v-model="state.filter.search"
+          />
+          <button
+            class="mobile-clear-btn"
+            v-if="state.filter.search"
+            @click="state.filter.search = ''"
+          >
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+      </template>
+
+      <!-- 模式 B：有选中任务时的批量选择工具条 -->
+      <template v-else>
+        <div class="selection-badge">
+          <span class="badge-text">{{ t('ribbon.selectedCount', { count: selectedCount }) }}</span>
+        </div>
+        <button class="fluent-btn-mobile" @click="selectAllTorrents" :title="t('ribbon.selectAll')">
+          <span class="material-icons">select_all</span>
+        </button>
+        <button class="fluent-btn-mobile" @click="handleStart" :title="t('common.start')">
+          <span class="material-icons text-success">play_arrow</span>
+        </button>
+        <button class="fluent-btn-mobile" @click="handleStop" :title="t('common.pause')">
+          <span class="material-icons text-warning">pause</span>
+        </button>
+        <button class="fluent-btn-mobile" @click="handleRemove(false)" :title="t('common.delete')">
+          <span class="material-icons text-danger">delete</span>
+        </button>
+        <button class="fluent-btn-mobile" v-if="selectedCount === 1" @click="openProps" :title="t('ribbon.tabs.torrentProps')">
+          <span class="material-icons">tune</span>
+        </button>
+        <button class="fluent-btn-mobile clear-sel-btn" @click="clearSelection" :title="t('common.cancel')">
+          <span class="material-icons">close</span>
+        </button>
+      </template>
     </div>
 
     <!-- 全局 Teleport 浮层下拉菜单：彻底逃离 Ribbon 裁剪与 z-index 层叠 -->
@@ -832,6 +877,9 @@ import {
   saveColumns,
   resetColumns,
   saveUIPreferences,
+  toggleViewMode,
+  selectAllTorrents,
+  clearSelection,
 } from '../stores/transmission';
 import { rpc } from '../api/rpc';
 import { t, currentLocale, setLocale, LocaleKey } from '../locales';
@@ -901,6 +949,10 @@ const isQueueEnabled = computed(() => {
 
 const hasSelection = computed(() => {
   return state.selectedIds.length > 0 || state.selectedId !== null;
+});
+
+const selectedCount = computed(() => {
+  return state.selectedIds.length > 0 ? state.selectedIds.length : (state.selectedId !== null ? 1 : 0);
 });
 
 const selectedTorrentId = computed(() => {
@@ -1890,42 +1942,113 @@ function onLocaleChange(e: Event) {
 /* 3. 移动端紧凑模式 */
 .mobile-compact-bar {
   display: none;
-  height: 48px;
+  height: 44px;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 0 10px;
   background-color: var(--fluent-bg-canvas);
+  border-bottom: 1px solid var(--fluent-border-subtle);
 }
 
 .fluent-btn-mobile {
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--fluent-radius);
   border: 1px solid var(--fluent-border-subtle);
-  background: transparent;
+  background: var(--fluent-bg-subtle);
+  color: var(--md-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.fluent-btn-mobile:active {
+  background-color: var(--fluent-bg-hover);
+  transform: scale(0.96);
+}
+
+.fluent-btn-mobile.btn-primary {
+  background-color: rgba(0, 120, 212, 0.12);
+  border-color: rgba(0, 120, 212, 0.35);
+  color: var(--fluent-accent);
+}
+
+.fluent-btn-mobile.clear-sel-btn {
+  margin-left: auto;
 }
 
 .fluent-btn-mobile .material-icons {
-  font-size: 20px;
+  font-size: 18px;
+}
+
+.selection-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background-color: rgba(0, 120, 212, 0.12);
+  border: 1px solid rgba(0, 120, 212, 0.3);
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--fluent-accent);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .mobile-search-wrap {
   flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.search-prefix-icon {
+  position: absolute;
+  left: 7px;
+  font-size: 16px;
+  color: var(--md-text-secondary);
+  pointer-events: none;
 }
 
 .mobile-search-input {
   width: 100%;
-  height: 32px;
-  border-radius: 4px;
+  height: 30px;
+  border-radius: var(--fluent-radius);
   border: 1px solid var(--fluent-border-subtle);
-  padding: 0 8px;
-  background: transparent;
+  padding: 0 26px 0 28px;
+  background: var(--fluent-bg-subtle);
   color: var(--md-text-primary);
-  font-size: 12px;
+  font-size: 11.5px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.mobile-search-input:focus {
+  border-color: var(--fluent-accent);
+  background-color: var(--fluent-bg-canvas);
+}
+
+.mobile-clear-btn {
+  position: absolute;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--md-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.mobile-clear-btn .material-icons {
+  font-size: 14px;
 }
 
 .lang-dropdown-wrapper {
@@ -1958,6 +2081,30 @@ function onLocaleChange(e: Event) {
   }
   .mobile-only {
     display: flex !important;
+  }
+
+  .ribbon-header-row {
+    height: 42px;
+    padding: 0 8px;
+  }
+
+  .fluent-tool-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .fluent-tool-btn .material-icons {
+    font-size: 16px;
+  }
+
+  .brand-text {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-text {
+    display: none;
   }
 }
 </style>

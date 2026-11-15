@@ -316,4 +316,23 @@ async function submit() {
   accent-color: var(--fluent-accent);
   cursor: pointer;
 }
+
+@media (max-width: 600px) {
+  .add-dialog {
+    width: calc(100vw - 16px);
+    max-height: 92vh;
+    margin: 8px;
+  }
+
+  .dialog-header {
+    padding: 10px 14px;
+  }
+
+  .md-dialog-content {
+    padding: 0 14px 14px;
+    max-height: calc(92vh - 110px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
 </style>

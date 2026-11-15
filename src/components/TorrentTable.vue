@@ -760,6 +760,7 @@ function getStatusBadgeClass(item: Torrent): string {
 .fluent-table-workspace {
   flex: 1;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
   background-color: var(--fluent-bg-canvas);
   position: relative;
   user-select: none;
@@ -1120,5 +1121,12 @@ function getStatusBadgeClass(item: Torrent): string {
   height: 1px;
   background-color: var(--fluent-border-subtle);
   margin: 4px 2px;
+}
+
+@media (max-width: 768px) {
+  .fluent-desktop-table td {
+    padding: 6px 8px;
+    height: 36px;
+  }
 }
 </style>
