@@ -237,6 +237,7 @@
               <th>做种者</th>
               <th>下载者</th>
               <th>上次宣告同伴</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -251,6 +252,11 @@
               <td>{{ tr.seederCount >= 0 ? tr.seederCount : '—' }}</td>
               <td>{{ tr.leecherCount >= 0 ? tr.leecherCount : '—' }}</td>
               <td>{{ tr.lastAnnouncePeerCount }}</td>
+              <td>
+                <button class="remove-tr-btn" @click="removeTracker(tr.id)" title="移除此 Tracker">
+                  <span class="material-icons" style="font-size: 14px;">delete_outline</span>
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -310,6 +316,19 @@ async function addTrackersPrompt() {
   });
   alert(`已成功追加 ${urls.length} 个 Tracker 服务器！`);
   // 刷新详情
+  const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
+  if (refreshed) {
+    state.activeTorrentDetail = { ...activeTorrent.value, ...refreshed };
+  }
+}
+
+async function removeTracker(trackerId: number) {
+  if (!activeTorrent.value) return;
+  if (!confirm('确定要移除此 Tracker 服务器吗？')) return;
+  await rpc.torrentSet({
+    ids: [activeTorrent.value.id],
+    trackerRemove: [trackerId],
+  });
   const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
   if (refreshed) {
     state.activeTorrentDetail = { ...activeTorrent.value, ...refreshed };
@@ -504,6 +523,24 @@ function getPriorityText(p?: Priority): string {
 
 .info-row .value {
   color: var(--md-text-primary);
+}
+
+.remove-tr-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--md-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+
+.remove-tr-btn:hover {
+  color: var(--md-error);
+  background: rgba(244, 67, 54, 0.1);
 }
 
 .copy-magnet-btn {

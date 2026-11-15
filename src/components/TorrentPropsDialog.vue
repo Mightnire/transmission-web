@@ -63,6 +63,13 @@
           </div>
         </div>
 
+        <div class="form-row">
+          <label class="form-check">
+            <input type="checkbox" v-model="form.honorsSessionLimits" />
+            <span>遵循全局速度限制 (若取消勾选则无视全局限速)</span>
+          </label>
+        </div>
+
         <div class="divider"></div>
 
         <!-- 2. 分享率与做种停止规则 -->
@@ -154,6 +161,7 @@ const form = reactive({
   downloadLimited: false,
   uploadLimit: 0,
   uploadLimited: false,
+  honorsSessionLimits: true,
   seedRatioMode: SeedRatioMode.GLOBAL,
   seedRatioLimit: 2.0,
   seedIdleMode: SeedIdleMode.GLOBAL,
@@ -174,6 +182,7 @@ watch(
     form.downloadLimited = detail.downloadLimited || false;
     form.uploadLimit = detail.uploadLimit || 0;
     form.uploadLimited = detail.uploadLimited || false;
+    form.honorsSessionLimits = detail.honorsSessionLimits !== undefined ? detail.honorsSessionLimits : true;
     form.seedRatioMode = detail.seedRatioMode !== undefined ? detail.seedRatioMode : SeedRatioMode.GLOBAL;
     form.seedRatioLimit = detail.seedRatioLimit || 2.0;
     form.seedIdleMode = detail.seedIdleMode !== undefined ? detail.seedIdleMode : SeedIdleMode.GLOBAL;
@@ -203,6 +212,7 @@ async function saveProps() {
     downloadLimited: form.downloadLimited,
     uploadLimit: form.uploadLimit,
     uploadLimited: form.uploadLimited,
+    honorsSessionLimits: form.honorsSessionLimits,
     seedRatioMode: form.seedRatioMode,
     seedRatioLimit: form.seedRatioLimit,
     seedIdleMode: form.seedIdleMode,
