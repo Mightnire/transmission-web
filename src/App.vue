@@ -20,7 +20,7 @@
       class="mobile-fab"
       v-if="isMobile && !state.detailOpen"
       @click="state.addDialogOpen = true"
-      title="添加新任务"
+      :title="t('toolbar.addTitle')"
       v-ripple
     >
       <span class="material-icons">add</span>
@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { state, startPolling, stopPolling } from './stores/transmission';
+import { t } from './locales';
 import AppBar from './components/AppBar.vue';
 import Drawer from './components/Drawer.vue';
 import TorrentList from './components/TorrentList.vue';

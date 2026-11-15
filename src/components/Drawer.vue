@@ -6,7 +6,7 @@
     <div class="sidebar-inner">
       <!-- 状态筛选区 -->
       <div class="sidebar-section">
-        <div class="section-header">{{ t('filter.title') }}</div>
+        <div class="section-header">{{ t('sidebar.filters') }}</div>
 
         <div
           class="sidebar-nav-item"
@@ -14,7 +14,7 @@
           @click="setStatusFilter('all')"
         >
           <span class="material-icons item-icon">all_inclusive</span>
-          <span class="item-label">{{ t('filter.all') }}</span>
+          <span class="item-label">{{ t('sidebar.all') }}</span>
           <span class="item-badge">{{ state.torrents.length }}</span>
         </div>
 
@@ -24,7 +24,7 @@
           @click="setStatusFilter('downloading')"
         >
           <span class="material-icons item-icon down-color">arrow_downward</span>
-          <span class="item-label">{{ t('filter.downloading') }}</span>
+          <span class="item-label">{{ t('sidebar.downloading') }}</span>
           <span class="item-badge" v-if="counts.downloading > 0">{{ counts.downloading }}</span>
         </div>
 
@@ -34,7 +34,7 @@
           @click="setStatusFilter('seeding')"
         >
           <span class="material-icons item-icon up-color">arrow_upward</span>
-          <span class="item-label">{{ t('filter.seeding') }}</span>
+          <span class="item-label">{{ t('sidebar.seeding') }}</span>
           <span class="item-badge" v-if="counts.seeding > 0">{{ counts.seeding }}</span>
         </div>
 
@@ -44,7 +44,7 @@
           @click="setStatusFilter('finished')"
         >
           <span class="material-icons item-icon finish-color">check_circle</span>
-          <span class="item-label">{{ t('filter.finished') }}</span>
+          <span class="item-label">{{ t('sidebar.finished') }}</span>
           <span class="item-badge" v-if="counts.finished > 0">{{ counts.finished }}</span>
         </div>
 
@@ -54,7 +54,7 @@
           @click="setStatusFilter('paused')"
         >
           <span class="material-icons item-icon pause-color">pause</span>
-          <span class="item-label">{{ t('filter.paused') }}</span>
+          <span class="item-label">{{ t('sidebar.paused') }}</span>
           <span class="item-badge" v-if="counts.paused > 0">{{ counts.paused }}</span>
         </div>
 
@@ -64,7 +64,7 @@
           @click="setStatusFilter('error')"
         >
           <span class="material-icons item-icon error-color">error</span>
-          <span class="item-label">{{ t('filter.error') }}</span>
+          <span class="item-label">{{ t('sidebar.errors') }}</span>
           <span class="item-badge error-badge" v-if="counts.error > 0">{{ counts.error }}</span>
         </div>
       </div>
@@ -74,8 +74,8 @@
       <!-- 排序管理 -->
       <div class="sidebar-section">
         <div class="section-header-flex">
-          <span>{{ t('filter.sortBy') }}</span>
-          <button class="sort-order-btn" @click="state.filter.sortAsc = !state.filter.sortAsc" :title="state.filter.sortAsc ? '升序' : '降序'">
+          <span>{{ t('sidebar.sortBy') }}</span>
+          <button class="sort-order-btn" @click="state.filter.sortAsc = !state.filter.sortAsc" :title="state.filter.sortAsc ? t('sidebar.sortAsc') : t('sidebar.sortDesc')">
             <span class="material-icons">{{ state.filter.sortAsc ? 'arrow_upward' : 'arrow_downward' }}</span>
           </button>
         </div>
@@ -95,17 +95,17 @@
 
       <!-- 底部统计面板 (BiglyBT 风格) -->
       <div class="sidebar-footer" v-if="state.stats">
-        <div class="footer-title">会话统计</div>
+        <div class="footer-title">{{ t('sidebar.stats') }}</div>
         <div class="footer-stat-line">
-          <span>已下载:</span>
+          <span>{{ t('sidebar.downloaded') }}:</span>
           <b>{{ formatBytes(state.stats['current-stats'].downloadedBytes) }}</b>
         </div>
         <div class="footer-stat-line">
-          <span>已上传:</span>
+          <span>{{ t('sidebar.uploaded') }}:</span>
           <b>{{ formatBytes(state.stats['current-stats'].uploadedBytes) }}</b>
         </div>
         <div class="footer-stat-line">
-          <span>分享率:</span>
+          <span>{{ t('sidebar.ratio') }}:</span>
           <b>{{ getRatio() }}</b>
         </div>
       </div>

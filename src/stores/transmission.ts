@@ -1,6 +1,7 @@
 import { reactive, ref, computed } from 'vue';
 import { Torrent, TorrentStatus, SessionInfo, SessionStats } from '../api/types';
 import { rpc } from '../api/rpc';
+import { t } from '../locales';
 
 export interface TorrentFilter {
   status: 'all' | 'downloading' | 'seeding' | 'paused' | 'error' | 'finished';
@@ -204,28 +205,28 @@ export function formatSpeed(bytesPerSec?: number): string {
 
 export function formatETA(seconds?: number): string {
   if (seconds === undefined || seconds === null || seconds < 0) return '—';
-  if (seconds === 0) return '完成';
+  if (seconds === 0) return t('common.finished');
   if (seconds > 86400 * 30) return '∞';
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  if (d > 0) return `${d}天 ${h}时`;
-  if (h > 0) return `${h}时 ${m}分`;
-  if (m > 0) return `${m}分 ${s}秒`;
-  return `${s}秒`;
+  if (d > 0) return `${d}${t('common.day')} ${h}${t('common.hour')}`;
+  if (h > 0) return `${h}${t('common.hour')} ${m}${t('common.min')}`;
+  if (m > 0) return `${m}${t('common.min')} ${s}${t('common.sec')}`;
+  return `${s}${t('common.sec')}`;
 }
 
 export function getStatusText(status: number): string {
   switch (status) {
-    case 0: return '已暂停';
-    case 1: return '等待校验';
-    case 2: return '正在校验';
-    case 3: return '等待下载';
-    case 4: return '正在下载';
-    case 5: return '等待做种';
-    case 6: return '正在做种';
-    default: return '未知状态';
+    case 0: return t('status.stopped');
+    case 1: return t('status.checkWait');
+    case 2: return t('status.checking');
+    case 3: return t('status.downloadWait');
+    case 4: return t('status.downloading');
+    case 5: return t('status.seedWait');
+    case 6: return t('status.seeding');
+    default: return t('status.unknown');
   }
 }
 

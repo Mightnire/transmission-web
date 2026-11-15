@@ -130,7 +130,7 @@
 
           <!-- 坏块损耗 -->
           <td class="col-corrupt">
-            <span class="corrupt-tag" v-if="torrent.corruptEver > 0" :title="`坏块损耗: ${formatBytes(torrent.corruptEver)}`">
+            <span class="corrupt-tag" v-if="torrent.corruptEver > 0" :title="t('table.corruptTitle', { size: formatBytes(torrent.corruptEver) })">
               {{ formatBytes(torrent.corruptEver) }}
             </span>
             <span v-else class="text-muted">—</span>
@@ -141,7 +141,7 @@
         <tr v-if="filteredTorrents.length === 0">
           <td colspan="11" class="empty-table-cell">
             <span class="material-icons empty-icon">inbox</span>
-            <p>没有找到符合条件的任务</p>
+            <p>{{ t('table.empty') }}</p>
           </td>
         </tr>
       </tbody>
@@ -156,71 +156,71 @@
     >
       <div class="menu-item" @click="handleAction('start')">
         <span class="material-icons">play_arrow</span>
-        <span>开始</span>
+        <span>{{ t('menu.start') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('start-now')">
         <span class="material-icons">fast_forward</span>
-        <span>立即开始 (跳过队列)</span>
+        <span>{{ t('menu.startNow') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('stop')">
         <span class="material-icons">pause</span>
-        <span>暂停</span>
+        <span>{{ t('menu.pause') }}</span>
       </div>
       <div class="menu-divider"></div>
       <div class="menu-item" @click="handleAction('verify')">
         <span class="material-icons">check_circle_outline</span>
-        <span>重新校验数据</span>
+        <span>{{ t('menu.verify') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('reannounce')">
         <span class="material-icons">cell_tower</span>
-        <span>向 Tracker 重新宣告</span>
+        <span>{{ t('menu.reannounce') }}</span>
       </div>
       <div class="menu-divider"></div>
       <div class="menu-item" @click="handleAction('move-top')">
         <span class="material-icons">vertical_align_top</span>
-        <span>移至队首</span>
+        <span>{{ t('menu.moveTop') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('move-up')">
         <span class="material-icons">keyboard_arrow_up</span>
-        <span>队列上移</span>
+        <span>{{ t('menu.moveUp') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('move-down')">
         <span class="material-icons">keyboard_arrow_down</span>
-        <span>队列下移</span>
+        <span>{{ t('menu.moveDown') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('move-bottom')">
         <span class="material-icons">vertical_align_bottom</span>
-        <span>移至队尾</span>
+        <span>{{ t('menu.moveBottom') }}</span>
       </div>
       <div class="menu-divider"></div>
       <div class="menu-item" @click="handleAction('set-location')">
         <span class="material-icons">drive_file_move</span>
-        <span>设置存储路径...</span>
+        <span>{{ t('menu.setLocation') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('rename')">
         <span class="material-icons">edit</span>
-        <span>重命名任务...</span>
+        <span>{{ t('menu.rename') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('copy-magnet')">
         <span class="material-icons">link</span>
-        <span>复制磁力链接 (Magnet)</span>
+        <span>{{ t('menu.copyMagnet') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('props')">
         <span class="material-icons">tune</span>
-        <span>任务首选项 / 限速属性...</span>
+        <span>{{ t('menu.props') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('detail')">
         <span class="material-icons">info</span>
-        <span>查看属性与文件...</span>
+        <span>{{ t('menu.detail') }}</span>
       </div>
       <div class="menu-divider"></div>
       <div class="menu-item text-danger" @click="handleAction('remove')">
         <span class="material-icons">delete</span>
-        <span>移除任务</span>
+        <span>{{ t('menu.remove') }}</span>
       </div>
       <div class="menu-item text-danger" @click="handleAction('remove-data')">
         <span class="material-icons">delete_forever</span>
-        <span>移除任务并删除文件</span>
+        <span>{{ t('menu.removeData') }}</span>
       </div>
     </div>
   </div>
@@ -330,12 +330,12 @@ async function handleAction(action: string) {
       const targetTorrent = state.torrents.find((t) => t.id === ids[0]);
       if (targetTorrent?.magnetLink) {
         navigator.clipboard.writeText(targetTorrent.magnetLink);
-        alert('磁力链接已成功复制到剪贴板！');
+        alert(t('menu.magnetCopied'));
       } else {
         rpc.getTorrentDetail(ids[0]).then((d) => {
           if (d?.magnetLink) {
             navigator.clipboard.writeText(d.magnetLink);
-            alert('磁力链接已成功复制到剪贴板！');
+            alert(t('menu.magnetCopied'));
           }
         });
       }
@@ -343,32 +343,32 @@ async function handleAction(action: string) {
     case 'rename':
       const curT = state.torrents.find((t) => t.id === ids[0]);
       if (!curT) break;
-      const newName = prompt('请输入新的任务或主目录名称:', curT.name);
+      const newName = prompt(t('menu.promptRename'), curT.name);
       if (newName && newName !== curT.name) {
         try {
           await rpc.torrentRenamePath(ids[0], curT.name, newName);
           await fetchTorrents();
         } catch (e: any) {
-          alert(`重命名失败: ${e.message}`);
+          alert(t('menu.renameFailed', { error: e.message }));
         }
       }
       break;
     case 'set-location':
-      const newLoc = prompt('请输入新的保存目录路径:', state.torrents.find((t) => t.id === ids[0])?.downloadDir || '/mnt');
+      const newLoc = prompt(t('menu.promptLocation'), state.torrents.find((t) => t.id === ids[0])?.downloadDir || '/mnt');
       if (newLoc) {
-        const moveData = confirm('是否同时移动已下载的数据文件？\n点击【确定】移动物理文件，【取消】仅切换索引。');
+        const moveData = confirm(t('menu.confirmMoveData'));
         await rpc.torrentSetLocation(ids, newLoc, moveData);
       }
       break;
     case 'remove':
-      if (confirm(`确定要移除选中的 ${ids.length} 个任务吗？`)) {
+      if (confirm(t('menu.confirmRemove', { count: ids.length }))) {
         await rpc.torrentRemove(ids, false);
         state.selectedIds = [];
         state.selectedId = null;
       }
       break;
     case 'remove-data':
-      if (confirm(`⚠️ 警告：确定要彻底删除选中的 ${ids.length} 个任务并连同磁盘文件一起粉碎吗？此操作不可撤销！`)) {
+      if (confirm(t('menu.confirmRemoveData', { count: ids.length }))) {
         await rpc.torrentRemove(ids, true);
         state.selectedIds = [];
         state.selectedId = null;
@@ -414,37 +414,37 @@ function isChecking(t: Torrent): boolean {
   return t.status === TorrentStatus.CHECK || t.status === TorrentStatus.CHECK_WAIT;
 }
 
-function getDisplayPercent(t: Torrent): number {
-  if (isChecking(t)) {
-    return (t.recheckProgress || 0) * 100;
+function getDisplayPercent(item: Torrent): number {
+  if (isChecking(item)) {
+    return (item.recheckProgress || 0) * 100;
   }
-  return (t.percentDone || 0) * 100;
+  return (item.percentDone || 0) * 100;
 }
 
-function getStatusDisplayText(t: Torrent): string {
-  if (t.status === TorrentStatus.CHECK) {
-    const p = ((t.recheckProgress || 0) * 100).toFixed(0);
-    return `正在校验 (${p}%)`;
+function getStatusDisplayText(item: Torrent): string {
+  if (item.status === TorrentStatus.CHECK) {
+    const p = ((item.recheckProgress || 0) * 100).toFixed(0);
+    return t('status.checkingWithPct', { pct: p });
   }
-  if (t.status === TorrentStatus.CHECK_WAIT) {
-    return '等待校验';
+  if (item.status === TorrentStatus.CHECK_WAIT) {
+    return t('status.checkWait');
   }
-  return getStatusText(t.status);
+  return getStatusText(item.status);
 }
 
-function getProgressFillClass(t: Torrent): string {
-  if (t.error !== 0) return 'fill-error';
-  if (isChecking(t)) return 'fill-checking';
-  if (t.percentDone >= 1.0) return 'fill-done';
-  if (t.status === TorrentStatus.STOPPED) return 'fill-paused';
+function getProgressFillClass(item: Torrent): string {
+  if (item.error !== 0) return 'fill-error';
+  if (isChecking(item)) return 'fill-checking';
+  if (item.percentDone >= 1.0) return 'fill-done';
+  if (item.status === TorrentStatus.STOPPED) return 'fill-paused';
   return 'fill-active';
 }
 
-function getStatusBadgeClass(t: Torrent): string {
-  if (t.error !== 0) return 'badge-error';
-  if (isChecking(t)) return 'badge-check';
-  if (t.status === TorrentStatus.DOWNLOAD) return 'badge-download';
-  if (t.status === TorrentStatus.SEED) return 'badge-seed';
+function getStatusBadgeClass(item: Torrent): string {
+  if (item.error !== 0) return 'badge-error';
+  if (isChecking(item)) return 'badge-check';
+  if (item.status === TorrentStatus.DOWNLOAD) return 'badge-download';
+  if (item.status === TorrentStatus.SEED) return 'badge-seed';
   return 'badge-idle';
 }
 </script>

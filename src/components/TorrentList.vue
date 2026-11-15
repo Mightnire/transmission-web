@@ -15,7 +15,7 @@
 
       <div class="empty-state" v-else>
         <span class="material-icons empty-icon">inbox</span>
-        <p class="empty-text">当前分类下没有下载任务</p>
+        <p class="empty-text">{{ t('table.empty') }}</p>
       </div>
     </div>
   </div>
@@ -24,6 +24,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { state, filteredTorrents } from '../stores/transmission';
+import { t } from '../locales';
 import TorrentTable from './TorrentTable.vue';
 import TorrentCard from './TorrentCard.vue';
 

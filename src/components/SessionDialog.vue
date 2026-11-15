@@ -4,9 +4,9 @@
       <div class="dialog-header">
         <div class="header-title-row">
           <span class="material-icons header-icon">settings</span>
-          <h2 class="md-dialog-title">Transmission 首选项</h2>
+          <h2 class="md-dialog-title">{{ t('session.title') }}</h2>
         </div>
-        <button class="md-icon-button" @click="state.sessionDialogOpen = false" title="关闭">
+        <button class="md-icon-button" @click="state.sessionDialogOpen = false" :title="t('common.close')">
           <span class="material-icons">close</span>
         </button>
       </div>
@@ -19,45 +19,45 @@
             :class="{ active: activeTab === 'speed' }"
             @click="activeTab = 'speed'"
           >
-            速度与计划
+            {{ t('session.tabs.speed') }}
           </button>
           <button
             class="tab-btn"
             :class="{ active: activeTab === 'queue' }"
             @click="activeTab = 'queue'"
           >
-            队列与调度
+            {{ t('session.tabs.queue') }}
           </button>
           <button
             class="tab-btn"
             :class="{ active: activeTab === 'network' }"
             @click="activeTab = 'network'"
           >
-            网络与协议
+            {{ t('session.tabs.network') }}
           </button>
           <button
             class="tab-btn"
             :class="{ active: activeTab === 'storage' }"
             @click="activeTab = 'storage'"
           >
-            存储与缓存
+            {{ t('session.tabs.storage') }}
           </button>
           <button
             class="tab-btn"
             :class="{ active: activeTab === 'automation' }"
             @click="activeTab = 'automation'"
           >
-            安全与自动化
+            {{ t('session.tabs.automation') }}
           </button>
         </div>
 
         <!-- 1. 速度与计划 (包含定时计划限速) -->
         <div v-if="activeTab === 'speed'" class="tab-body">
-          <h4 class="sub-title">常规速度限制</h4>
+          <h4 class="sub-title">{{ t('session.speed.normal') }}</h4>
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.speedLimitDownEnabled" />
-              <span>全局下载速度上限:</span>
+              <span>{{ t('session.speed.downLimit') }}</span>
             </label>
             <div class="unit-group">
               <input
@@ -73,7 +73,7 @@
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.speedLimitUpEnabled" />
-              <span>全局上传速度上限:</span>
+              <span>{{ t('session.speed.upLimit') }}</span>
             </label>
             <div class="unit-group">
               <input
@@ -88,16 +88,16 @@
 
           <div class="divider"></div>
 
-          <h4 class="sub-title">乌龟临时限速模式 (Turtle Mode)</h4>
+          <h4 class="sub-title">{{ t('session.speed.turtle') }}</h4>
           <div class="form-row">
-            <span>乌龟模式下载速度:</span>
+            <span>{{ t('session.speed.turtleDown') }}</span>
             <div class="unit-group">
               <input type="number" class="num-input" v-model.number="form.altSpeedDown" />
               <span class="unit-label">KB/s</span>
             </div>
           </div>
           <div class="form-row">
-            <span>乌龟模式上传速度:</span>
+            <span>{{ t('session.speed.turtleUp') }}</span>
             <div class="unit-group">
               <input type="number" class="num-input" v-model.number="form.altSpeedUp" />
               <span class="unit-label">KB/s</span>
@@ -107,26 +107,26 @@
           <div class="form-row mt-2">
             <label class="form-check">
               <input type="checkbox" v-model="form.altSpeedTimeEnabled" />
-              <span class="font-bold">启用定时计划限速</span>
+              <span class="font-bold">{{ t('session.speed.scheduleEnable') }}</span>
             </label>
           </div>
 
           <div class="sub-box" v-if="form.altSpeedTimeEnabled">
             <div class="form-row">
-              <span>每天限速时段:</span>
+              <span>{{ t('session.speed.scheduleTime') }}</span>
               <div class="time-range-group">
                 <input type="time" class="time-input" v-model="timeBeginStr" />
-                <span>至</span>
+                <span>{{ t('session.speed.to') }}</span>
                 <input type="time" class="time-input" v-model="timeEndStr" />
               </div>
             </div>
 
             <div class="form-row">
-              <span>生效日期:</span>
+              <span>{{ t('session.speed.days') }}</span>
               <select class="select-input" v-model.number="form.altSpeedTimeDay">
-                <option :value="127">每天 (周一至周日)</option>
-                <option :value="62">工作日 (周一至周五)</option>
-                <option :value="65">周末 (周六与周日)</option>
+                <option :value="127">{{ t('session.speed.daysAll') }}</option>
+                <option :value="62">{{ t('session.speed.daysWork') }}</option>
+                <option :value="65">{{ t('session.speed.daysWeekend') }}</option>
               </select>
             </div>
           </div>
@@ -134,11 +134,11 @@
 
         <!-- 2. 队列与调度 (并发限制与停滞时间) -->
         <div v-else-if="activeTab === 'queue'" class="tab-body">
-          <h4 class="sub-title">并发任务限制</h4>
+          <h4 class="sub-title">{{ t('session.queue.concurrency') }}</h4>
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.downloadQueueEnabled" />
-              <span>最大活动下载任务数:</span>
+              <span>{{ t('session.queue.downQueue') }}</span>
             </label>
             <input
               type="number"
@@ -151,7 +151,7 @@
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.seedQueueEnabled" />
-              <span>最大活动做种任务数:</span>
+              <span>{{ t('session.queue.seedQueue') }}</span>
             </label>
             <input
               type="number"
@@ -163,15 +163,15 @@
 
           <div class="divider"></div>
 
-          <h4 class="sub-title">停滞任务忽略策略 (Stalled Tasks)</h4>
+          <h4 class="sub-title">{{ t('session.queue.stalled') }}</h4>
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.queueStalledEnabled" />
-              <span>当任务空闲无传输超过指定时间，不计入并发上限:</span>
+              <span>{{ t('session.queue.stalledEnable') }}</span>
             </label>
           </div>
           <div class="form-row">
-            <span style="padding-left: 24px;">停滞超时判定时间:</span>
+            <span style="padding-left: 24px;">{{ t('session.queue.stalledTime') }}</span>
             <div class="unit-group">
               <input
                 type="number"
@@ -179,17 +179,17 @@
                 v-model.number="form.queueStalledMinutes"
                 :disabled="!form.queueStalledEnabled"
               />
-              <span class="unit-label">分钟</span>
+              <span class="unit-label">{{ t('session.queue.minutes') }}</span>
             </div>
           </div>
 
           <div class="divider"></div>
 
-          <h4 class="sub-title">默认做种与停止规则</h4>
+          <h4 class="sub-title">{{ t('session.queue.seedRules') }}</h4>
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.seedRatioLimited" />
-              <span>默认做种达到指定分享率后停止:</span>
+              <span>{{ t('session.queue.ratioLimit') }}</span>
             </label>
             <input
               type="number"
@@ -203,7 +203,7 @@
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.idleSeedingLimitEnabled" />
-              <span>默认做种空闲超过指定时间后停止:</span>
+              <span>{{ t('session.queue.idleLimit') }}</span>
             </label>
             <div class="unit-group">
               <input
@@ -212,21 +212,21 @@
                 v-model.number="form.idleSeedingLimit"
                 :disabled="!form.idleSeedingLimitEnabled"
               />
-              <span class="unit-label">分钟</span>
+              <span class="unit-label">{{ t('session.queue.minutes') }}</span>
             </div>
           </div>
         </div>
 
         <!-- 3. 网络与协议 (P2P协议、端口与加密) -->
         <div v-else-if="activeTab === 'network'" class="tab-body">
-          <h4 class="sub-title">入站对等连接端口</h4>
+          <h4 class="sub-title">{{ t('session.network.peerPort') }}</h4>
           <div class="form-row">
-            <span>监听对等端口:</span>
+            <span>{{ t('session.network.portLabel') }}</span>
             <div class="port-input-group">
               <input type="number" class="num-input" v-model.number="form.peerPort" />
               <button class="md-btn md-btn-flat btn-sm" @click="testPort" :disabled="testingPort">
                 <span class="material-icons" style="font-size: 16px;">{{ testingPort ? 'sync' : 'network_check' }}</span>
-                {{ testingPort ? '测试中...' : '测试端口' }}
+                {{ testingPort ? t('session.network.portTesting') : t('session.network.testPort') }}
               </button>
             </div>
           </div>
@@ -235,84 +235,84 @@
             <span class="material-icons" :style="{ color: portStatus ? 'var(--md-success)' : 'var(--md-error)' }">
               {{ portStatus ? 'check_circle' : 'cancel' }}
             </span>
-            <span>{{ portStatus ? '公网入站对等端口正常开放 (Port is OPEN)' : '入站端口被阻断或关闭 (Port is CLOSED)' }}</span>
+            <span>{{ portStatus ? t('session.network.portOpen') : t('session.network.portClosed') }}</span>
           </div>
 
           <div class="form-row mt-2">
             <label class="form-check">
               <input type="checkbox" v-model="form.peerPortRandomOnStart" />
-              <span>启动 Transmission 时随机选择端口</span>
+              <span>{{ t('session.network.randomPort') }}</span>
             </label>
           </div>
 
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.portForwardingEnabled" />
-              <span>使用 UPnP / NAT-PMP 自动映射路由端口</span>
+              <span>{{ t('session.network.upnp') }}</span>
             </label>
           </div>
 
           <div class="divider"></div>
 
-          <h4 class="sub-title">P2P 协议与网络特性 (PT/BT 选项)</h4>
+          <h4 class="sub-title">{{ t('session.network.protocols') }}</h4>
           <div class="form-grid">
             <label class="form-check">
               <input type="checkbox" v-model="form.dhtEnabled" />
-              <span>启用分布式哈希表 (DHT)</span>
+              <span>{{ t('session.network.dht') }}</span>
             </label>
             <label class="form-check">
               <input type="checkbox" v-model="form.pexEnabled" />
-              <span>启用用户对等交换 (PEX)</span>
+              <span>{{ t('session.network.pex') }}</span>
             </label>
             <label class="form-check">
               <input type="checkbox" v-model="form.lpdEnabled" />
-              <span>启用本地用户发现 (LPD)</span>
+              <span>{{ t('session.network.lpd') }}</span>
             </label>
             <label class="form-check">
               <input type="checkbox" v-model="form.utpEnabled" />
-              <span>启用微传输协议 (µTP)</span>
+              <span>{{ t('session.network.utp') }}</span>
             </label>
           </div>
 
           <div class="divider"></div>
 
-          <h4 class="sub-title">数据传输加密模式</h4>
+          <h4 class="sub-title">{{ t('session.network.encryption') }}</h4>
           <div class="form-row">
-            <span>加密协议策略:</span>
+            <span>{{ t('session.network.encPolicy') }}</span>
             <select class="select-input" v-model="form.encryption">
-              <option value="tolerated">兼容模式 (Tolerated - 允许未加密)</option>
-              <option value="preferred">优先加密 (Preferred - 推荐)</option>
-              <option value="required">强制加密 (Required - 拒绝未加密连接)</option>
+              <option value="tolerated">{{ t('session.network.encTolerated') }}</option>
+              <option value="preferred">{{ t('session.network.encPreferred') }}</option>
+              <option value="required">{{ t('session.network.encRequired') }}</option>
             </select>
           </div>
 
           <div class="form-row">
-            <span>全局最大连接对等数:</span>
+            <span>{{ t('session.network.peerGlobal') }}</span>
             <input type="number" class="num-input" v-model.number="form.peerLimitGlobal" />
           </div>
           <div class="form-row">
-            <span>每个种子最大连接数:</span>
+            <span>{{ t('session.network.peerPerTorrent') }}</span>
             <input type="number" class="num-input" v-model.number="form.peerLimitPerTorrent" />
           </div>
         </div>
 
         <!-- 4. 存储与缓存 (目录、可用空间、写缓存调节) -->
         <div v-else-if="activeTab === 'storage'" class="tab-body">
-          <h4 class="sub-title">存储目录与空间探测</h4>
+          <h4 class="sub-title">{{ t('session.storage.dirs') }}</h4>
           <div class="form-group">
-            <label class="form-label">默认下载保存目录:</label>
+            <label class="form-label">{{ t('session.storage.downloadDir') }}</label>
             <input type="text" class="text-input" v-model="form.downloadDir" @blur="checkFreeSpace" />
           </div>
 
           <div class="free-space-badge" v-if="freeSpaceBytes !== null">
             <span class="material-icons">storage</span>
-            <span>该存储挂载点剩余可用容量: <b>{{ formatBytes(freeSpaceBytes) }}</b></span>
+            <span>{{ t('session.storage.freeSpace', { size: formatBytes(freeSpaceBytes) }) }}</span>
           </div>
 
           <div class="form-group mt-2">
             <label class="form-check">
               <input type="checkbox" v-model="form.incompleteDirEnabled" />
-              <span>将未完成的任务文件保存在临时目录:</span>
+              <span>{{ t('session.storage.incompleteDir') }}</span>
             </label>
             <input
               type="text"
@@ -324,11 +324,11 @@
 
           <div class="divider"></div>
 
-          <h4 class="sub-title">路由器嵌入式内存缓存调优 (Cache Size)</h4>
+          <h4 class="sub-title">{{ t('session.storage.cacheTitle') }}</h4>
           <div class="form-row">
             <div>
-              <span>磁盘写入缓存大小:</span>
-              <div class="form-hint">路由器 RAM 较紧凑时建议 2~4MB，机械硬盘下载可调大至 8~16MB</div>
+              <span>{{ t('session.storage.cacheSize') }}</span>
+              <div class="form-hint">{{ t('session.storage.cacheHint') }}</div>
             </div>
             <div class="unit-group">
               <input type="number" class="num-input" v-model.number="form.cacheSizeMb" min="1" max="64" />
@@ -339,46 +339,46 @@
           <div class="form-row mt-2">
             <label class="form-check">
               <input type="checkbox" v-model="form.renamePartialFiles" />
-              <span>下载中未完成的文件自动追加 .part 扩展名</span>
+              <span>{{ t('session.storage.renamePartial') }}</span>
             </label>
           </div>
 
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.trashOriginalTorrentFiles" />
-              <span>添加任务后自动删除原始 .torrent 文件</span>
+              <span>{{ t('session.storage.trashTorrent') }}</span>
             </label>
           </div>
         </div>
 
         <!-- 5. 安全与自动化 (黑名单、默认Tracker、完成脚本) -->
         <div v-else-if="activeTab === 'automation'" class="tab-body">
-          <h4 class="sub-title">IP 黑名单防护 (Blocklist)</h4>
+          <h4 class="sub-title">{{ t('session.automation.blocklist') }}</h4>
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.blocklistEnabled" />
-              <span>启用外部 IP 黑名单防护</span>
+              <span>{{ t('session.automation.blocklistEnable') }}</span>
             </label>
           </div>
           <div class="form-group">
-            <label class="form-label">黑名单更新 URL 规则源:</label>
+            <label class="form-label">{{ t('session.automation.blocklistUrl') }}</label>
             <input type="text" class="text-input" v-model="form.blocklistUrl" :disabled="!form.blocklistEnabled" />
           </div>
           <div class="blocklist-action-row">
             <button class="md-btn md-btn-flat" @click="updateBlocklist" :disabled="updatingBlocklist || !form.blocklistEnabled">
               <span class="material-icons">security</span>
-              {{ updatingBlocklist ? '正在拉取...' : '立即更新黑名单' }}
+              {{ updatingBlocklist ? t('session.automation.blocklistUpdating') : t('session.automation.blocklistUpdate') }}
             </button>
             <span class="blocklist-size" v-if="state.session?.['blocklist-size']">
-              已载入规则条数: <b>{{ state.session['blocklist-size'] }}</b> 条
+              {{ t('session.automation.blocklistRules', { count: state.session['blocklist-size'] }) }}
             </span>
           </div>
 
           <div class="divider"></div>
 
-          <h4 class="sub-title">全局公共默认 Tracker (Default Trackers)</h4>
+          <h4 class="sub-title">{{ t('session.automation.defaultTrackers') }}</h4>
           <div class="form-group">
-            <label class="form-label">添加公共种子时自动注入的默认 Tracker 列表 (每行一个):</label>
+            <label class="form-label">{{ t('session.automation.defaultTrackersHint') }}</label>
             <textarea
               class="textarea-input"
               rows="3"
@@ -389,15 +389,15 @@
 
           <div class="divider"></div>
 
-          <h4 class="sub-title">任务下载完成自动化脚本 (Done Script)</h4>
+          <h4 class="sub-title">{{ t('session.automation.doneScript') }}</h4>
           <div class="form-row">
             <label class="form-check">
               <input type="checkbox" v-model="form.scriptTorrentDoneEnabled" />
-              <span>任务下载完成时自动执行后台脚本</span>
+              <span>{{ t('session.automation.doneScriptEnable') }}</span>
             </label>
           </div>
           <div class="form-group">
-            <label class="form-label">Shell 脚本绝对路径:</label>
+            <label class="form-label">{{ t('session.automation.doneScriptPath') }}</label>
             <input
               type="text"
               class="text-input"
@@ -411,10 +411,10 @@
 
       <div class="md-dialog-actions">
         <button class="md-btn md-btn-flat" @click="state.sessionDialogOpen = false">
-          取消
+          {{ t('common.cancel') }}
         </button>
         <button class="md-btn md-btn-raised" @click="saveSettings">
-          保存配置
+          {{ t('common.save') }}
         </button>
       </div>
     </div>
@@ -424,6 +424,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue';
 import { state, fetchSession, formatBytes } from '../stores/transmission';
+import { t } from '../locales';
 import { rpc } from '../api/rpc';
 
 const activeTab = ref<'speed' | 'queue' | 'network' | 'storage' | 'automation'>('speed');
@@ -594,10 +595,10 @@ async function updateBlocklist() {
   updatingBlocklist.value = true;
   try {
     const res = await rpc.blocklistUpdate();
-    alert(`IP 黑名单更新完成！已成功载入 ${res['blocklist-size']} 条防护屏蔽规则。`);
+    alert(t('session.automation.blocklistSuccess', { count: res['blocklist-size'] }));
     await fetchSession();
   } catch (e) {
-    alert('黑名单更新失败，请检查网络或 URL 规则源是否有效。');
+    alert(t('session.automation.blocklistFailed'));
   } finally {
     updatingBlocklist.value = false;
   }

@@ -4,37 +4,37 @@
       <div class="dialog-header">
         <div class="header-title-row">
           <span class="material-icons header-icon">tune</span>
-          <h2 class="md-dialog-title">任务属性: {{ torrent.name }}</h2>
+          <h2 class="md-dialog-title">{{ t('props.title', { name: torrent.name }) }}</h2>
         </div>
-        <button class="md-icon-button" @click="close" title="关闭">
+        <button class="md-icon-button" @click="close" :title="t('common.close')">
           <span class="material-icons">close</span>
         </button>
       </div>
 
       <div class="md-dialog-content">
         <!-- 1. 速度与带宽优先级 -->
-        <h4 class="sub-title">独立带宽与优先级</h4>
+        <h4 class="sub-title">{{ t('props.bandwidth') }}</h4>
         <div class="form-row">
-          <span>带宽优先级:</span>
+          <span>{{ t('props.priority') }}</span>
           <select class="select-input" v-model.number="form.bandwidthPriority">
-            <option :value="1">高优先级 (High)</option>
-            <option :value="0">普通优先级 (Normal)</option>
-            <option :value="-1">低优先级 (Low)</option>
+            <option :value="1">{{ t('props.high') }}</option>
+            <option :value="0">{{ t('props.normal') }}</option>
+            <option :value="-1">{{ t('props.low') }}</option>
           </select>
         </div>
 
         <div class="form-row">
-          <span>最大连接节点数:</span>
+          <span>{{ t('props.peerLimit') }}</span>
           <input type="number" class="num-input" v-model.number="form.peerLimit" min="1" max="500" />
         </div>
 
         <div class="divider"></div>
 
-        <h4 class="sub-title">独立速度限制</h4>
+        <h4 class="sub-title">{{ t('props.speedLimits') }}</h4>
         <div class="form-row">
           <label class="form-check">
             <input type="checkbox" v-model="form.downloadLimited" />
-            <span>启用独立下载限速:</span>
+            <span>{{ t('props.downLimit') }}</span>
           </label>
           <div class="unit-group">
             <input
@@ -50,7 +50,7 @@
         <div class="form-row">
           <label class="form-check">
             <input type="checkbox" v-model="form.uploadLimited" />
-            <span>启用独立上传限速:</span>
+            <span>{{ t('props.upLimit') }}</span>
           </label>
           <div class="unit-group">
             <input
@@ -66,65 +66,65 @@
         <div class="form-row">
           <label class="form-check">
             <input type="checkbox" v-model="form.honorsSessionLimits" />
-            <span>遵循全局速度限制 (若取消勾选则无视全局限速)</span>
+            <span>{{ t('props.honorsSession') }}</span>
           </label>
         </div>
 
         <div class="divider"></div>
 
         <!-- 2. 分享率与做种停止规则 -->
-        <h4 class="sub-title">独立做种停止规则</h4>
+        <h4 class="sub-title">{{ t('props.seedRules') }}</h4>
         <div class="form-row">
-          <span>分享率停止模式:</span>
+          <span>{{ t('props.ratioMode') }}</span>
           <select class="select-input" v-model.number="form.seedRatioMode">
-            <option :value="0">遵循全局设置 (0)</option>
-            <option :value="1">单独指定分享率 (1)</option>
-            <option :value="2">无限做种 (2)</option>
+            <option :value="0">{{ t('props.ratioGlobal') }}</option>
+            <option :value="1">{{ t('props.ratioSingle') }}</option>
+            <option :value="2">{{ t('props.ratioUnlimited') }}</option>
           </select>
         </div>
 
         <div class="form-row" v-if="form.seedRatioMode === 1">
-          <span>目标分享比率:</span>
+          <span>{{ t('props.ratioTarget') }}</span>
           <input type="number" step="0.1" class="num-input" v-model.number="form.seedRatioLimit" />
         </div>
 
         <div class="form-row mt-2">
-          <span>空闲停止模式:</span>
+          <span>{{ t('props.idleMode') }}</span>
           <select class="select-input" v-model.number="form.seedIdleMode">
-            <option :value="0">遵循全局设置 (0)</option>
-            <option :value="1">单独指定超时 (1)</option>
-            <option :value="2">无限期做种 (2)</option>
+            <option :value="0">{{ t('props.idleGlobal') }}</option>
+            <option :value="1">{{ t('props.idleSingle') }}</option>
+            <option :value="2">{{ t('props.idleUnlimited') }}</option>
           </select>
         </div>
 
         <div class="form-row" v-if="form.seedIdleMode === 1">
-          <span>空闲超时分钟数:</span>
+          <span>{{ t('props.idleTarget') }}</span>
           <div class="unit-group">
             <input type="number" class="num-input" v-model.number="form.seedIdleLimit" />
-            <span class="unit-label">分钟</span>
+            <span class="unit-label">{{ t('session.queue.minutes') }}</span>
           </div>
         </div>
 
         <div class="divider"></div>
 
         <!-- 3. 标签分类 -->
-        <h4 class="sub-title">任务标签 (逗号分隔)</h4>
+        <h4 class="sub-title">{{ t('props.labels') }}</h4>
         <div class="form-group">
           <input
             type="text"
             class="text-input"
             v-model="labelsStr"
-            placeholder="例如: 动漫, PT, 电影"
+            :placeholder="t('props.labelsPlaceholder')"
           />
         </div>
       </div>
 
       <div class="md-dialog-actions">
         <button class="md-btn md-btn-flat" @click="close">
-          取消
+          {{ t('common.cancel') }}
         </button>
         <button class="md-btn md-btn-raised" @click="saveProps">
-          保存属性
+          {{ t('common.save') }}
         </button>
       </div>
     </div>
@@ -135,6 +135,7 @@
 import { ref, reactive, watch, computed } from 'vue';
 import { state, fetchTorrents } from '../stores/transmission';
 import { Torrent, Priority, SeedRatioMode, SeedIdleMode } from '../api/types';
+import { t } from '../locales';
 import { rpc } from '../api/rpc';
 
 const props = defineProps<{

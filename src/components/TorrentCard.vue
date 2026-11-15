@@ -19,7 +19,7 @@
         <!-- 统计指标网格 -->
         <div class="torrent-meta">
           <span class="meta-item bold-percent" :style="isChecking ? 'color: var(--md-warning);' : ''">
-            {{ progressPercent.toFixed(1) }}%{{ isChecking ? ' (校验)' : '' }}
+            {{ progressPercent.toFixed(1) }}%{{ isChecking ? ` (${t('status.checking')})` : '' }}
           </span>
           <span class="meta-item">
             {{ formatBytes(torrent.totalSize * torrent.percentDone) }} / {{ formatBytes(torrent.totalSize) }}
@@ -31,21 +31,21 @@
           ↑ {{ formatSpeed(torrent.rateUpload) }}
         </span>
         <span class="meta-item" v-if="torrent.eta > 0">
-          剩余: {{ formatETA(torrent.eta) }}
+          {{ t('common.eta') }}: {{ formatETA(torrent.eta) }}
         </span>
-        <span class="meta-item peers" title="连接的做种者 / 下载者">
+        <span class="meta-item peers" :title="t('common.peers')">
           Peers: {{ torrent.peersConnected }}
         </span>
       </div>
 
       <!-- 坏块与网络浪费损耗专属徽标 (特色功能) -->
       <div class="badges-row" v-if="torrent.corruptEver > 0 || torrent.error !== 0">
-        <span class="md-badge md-badge-error" v-if="torrent.corruptEver > 0" title="校验失败丢弃的坏块数据">
+        <span class="md-badge md-badge-error" v-if="torrent.corruptEver > 0" :title="t('table.corruptTitle', { size: formatBytes(torrent.corruptEver) })">
           <span class="material-icons" style="font-size: 14px; margin-right: 2px;">warning</span>
-          坏块损耗: {{ formatBytes(torrent.corruptEver) }}
+          {{ t('common.corrupt') }}: {{ formatBytes(torrent.corruptEver) }}
         </span>
         <span class="md-badge md-badge-error" v-if="torrent.error !== 0">
-          {{ torrent.errorString || '任务发生异常' }}
+          {{ torrent.errorString || t('sidebar.errors') }}
         </span>
       </div>
 
@@ -54,20 +54,20 @@
         <button
           class="md-btn md-btn-flat"
           @click="togglePlay"
-          :title="isPaused ? '开始' : '暂停'"
+          :title="isPaused ? t('common.start') : t('common.pause')"
         >
           <span class="material-icons">{{ isPaused ? 'play_arrow' : 'pause' }}</span>
-          {{ isPaused ? '开始' : '暂停' }}
+          {{ isPaused ? t('common.start') : t('common.pause') }}
         </button>
 
-        <button class="md-btn md-btn-flat" @click="verifyTorrent" title="重新校验数据完整性">
+        <button class="md-btn md-btn-flat" @click="verifyTorrent" :title="t('toolbar.verifyTitle')">
           <span class="material-icons">refresh</span>
-          校验
+          {{ t('common.verify') }}
         </button>
 
-        <button class="md-btn md-btn-flat delete-btn" @click="removeTorrent" title="删除任务">
+        <button class="md-btn md-btn-flat delete-btn" @click="removeTorrent" :title="t('toolbar.deleteTitle')">
           <span class="material-icons">delete</span>
-          删除
+          {{ t('common.delete') }}
         </button>
       </div>
     </div>
@@ -78,6 +78,7 @@
 import { computed } from 'vue';
 import { Torrent, TorrentStatus } from '../api/types';
 import { state, formatBytes, formatSpeed, formatETA } from '../stores/transmission';
+import { t } from '../locales';
 import { rpc } from '../api/rpc';
 
 const props = defineProps<{ torrent: Torrent }>();
@@ -144,8 +145,8 @@ async function verifyTorrent() {
 }
 
 async function removeTorrent() {
-  if (confirm(`确定要移除任务 "${props.torrent.name}" 吗？`)) {
-    const deleteData = confirm('是否同时删除本地下载的数据文件？');
+  if (confirm(t('menu.confirmRemove', { count: 1 }))) {
+    const deleteData = confirm(t('menu.confirmRemoveData', { count: 1 }));
     await rpc.removeTorrents([props.torrent.id], deleteData);
     if (state.selectedId === props.torrent.id) {
       state.selectedId = null;

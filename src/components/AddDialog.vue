@@ -15,7 +15,7 @@
           ></textarea>
         </div>
 
-        <div class="or-divider">或</div>
+        <div class="or-divider">{{ t('addDialog.or') }}</div>
 
         <!-- 选项二：上传本地种子文件 -->
         <div class="form-group">
@@ -141,7 +141,7 @@ async function submit() {
     selectedFileName.value = '';
     fetchTorrents();
   } catch (err: any) {
-    alert('添加任务失败: ' + (err.message || err));
+    alert(t('addDialog.failed', { error: err.message || err }));
   }
 }
 </script>

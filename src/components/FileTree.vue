@@ -2,13 +2,17 @@
   <div class="file-tree-container">
     <div class="file-tree-header">
       <span class="file-tree-summary">
-        共 {{ files.length }} 个文件 · 已选 {{ selectedCount }} 个 · 
-        {{ formatBytes(totalSelectedBytes) }} / {{ formatBytes(totalBytes) }}
+        {{ t('fileTree.summary', {
+          total: files.length,
+          selected: selectedCount,
+          selectedBytes: formatBytes(totalSelectedBytes),
+          totalBytes: formatBytes(totalBytes)
+        }) }}
       </span>
 
       <div class="file-tree-actions">
         <button class="md-btn md-btn-flat" @click="toggleSelectAll" style="height: 28px; font-size: 11px;">
-          {{ isAllSelected ? '取消全选' : '全部选择' }}
+          {{ isAllSelected ? t('fileTree.deselectAll') : t('fileTree.selectAll') }}
         </button>
       </div>
     </div>
@@ -59,7 +63,7 @@
             <span class="node-pct">{{ (node.progress * 100).toFixed(0) }}%</span>
 
             <!-- 重命名按钮 -->
-            <button class="rename-file-btn" @click.stop="renamePath(node)" title="重命名此文件或目录">
+            <button class="rename-file-btn" @click.stop="renamePath(node)" :title="t('fileTree.renameTitle')">
               <span class="material-icons" style="font-size: 14px;">edit</span>
             </button>
 
@@ -70,9 +74,9 @@
               :value="fileStats[node.fileIndex!]?.priority ?? 0"
               @change="changePriority(node.fileIndex!, $event)"
             >
-              <option :value="1">高优先级</option>
-              <option :value="0">普通</option>
-              <option :value="-1">低优先级</option>
+              <option :value="1">{{ t('fileTree.priorityHigh') }}</option>
+              <option :value="0">{{ t('fileTree.priorityNormal') }}</option>
+              <option :value="-1">{{ t('fileTree.priorityLow') }}</option>
             </select>
           </div>
         </div>
@@ -85,6 +89,7 @@
 import { ref, computed, watch } from 'vue';
 import { TorrentFile, TorrentFileStat } from '../api/types';
 import { state, fetchTorrents, formatBytes } from '../stores/transmission';
+import { t } from '../locales';
 import { rpc } from '../api/rpc';
 
 const props = defineProps<{
@@ -131,7 +136,7 @@ function toggleCollapse(path: string) {
 }
 
 async function renamePath(node: TreeNode) {
-  const newName = prompt(`请输入新的名称:`, node.name);
+  const newName = prompt(t('fileTree.renamePrompt'), node.name);
   if (!newName || newName === node.name) return;
   try {
     await rpc.torrentRenamePath(props.torrentId, node.path, newName);
@@ -141,7 +146,7 @@ async function renamePath(node: TreeNode) {
     }
     await fetchTorrents();
   } catch (e: any) {
-    alert(`重命名失败: ${e.message}`);
+    alert(t('fileTree.renameFailed', { error: e.message }));
   }
 }
 

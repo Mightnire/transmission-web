@@ -6,23 +6,27 @@
         <span class="material-icons info-icon">info</span>
         <span class="dock-name" :title="activeTorrent.name">{{ activeTorrent.name }}</span>
         <span class="dock-meta" v-if="activeTorrent.status === 2 || activeTorrent.status === 1">
-          <span style="color: #e65100; font-weight: 600;">正在校验: {{ ((activeTorrent.recheckProgress || 0) * 100).toFixed(1) }}%</span> · 
-          已完成大小: {{ formatBytes((activeTorrent.totalSize || 0) * (activeTorrent.percentDone || 0)) }} / 
-          {{ formatBytes(activeTorrent.totalSize || 0) }}
+          <span style="color: #e65100; font-weight: 600;">{{ t('detail.checking', { pct: ((activeTorrent.recheckProgress || 0) * 100).toFixed(1) }) }}</span> · 
+          {{ t('detail.doneSize', {
+            done: formatBytes((activeTorrent.totalSize || 0) * (activeTorrent.percentDone || 0)),
+            total: formatBytes(activeTorrent.totalSize || 0)
+          }) }}
         </span>
         <span class="dock-meta" v-else>
-          进度: {{ ((activeTorrent.percentDone || 0) * 100).toFixed(1) }}% · 
-          {{ formatBytes((activeTorrent.totalSize || 0) * (activeTorrent.percentDone || 0)) }} / 
-          {{ formatBytes(activeTorrent.totalSize || 0) }}
+          {{ t('detail.progress', {
+            pct: ((activeTorrent.percentDone || 0) * 100).toFixed(1),
+            done: formatBytes((activeTorrent.totalSize || 0) * (activeTorrent.percentDone || 0)),
+            total: formatBytes(activeTorrent.totalSize || 0)
+          }) }}
         </span>
       </div>
 
       <div class="dock-actions">
         <!-- 最小化 / 关闭 -->
-        <button class="dock-btn" @click="state.detailOpen = false" title="收起详情面板">
+        <button class="dock-btn" @click="state.detailOpen = false" :title="t('detail.minimize')">
           <span class="material-icons">expand_more</span>
         </button>
-        <button class="dock-btn" @click="closeDetail" title="关闭">
+        <button class="dock-btn" @click="closeDetail" :title="t('detail.close')">
           <span class="material-icons">close</span>
         </button>
       </div>
@@ -36,7 +40,7 @@
         @click="currentTab = 'general'"
       >
         <span class="material-icons tab-icon">dashboard</span>
-        <span>常规</span>
+        <span>{{ t('detail.tabs.general') }}</span>
       </button>
 
       <button
@@ -45,7 +49,7 @@
         @click="currentTab = 'files'"
       >
         <span class="material-icons tab-icon">folder</span>
-        <span>文件</span>
+        <span>{{ t('detail.tabs.files') }}</span>
         <span class="tab-badge" v-if="activeTorrent.files">({{ activeTorrent.files.length }})</span>
       </button>
 
@@ -55,7 +59,7 @@
         @click="currentTab = 'peers'"
       >
         <span class="material-icons tab-icon">people</span>
-        <span>节点</span>
+        <span>{{ t('detail.tabs.peers') }}</span>
         <span class="tab-badge" v-if="activeTorrent.peers">({{ activeTorrent.peers.length }})</span>
       </button>
 
@@ -65,7 +69,7 @@
         @click="currentTab = 'trackers'"
       >
         <span class="material-icons tab-icon">alt_route</span>
-        <span>服务器</span>
+        <span>{{ t('detail.tabs.trackers') }}</span>
         <span class="tab-badge" v-if="activeTorrent.trackerStats">({{ activeTorrent.trackerStats.length }})</span>
       </button>
     </div>
@@ -77,92 +81,92 @@
         <div class="general-grid">
           <!-- 传输统计卡片 -->
           <div class="info-card">
-            <div class="card-title">传输统计</div>
+            <div class="card-title">{{ t('detail.general.transfer') }}</div>
             <div class="info-row">
-              <span class="label">完成进度:</span>
+              <span class="label">{{ t('detail.general.progress') }}</span>
               <span class="value font-bold">{{ ((activeTorrent.percentDone || 0) * 100).toFixed(1) }}%</span>
             </div>
             <div class="info-row" v-if="activeTorrent.status === 2">
-              <span class="label" style="color: #e65100; font-weight: 600;">数据校验进度:</span>
+              <span class="label" style="color: #e65100; font-weight: 600;">{{ t('detail.general.checkProgress') }}</span>
               <span class="value font-bold" style="color: #e65100;">{{ ((activeTorrent.recheckProgress || 0) * 100).toFixed(1) }}%</span>
             </div>
             <div class="info-row">
-              <span class="label">有效数据:</span>
+              <span class="label">{{ t('detail.general.haveValid') }}</span>
               <span class="value">{{ formatBytes(activeTorrent.haveValid) }}</span>
             </div>
             <div class="info-row">
-              <span class="label">累计下载:</span>
+              <span class="label">{{ t('detail.general.downloadedEver') }}</span>
               <span class="value">{{ formatBytes(activeTorrent.downloadedEver) }}</span>
             </div>
             <div class="info-row">
-              <span class="label">累计上传:</span>
+              <span class="label">{{ t('detail.general.uploadedEver') }}</span>
               <span class="value">{{ formatBytes(activeTorrent.uploadedEver) }}</span>
             </div>
             <div class="info-row">
-              <span class="label">分享比率:</span>
+              <span class="label">{{ t('detail.general.ratio') }}</span>
               <span class="value font-bold" style="color: var(--md-primary);">
                 {{ activeTorrent.uploadRatio >= 0 ? activeTorrent.uploadRatio.toFixed(2) : '0.00' }}
               </span>
             </div>
             <div class="info-row" v-if="activeTorrent.corruptEver > 0">
-              <span class="label text-danger">校验坏块损耗:</span>
+              <span class="label text-danger">{{ t('detail.general.corrupt') }}</span>
               <span class="value text-danger font-bold">{{ formatBytes(activeTorrent.corruptEver) }}</span>
             </div>
           </div>
 
           <!-- 种子元数据卡片 -->
           <div class="info-card">
-            <div class="card-title">信息与位置</div>
+            <div class="card-title">{{ t('detail.general.info') }}</div>
             <div class="info-row">
-              <span class="label">保存路径:</span>
+              <span class="label">{{ t('detail.general.savePath') }}</span>
               <span class="value selectable" :title="activeTorrent.downloadDir">{{ activeTorrent.downloadDir }}</span>
             </div>
             <div class="info-row">
-              <span class="label">散列值 (Hash):</span>
+              <span class="label">{{ t('detail.general.hash') }}</span>
               <span class="value selectable monospace font-sm">{{ activeTorrent.hashString }}</span>
             </div>
             <div class="info-row" style="margin-top: 6px;">
-              <span class="label">磁力链接:</span>
+              <span class="label">{{ t('detail.general.magnet') }}</span>
               <button class="copy-magnet-btn" @click="copyMagnet">
                 <span class="material-icons" style="font-size: 14px;">link</span>
-                复制磁链 (Magnet)
+                {{ t('detail.general.copyMagnet') }}
               </button>
             </div>
             <div class="info-row" v-if="activeTorrent.pieceCount">
-              <span class="label">区块分片:</span>
-              <span class="value">{{ activeTorrent.pieceCount }} 片 × {{ formatBytes(activeTorrent.pieceSize) }}</span>
+              <span class="label">{{ t('detail.general.pieces') }}</span>
+              <span class="value">{{ t('detail.general.piecesUnit', { count: activeTorrent.pieceCount, size: formatBytes(activeTorrent.pieceSize) }) }}</span>
             </div>
             <div class="info-row" v-if="activeTorrent.creator">
-              <span class="label">制作程序:</span>
+              <span class="label">{{ t('detail.general.creator') }}</span>
               <span class="value">{{ activeTorrent.creator }}</span>
             </div>
             <div class="info-row" v-if="activeTorrent.comment">
-              <span class="label">任务注释:</span>
+              <span class="label">{{ t('detail.general.comment') }}</span>
               <span class="value">{{ activeTorrent.comment }}</span>
             </div>
           </div>
 
           <!-- 时间统计卡片 -->
           <div class="info-card">
-            <div class="card-title">时间与限速</div>
+            <div class="card-title">{{ t('detail.general.timing') }}</div>
             <div class="info-row">
-              <span class="label">添加时间:</span>
+              <span class="label">{{ t('detail.general.addedDate') }}</span>
               <span class="value">{{ formatDate(activeTorrent.addedDate) }}</span>
             </div>
             <div class="info-row" v-if="activeTorrent.doneDate > 0">
-              <span class="label">完成时间:</span>
+              <span class="label">{{ t('detail.general.doneDate') }}</span>
               <span class="value">{{ formatDate(activeTorrent.doneDate) }}</span>
             </div>
             <div class="info-row">
-              <span class="label">下载限速:</span>
-              <span class="value">{{ activeTorrent.downloadLimited ? `${activeTorrent.downloadLimit} KB/s` : '不限速' }}</span>
+              <span class="label">{{ t('detail.general.downLimit') }}</span>
+              <span class="value">{{ activeTorrent.downloadLimited ? `${activeTorrent.downloadLimit} KB/s` : t('detail.general.unlimited') }}</span>
             </div>
             <div class="info-row">
-              <span class="label">上传限速:</span>
-              <span class="value">{{ activeTorrent.uploadLimited ? `${activeTorrent.uploadLimit} KB/s` : '不限速' }}</span>
+              <span class="label">{{ t('detail.general.upLimit') }}</span>
+              <span class="value">{{ activeTorrent.uploadLimited ? `${activeTorrent.uploadLimit} KB/s` : t('detail.general.unlimited') }}</span>
             </div>
             <div class="info-row">
-              <span class="label">带宽优先级:</span>
+              <span class="label">{{ t('detail.general.priority') }}</span>
               <span class="value">{{ getPriorityText(activeTorrent.bandwidthPriority) }}</span>
             </div>
           </div>
@@ -179,7 +183,7 @@
         />
         <div class="empty-hint" v-else>
           <span class="material-icons">hourglass_empty</span>
-          <p>正在拉取文件列表...</p>
+          <p>{{ t('detail.files.loading') }}</p>
         </div>
       </div>
 
@@ -188,19 +192,19 @@
         <table class="detail-table" v-if="activeTorrent.peers && activeTorrent.peers.length > 0">
           <thead>
             <tr>
-              <th>IP 地址</th>
-              <th>客户端</th>
-              <th>下载速度</th>
-              <th>上传速度</th>
-              <th>对方进度</th>
-              <th>标志 (Flags)</th>
-              <th>协议</th>
+              <th>{{ t('detail.peers.colIp') }}</th>
+              <th>{{ t('detail.peers.colClient') }}</th>
+              <th>{{ t('detail.peers.colDownSpeed') }}</th>
+              <th>{{ t('detail.peers.colUpSpeed') }}</th>
+              <th>{{ t('detail.peers.colProgress') }}</th>
+              <th>{{ t('detail.peers.colFlags') }}</th>
+              <th>{{ t('detail.peers.colProtocol') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="peer in activeTorrent.peers" :key="peer.address">
               <td class="monospace">{{ peer.address }}:{{ peer.port }}</td>
-              <td>{{ peer.clientName || '未知客户端' }}</td>
+              <td>{{ peer.clientName || t('detail.peers.unknownClient') }}</td>
               <td class="down-val">{{ peer.rateToClient > 0 ? formatSpeed(peer.rateToClient) : '—' }}</td>
               <td class="up-val">{{ peer.rateToPeer > 0 ? formatSpeed(peer.rateToPeer) : '—' }}</td>
               <td>{{ (peer.progress * 100).toFixed(1) }}%</td>
@@ -211,7 +215,7 @@
         </table>
         <div class="empty-hint" v-else>
           <span class="material-icons">cloud_off</span>
-          <p>当前暂无活跃的连接节点</p>
+          <p>{{ t('detail.peers.empty') }}</p>
         </div>
       </div>
 
@@ -220,40 +224,40 @@
         <div class="tracker-actions-bar">
           <button class="md-btn md-btn-flat" @click="askMorePeers">
             <span class="material-icons">sync</span>
-            立即向服务器宣告
+            {{ t('detail.trackers.announceNow') }}
           </button>
           <button class="md-btn md-btn-flat" @click="addTrackersPrompt">
             <span class="material-icons">add</span>
-            追加 Tracker...
+            {{ t('detail.trackers.addTrackers') }}
           </button>
         </div>
 
         <table class="detail-table" v-if="activeTorrent.trackerStats && activeTorrent.trackerStats.length > 0">
           <thead>
             <tr>
-              <th>层级</th>
-              <th>Announce URL</th>
-              <th>状态与结果</th>
-              <th>做种者</th>
-              <th>下载者</th>
-              <th>上次宣告同伴</th>
-              <th>操作</th>
+              <th>{{ t('detail.trackers.colTier') }}</th>
+              <th>{{ t('detail.trackers.colUrl') }}</th>
+              <th>{{ t('detail.trackers.colStatus') }}</th>
+              <th>{{ t('detail.trackers.colSeeders') }}</th>
+              <th>{{ t('detail.trackers.colLeechers') }}</th>
+              <th>{{ t('detail.trackers.colLastPeers') }}</th>
+              <th>{{ t('detail.trackers.colActions') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="tr in activeTorrent.trackerStats" :key="tr.id">
-              <td>Tier {{ tr.tier }}</td>
+              <td>{{ t('detail.trackers.tier', { tier: tr.tier }) }}</td>
               <td class="selectable font-sm">{{ tr.announce }}</td>
               <td>
                 <span class="tracker-res-badge" :class="tr.hasAnnounced ? 'ok' : 'wait'">
-                  {{ tr.lastAnnounceResult || '等待宣告...' }}
+                  {{ tr.lastAnnounceResult || t('detail.trackers.waiting') }}
                 </span>
               </td>
               <td>{{ tr.seederCount >= 0 ? tr.seederCount : '—' }}</td>
               <td>{{ tr.leecherCount >= 0 ? tr.leecherCount : '—' }}</td>
               <td>{{ tr.lastAnnouncePeerCount }}</td>
               <td>
-                <button class="remove-tr-btn" @click="removeTracker(tr.id)" title="移除此 Tracker">
+                <button class="remove-tr-btn" @click="removeTracker(tr.id)" :title="t('detail.trackers.removeTitle')">
                   <span class="material-icons" style="font-size: 14px;">delete_outline</span>
                 </button>
               </td>
@@ -262,7 +266,7 @@
         </table>
         <div class="empty-hint" v-else>
           <span class="material-icons">alt_route</span>
-          <p>该种子暂无 Tracker 记录</p>
+          <p>{{ t('detail.trackers.empty') }}</p>
         </div>
       </div>
     </div>
@@ -273,6 +277,7 @@
 import { ref, computed } from 'vue';
 import { state, formatBytes, formatSpeed } from '../stores/transmission';
 import { Priority } from '../api/types';
+import { t } from '../locales';
 import { rpc } from '../api/rpc';
 import FileTree from './FileTree.vue';
 
@@ -294,27 +299,27 @@ function closeDetail() {
 function copyMagnet() {
   if (activeTorrent.value?.magnetLink) {
     navigator.clipboard.writeText(activeTorrent.value.magnetLink);
-    alert('磁力链接已成功复制到剪贴板！');
+    alert(t('menu.magnetCopied'));
   }
 }
 
 async function addTrackersPrompt() {
   if (!activeTorrent.value) return;
-  const input = prompt('请输入要追加的 Tracker Announce URLs (多个请用逗号或换行分隔):');
+  const input = prompt(t('detail.trackers.promptAdd'));
   if (!input) return;
   const urls = input
     .split(/[\n,]/)
     .map((s) => s.trim())
     .filter((s) => s.startsWith('http') || s.startsWith('udp'));
   if (urls.length === 0) {
-    alert('未检测到有效的 http:// 或 udp:// Tracker 地址。');
+    alert(t('detail.trackers.noValidUrls'));
     return;
   }
   await rpc.torrentSet({
     ids: [activeTorrent.value.id],
     trackerAdd: urls,
   });
-  alert(`已成功追加 ${urls.length} 个 Tracker 服务器！`);
+  alert(t('detail.trackers.addSuccess', { count: urls.length }));
   // 刷新详情
   const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
   if (refreshed) {
@@ -324,7 +329,7 @@ async function addTrackersPrompt() {
 
 async function removeTracker(trackerId: number) {
   if (!activeTorrent.value) return;
-  if (!confirm('确定要移除此 Tracker 服务器吗？')) return;
+  if (!confirm(t('detail.trackers.confirmRemove'))) return;
   await rpc.torrentSet({
     ids: [activeTorrent.value.id],
     trackerRemove: [trackerId],
@@ -348,9 +353,9 @@ function formatDate(ts?: number): string {
 }
 
 function getPriorityText(p?: Priority): string {
-  if (p === Priority.HIGH) return '高优先级';
-  if (p === Priority.LOW) return '低优先级';
-  return '普通优先级';
+  if (p === Priority.HIGH) return t('props.high');
+  if (p === Priority.LOW) return t('props.low');
+  return t('props.normal');
 }
 </script>
 
