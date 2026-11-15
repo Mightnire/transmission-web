@@ -1,0 +1,328 @@
+/* ==========================================================================
+   Material Design 1 (MD1) Design System
+   Classic Paper & Ink Metaphor, Elevation Shadows, Typography & Palette
+   ========================================================================== */
+
+:root {
+  /* MD1 Classic Palette: Indigo 500 & Pink A200 */
+  --md-primary: #3f51b5;
+  --md-primary-dark: #303f9f;
+  --md-primary-light: #c5cae9;
+  --md-accent: #ff4081;
+  --md-accent-dark: #f50057;
+
+  /* Surface & Background */
+  --md-bg: #eceff1;
+  --md-surface: #ffffff;
+  --md-surface-card: #ffffff;
+  
+  /* Text & Icons */
+  --md-text-primary: rgba(0, 0, 0, 0.87);
+  --md-text-secondary: rgba(0, 0, 0, 0.54);
+  --md-text-disabled: rgba(0, 0, 0, 0.38);
+  --md-divider: rgba(0, 0, 0, 0.12);
+
+  /* Status Colors */
+  --md-success: #4caf50;
+  --md-warning: #ff9800;
+  --md-error: #f44336;
+  --md-info: #03a9f4;
+
+  /* MD1 Elevation Shadows (0dp to 24dp) */
+  --md-shadow-1dp: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  --md-shadow-2dp: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  --md-shadow-4dp: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+  --md-shadow-6dp: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  --md-shadow-8dp: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+
+  /* Animation Curves */
+  --md-transition-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --md-transition-decel: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --md-transition-accel: cubic-bezier(0.4, 0.0, 1, 1);
+}
+
+/* Dark Mode Theme */
+[data-theme="dark"] {
+  --md-bg: #121212;
+  --md-surface: #1e1e1e;
+  --md-surface-card: #242424;
+  --md-text-primary: rgba(255, 255, 255, 0.87);
+  --md-text-secondary: rgba(255, 255, 255, 0.60);
+  --md-text-disabled: rgba(255, 255, 255, 0.38);
+  --md-divider: rgba(255, 255, 255, 0.12);
+  --md-shadow-1dp: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.6);
+  --md-shadow-2dp: 0 3px 6px rgba(0,0,0,0.6), 0 3px 6px rgba(0,0,0,0.7);
+}
+
+/* Global Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--md-bg);
+  color: var(--md-text-primary);
+  line-height: 1.5;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* Material App Bar (56dp standard mobile / 64dp desktop) */
+.md-app-bar {
+  height: 56px;
+  background-color: var(--md-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  box-shadow: var(--md-shadow-2dp);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+@media (min-width: 960px) {
+  .md-app-bar {
+    height: 64px;
+    padding: 0 24px;
+  }
+}
+
+.md-app-bar-title {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md-icon-button {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: inherit;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s var(--md-transition-standard);
+  position: relative;
+  overflow: hidden;
+}
+
+.md-icon-button:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.md-icon-button:active {
+  background-color: rgba(255, 255, 255, 0.24);
+}
+
+/* MD1 Card (2dp elevation, 2dp border radius) */
+.md-card {
+  background-color: var(--md-surface-card);
+  border-radius: 2px;
+  box-shadow: var(--md-shadow-1dp);
+  margin-bottom: 12px;
+  transition: box-shadow 0.28s var(--md-transition-standard), transform 0.28s;
+  overflow: hidden;
+  position: relative;
+}
+
+.md-card:hover {
+  box-shadow: var(--md-shadow-2dp);
+}
+
+.md-card-content {
+  padding: 16px;
+}
+
+/* Floating Action Button (FAB 56dp, 6dp elevation, 12dp on active) */
+.md-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--md-accent);
+  color: #ffffff;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  box-shadow: var(--md-shadow-4dp);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  transition: transform 0.2s, box-shadow 0.2s var(--md-transition-standard);
+}
+
+.md-fab:hover {
+  box-shadow: var(--md-shadow-6dp);
+  transform: scale(1.05);
+}
+
+.md-fab:active {
+  box-shadow: var(--md-shadow-8dp);
+  transform: scale(0.95);
+}
+
+/* Classic MD1 Linear Progress Bar */
+.md-progress-track {
+  height: 4px;
+  background-color: rgba(63, 81, 181, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.md-progress-bar {
+  height: 100%;
+  background-color: var(--md-primary);
+  border-radius: 2px;
+  transition: width 0.3s var(--md-transition-decel);
+}
+
+.md-progress-bar.success {
+  background-color: var(--md-success);
+}
+
+.md-progress-bar.warning {
+  background-color: var(--md-warning);
+}
+
+.md-progress-bar.error {
+  background-color: var(--md-error);
+}
+
+/* MD1 Buttons */
+.md-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.md-btn-flat {
+  background: transparent;
+  color: var(--md-primary);
+}
+
+.md-btn-flat:hover {
+  background-color: rgba(63, 81, 181, 0.08);
+}
+
+.md-btn-raised {
+  background-color: var(--md-primary);
+  color: #ffffff;
+  box-shadow: var(--md-shadow-1dp);
+}
+
+.md-btn-raised:hover {
+  box-shadow: var(--md-shadow-2dp);
+}
+
+/* Badges & Tags */
+.md-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.md-badge-error {
+  background-color: rgba(244, 67, 54, 0.12);
+  color: var(--md-error);
+}
+
+.md-badge-success {
+  background-color: rgba(76, 175, 80, 0.12);
+  color: var(--md-success);
+}
+
+.md-badge-info {
+  background-color: rgba(3, 169, 244, 0.12);
+  color: var(--md-info);
+}
+
+/* Modal Overlay & Dialog */
+.md-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.54);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: mdFadeIn 0.2s var(--md-transition-standard);
+}
+
+.md-dialog {
+  background-color: var(--md-surface);
+  border-radius: 2px;
+  box-shadow: var(--md-shadow-8dp);
+  max-width: 90vw;
+  width: 520px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: mdZoomIn 0.24s var(--md-transition-decel);
+}
+
+.md-dialog-title {
+  padding: 24px 24px 20px;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.md-dialog-content {
+  padding: 0 24px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.md-dialog-actions {
+  padding: 8px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--md-divider);
+}
+
+@keyframes mdFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mdZoomIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

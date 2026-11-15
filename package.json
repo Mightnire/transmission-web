@@ -1,0 +1,21 @@
+{
+  "name": "transmission-web-md1",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A lightweight, zero-bloat Transmission Web UI designed with classic Material Design 1 (MD1) for routers and low-spec devices.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "typescript": "^5.4.2",
+    "vite": "^5.1.6",
+    "vue-tsc": "^2.0.6"
+  }
+}
