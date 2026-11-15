@@ -1036,7 +1036,7 @@ function onLocaleChange(e: Event) {
   flex-direction: column;
   user-select: none;
   position: relative;
-  z-index: 100;
+  z-index: 200;
   transition: all 0.2s ease-in-out;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -1220,8 +1220,7 @@ function onLocaleChange(e: Event) {
   background-color: var(--fluent-bg-canvas);
   display: flex;
   padding: 4px 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: visible;
 }
 
 .ribbon-tab-pane {
@@ -1382,9 +1381,9 @@ function onLocaleChange(e: Event) {
   background-color: var(--fluent-bg-canvas);
   border: 1px solid var(--fluent-border-subtle);
   border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
   min-width: 150px;
-  z-index: 200;
+  z-index: 500;
   padding: 4px 0;
 }
 
