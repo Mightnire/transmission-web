@@ -31,6 +31,9 @@
 
     <!-- 全局首选项弹窗 (RPC session-get/set 端口测试与黑名单更新) -->
     <SessionDialog />
+
+    <!-- 单任务独立属性配置弹窗 -->
+    <TorrentPropsDialog :torrentId="state.propsTorrentId" v-model="state.propsDialogOpen" />
   </div>
 </template>
 
@@ -43,6 +46,7 @@ import TorrentList from './components/TorrentList.vue';
 import TorrentDetail from './components/TorrentDetail.vue';
 import AddDialog from './components/AddDialog.vue';
 import SessionDialog from './components/SessionDialog.vue';
+import TorrentPropsDialog from './components/TorrentPropsDialog.vue';
 
 const isMobile = ref(window.innerWidth < 768);
 

@@ -58,6 +58,11 @@
             </div>
             <span class="node-pct">{{ (node.progress * 100).toFixed(0) }}%</span>
 
+            <!-- 重命名按钮 -->
+            <button class="rename-file-btn" @click.stop="renamePath(node)" title="重命名此文件或目录">
+              <span class="material-icons" style="font-size: 14px;">edit</span>
+            </button>
+
             <!-- 优先级调整 (仅文件) -->
             <select
               v-if="!node.isDir"
@@ -79,7 +84,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { TorrentFile, TorrentFileStat } from '../api/types';
-import { formatBytes } from '../stores/transmission';
+import { state, fetchTorrents, formatBytes } from '../stores/transmission';
 import { rpc } from '../api/rpc';
 
 const props = defineProps<{
@@ -123,6 +128,21 @@ function toggleCollapse(path: string) {
   }
   // 持久化保存用户的折叠习惯！后台怎么轮询都不会被重置！
   localStorage.setItem(storageKey, JSON.stringify(Array.from(collapsedSet.value)));
+}
+
+async function renamePath(node: TreeNode) {
+  const newName = prompt(`请输入新的名称:`, node.name);
+  if (!newName || newName === node.name) return;
+  try {
+    await rpc.torrentRenamePath(props.torrentId, node.path, newName);
+    const detail = await rpc.getTorrentDetail(props.torrentId);
+    if (detail) {
+      state.activeTorrentDetail = { ...(state.activeTorrentDetail || {}), ...detail };
+    }
+    await fetchTorrents();
+  } catch (e: any) {
+    alert(`重命名失败: ${e.message}`);
+  }
 }
 
 // 树节点结构
@@ -363,5 +383,23 @@ async function changePriority(index: number, e: Event) {
   background: var(--md-surface);
   color: var(--md-text-primary);
   outline: none;
+}
+
+.rename-file-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--md-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+
+.rename-file-btn:hover {
+  color: var(--md-primary);
+  background: rgba(0, 0, 0, 0.06);
 }
 </style>

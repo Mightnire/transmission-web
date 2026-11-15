@@ -197,6 +197,18 @@
         <span class="material-icons">drive_file_move</span>
         <span>设置存储路径...</span>
       </div>
+      <div class="menu-item" @click="handleAction('rename')">
+        <span class="material-icons">edit</span>
+        <span>重命名任务...</span>
+      </div>
+      <div class="menu-item" @click="handleAction('copy-magnet')">
+        <span class="material-icons">link</span>
+        <span>复制磁力链接 (Magnet)</span>
+      </div>
+      <div class="menu-item" @click="handleAction('props')">
+        <span class="material-icons">tune</span>
+        <span>任务首选项 / 限速属性...</span>
+      </div>
       <div class="menu-item" @click="handleAction('detail')">
         <span class="material-icons">info</span>
         <span>查看属性与文件...</span>
@@ -221,6 +233,8 @@ import {
   filteredTorrents,
   selectTorrent,
   toggleDetail,
+  openTorrentProps,
+  fetchTorrents,
   formatBytes,
   formatSpeed,
   formatETA,
@@ -308,6 +322,36 @@ async function handleAction(action: string) {
       break;
     case 'detail':
       toggleDetail(ids[0]);
+      break;
+    case 'props':
+      openTorrentProps(ids[0]);
+      break;
+    case 'copy-magnet':
+      const targetTorrent = state.torrents.find((t) => t.id === ids[0]);
+      if (targetTorrent?.magnetLink) {
+        navigator.clipboard.writeText(targetTorrent.magnetLink);
+        alert('磁力链接已成功复制到剪贴板！');
+      } else {
+        rpc.getTorrentDetail(ids[0]).then((d) => {
+          if (d?.magnetLink) {
+            navigator.clipboard.writeText(d.magnetLink);
+            alert('磁力链接已成功复制到剪贴板！');
+          }
+        });
+      }
+      break;
+    case 'rename':
+      const curT = state.torrents.find((t) => t.id === ids[0]);
+      if (!curT) break;
+      const newName = prompt('请输入新的任务或主目录名称:', curT.name);
+      if (newName && newName !== curT.name) {
+        try {
+          await rpc.torrentRenamePath(ids[0], curT.name, newName);
+          await fetchTorrents();
+        } catch (e: any) {
+          alert(`重命名失败: ${e.message}`);
+        }
+      }
       break;
     case 'set-location':
       const newLoc = prompt('请输入新的保存目录路径:', state.torrents.find((t) => t.id === ids[0])?.downloadDir || '/mnt');

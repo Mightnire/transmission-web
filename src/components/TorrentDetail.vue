@@ -121,6 +121,13 @@
               <span class="label">散列值 (Hash):</span>
               <span class="value selectable monospace font-sm">{{ activeTorrent.hashString }}</span>
             </div>
+            <div class="info-row" style="margin-top: 6px;">
+              <span class="label">磁力链接:</span>
+              <button class="copy-magnet-btn" @click="copyMagnet">
+                <span class="material-icons" style="font-size: 14px;">link</span>
+                复制磁链 (Magnet)
+              </button>
+            </div>
             <div class="info-row" v-if="activeTorrent.pieceCount">
               <span class="label">区块分片:</span>
               <span class="value">{{ activeTorrent.pieceCount }} 片 × {{ formatBytes(activeTorrent.pieceSize) }}</span>
@@ -215,6 +222,10 @@
             <span class="material-icons">sync</span>
             立即向服务器宣告
           </button>
+          <button class="md-btn md-btn-flat" @click="addTrackersPrompt">
+            <span class="material-icons">add</span>
+            追加 Tracker...
+          </button>
         </div>
 
         <table class="detail-table" v-if="activeTorrent.trackerStats && activeTorrent.trackerStats.length > 0">
@@ -272,6 +283,37 @@ function closeDetail() {
   state.detailOpen = false;
   state.selectedId = null;
   state.activeTorrentDetail = null;
+}
+
+function copyMagnet() {
+  if (activeTorrent.value?.magnetLink) {
+    navigator.clipboard.writeText(activeTorrent.value.magnetLink);
+    alert('磁力链接已成功复制到剪贴板！');
+  }
+}
+
+async function addTrackersPrompt() {
+  if (!activeTorrent.value) return;
+  const input = prompt('请输入要追加的 Tracker Announce URLs (多个请用逗号或换行分隔):');
+  if (!input) return;
+  const urls = input
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter((s) => s.startsWith('http') || s.startsWith('udp'));
+  if (urls.length === 0) {
+    alert('未检测到有效的 http:// 或 udp:// Tracker 地址。');
+    return;
+  }
+  await rpc.torrentSet({
+    ids: [activeTorrent.value.id],
+    trackerAdd: urls,
+  });
+  alert(`已成功追加 ${urls.length} 个 Tracker 服务器！`);
+  // 刷新详情
+  const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
+  if (refreshed) {
+    state.activeTorrentDetail = { ...activeTorrent.value, ...refreshed };
+  }
 }
 
 function askMorePeers() {
@@ -462,6 +504,24 @@ function getPriorityText(p?: Priority): string {
 
 .info-row .value {
   color: var(--md-text-primary);
+}
+
+.copy-magnet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(63, 81, 181, 0.08);
+  border: 1px solid rgba(63, 81, 181, 0.2);
+  color: var(--md-primary);
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.copy-magnet-btn:hover {
+  background: rgba(63, 81, 181, 0.16);
 }
 
 .selectable {

@@ -21,6 +21,8 @@ export const state = reactive<{
   addDialogOpen: boolean;
   sessionDialogOpen: boolean;
   detailOpen: boolean;
+  propsDialogOpen: boolean;
+  propsTorrentId: number | null;
   isPolling: boolean;
   viewMode: 'table' | 'cards';
 }>({
@@ -40,6 +42,8 @@ export const state = reactive<{
   addDialogOpen: false,
   sessionDialogOpen: false,
   detailOpen: false,
+  propsDialogOpen: false,
+  propsTorrentId: null,
   isPolling: false,
   viewMode: 'table',
 });
@@ -137,6 +141,11 @@ export function toggleDetail(id?: number) {
       }
     });
   }
+}
+
+export function openTorrentProps(id: number) {
+  state.propsTorrentId = id;
+  state.propsDialogOpen = true;
 }
 
 // 批量操作
