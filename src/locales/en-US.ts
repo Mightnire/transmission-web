@@ -98,6 +98,10 @@ export default {
     downloading: 'Downloading',
     seedWait: 'Queued for seed',
     seeding: 'Seeding',
+    error: 'Error',
+    errorTrackerWarning: 'Tracker Warning',
+    errorTracker: 'Tracker Error',
+    errorLocal: 'Local Data Error',
     unknown: 'Unknown',
   },
   table: {
@@ -199,6 +203,18 @@ export default {
     },
     files: {
       loading: 'Loading file tree...',
+    },
+    errorAlert: {
+      title: 'Torrent Error',
+      code: 'Error Code: {code}',
+      categoryWarning: 'Tracker Warning',
+      categoryTracker: 'Tracker Connection Error',
+      categoryLocal: 'Local Storage or File Missing',
+      categoryUnknown: 'Unknown Error',
+      localHelp: 'Transmission cannot access the local files for this torrent. This usually occurs if an external USB drive was disconnected, the folder was renamed, or the path changed. Check the disk connection or use Set Location / Verify.',
+      trackerHelp: 'Cannot communicate with the tracker server. Please check the network connection or ask tracker for more peers.',
+      verifyBtn: 'Verify Local Data',
+      setLocationBtn: 'Set Location',
     },
   },
   fileTree: {

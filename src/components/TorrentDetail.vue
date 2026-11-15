@@ -3,8 +3,13 @@
     <!-- 面板顶部控制与标题 -->
     <div class="dock-header">
       <div class="dock-title-block">
-        <span class="material-icons info-icon">info</span>
+        <span class="material-icons info-icon" :class="{ 'error-icon-red': activeTorrent.error !== 0 }">
+          {{ activeTorrent.error !== 0 ? 'error' : 'info' }}
+        </span>
         <span class="dock-name" :title="activeTorrent.name">{{ activeTorrent.name }}</span>
+        <span class="dock-error-badge" v-if="activeTorrent.error !== 0">
+          {{ getErrorCategoryTitle(activeTorrent.error) }}
+        </span>
         <span class="dock-meta" v-if="activeTorrent.status === 2 || activeTorrent.status === 1">
           <span style="color: #e65100; font-weight: 600;">{{ t('detail.checking', { pct: ((activeTorrent.recheckProgress || 0) * 100).toFixed(1) }) }}</span> · 
           {{ t('detail.doneSize', {
@@ -72,6 +77,36 @@
         <span>{{ t('detail.tabs.trackers') }}</span>
         <span class="tab-badge" v-if="activeTorrent.trackerStats">({{ activeTorrent.trackerStats.length }})</span>
       </button>
+    </div>
+
+    <!-- 任务异常与错误报警横幅 (若任务报错) -->
+    <div class="torrent-error-banner" v-if="activeTorrent.error !== 0 || activeTorrent.errorString">
+      <div class="banner-main">
+        <span class="material-icons banner-icon">error</span>
+        <div class="banner-text">
+          <div class="banner-title-line">
+            <span class="banner-title">{{ getErrorCategoryTitle(activeTorrent.error) }}</span>
+            <span class="banner-code" v-if="activeTorrent.error">(Code {{ activeTorrent.error }})</span>
+          </div>
+          <div class="banner-msg">{{ activeTorrent.errorString }}</div>
+          <div class="banner-help" v-if="activeTorrent.error === 3">
+            {{ t('detail.errorAlert.localHelp') }}
+          </div>
+          <div class="banner-help" v-else-if="activeTorrent.error === 1 || activeTorrent.error === 2">
+            {{ t('detail.errorAlert.trackerHelp') }}
+          </div>
+        </div>
+      </div>
+      <div class="banner-actions">
+        <button class="banner-action-btn" @click="handleVerifyTorrent" :title="t('detail.errorAlert.verifyBtn')">
+          <span class="material-icons">refresh</span>
+          <span>{{ t('detail.errorAlert.verifyBtn') }}</span>
+        </button>
+        <button class="banner-action-btn" @click="handleSetLocation" :title="t('detail.errorAlert.setLocationBtn')">
+          <span class="material-icons">folder_open</span>
+          <span>{{ t('detail.errorAlert.setLocationBtn') }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- 标签页主体内容 -->
@@ -357,6 +392,36 @@ function getPriorityText(p?: Priority): string {
   if (p === Priority.LOW) return t('props.low');
   return t('props.normal');
 }
+
+function getErrorCategoryTitle(error?: number): string {
+  if (error === 1) return t('detail.errorAlert.categoryWarning');
+  if (error === 2) return t('detail.errorAlert.categoryTracker');
+  if (error === 3) return t('detail.errorAlert.categoryLocal');
+  return t('detail.errorAlert.categoryUnknown');
+}
+
+async function handleVerifyTorrent() {
+  if (!activeTorrent.value) return;
+  await rpc.torrentVerify([activeTorrent.value.id]);
+  const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
+  if (refreshed) {
+    state.activeTorrentDetail = { ...activeTorrent.value, ...refreshed };
+  }
+}
+
+async function handleSetLocation() {
+  if (!activeTorrent.value) return;
+  const currentDir = activeTorrent.value.downloadDir || '/mnt';
+  const newLoc = prompt(t('menu.promptLocation'), currentDir);
+  if (newLoc && newLoc !== currentDir) {
+    const moveData = confirm(t('menu.confirmMoveData'));
+    await rpc.torrentSetLocation([activeTorrent.value.id], newLoc, moveData);
+    const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
+    if (refreshed) {
+      state.activeTorrentDetail = { ...activeTorrent.value, ...refreshed };
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -393,6 +458,117 @@ function getPriorityText(p?: Priority): string {
 .info-icon {
   font-size: 16px;
   color: var(--md-primary);
+}
+
+.error-icon-red {
+  color: var(--md-error) !important;
+}
+
+.dock-error-badge {
+  background-color: rgba(244, 67, 54, 0.15);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  color: #c62828;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+/* 错误报警横幅 */
+.torrent-error-banner {
+  background-color: #ffebee;
+  border-bottom: 1px solid #ffcdd2;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.banner-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.banner-icon {
+  color: #d32f2f;
+  font-size: 22px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.banner-text {
+  flex: 1;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow: hidden;
+}
+
+.banner-title-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: #b71c1c;
+  font-size: 12px;
+}
+
+.banner-code {
+  font-weight: normal;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.banner-msg {
+  color: #c62828;
+  font-weight: 500;
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.banner-help {
+  color: #424242;
+  font-size: 11px;
+  margin-top: 3px;
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.banner-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #fff;
+  border: 1px solid #ef9a9a;
+  color: #c62828;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.banner-action-btn:hover {
+  background-color: #fbe9e7;
+  border-color: #e57373;
+}
+
+.banner-action-btn .material-icons {
+  font-size: 14px;
 }
 
 .dock-name {

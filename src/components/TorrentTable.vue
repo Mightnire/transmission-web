@@ -77,8 +77,12 @@
           </td>
 
           <!-- 种子名称 -->
-          <td class="col-name" :title="torrent.name">
+          <td class="col-name" :title="torrent.errorString ? `${torrent.name}\n\n[${t('status.error')}] ${torrent.errorString}` : torrent.name">
             <div class="name-text">{{ torrent.name }}</div>
+            <div class="table-error-pill" v-if="torrent.error !== 0 || torrent.errorString" :title="torrent.errorString">
+              <span class="material-icons pill-icon">error_outline</span>
+              <span class="pill-text">{{ torrent.errorString || t('status.error') }}</span>
+            </div>
           </td>
 
           <!-- 大小 -->
@@ -102,7 +106,7 @@
 
           <!-- 状态文本 -->
           <td class="col-statustext">
-            <span class="status-badge" :class="getStatusBadgeClass(torrent)">
+            <span class="status-badge" :class="getStatusBadgeClass(torrent)" :title="torrent.errorString || ''">
               {{ getStatusDisplayText(torrent) }}
             </span>
           </td>
@@ -422,6 +426,12 @@ function getDisplayPercent(item: Torrent): number {
 }
 
 function getStatusDisplayText(item: Torrent): string {
+  if (item.error !== 0 || item.errorString) {
+    if (item.error === 1) return t('status.errorTrackerWarning');
+    if (item.error === 2) return t('status.errorTracker');
+    if (item.error === 3) return t('status.errorLocal');
+    return t('status.error');
+  }
   if (item.status === TorrentStatus.CHECK) {
     const p = ((item.recheckProgress || 0) * 100).toFixed(0);
     return t('status.checkingWithPct', { pct: p });
@@ -522,6 +532,32 @@ function getStatusBadgeClass(item: Torrent): string {
 .col-corrupt { width: 85px; }
 
 .name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-error-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 3px;
+  padding: 1px 6px;
+  background-color: rgba(244, 67, 54, 0.12);
+  border: 1px solid rgba(244, 67, 54, 0.25);
+  border-radius: 3px;
+  color: #c62828;
+  font-size: 11px;
+  line-height: 1.3;
+  max-width: 100%;
+}
+
+.pill-icon {
+  font-size: 13px !important;
+  flex-shrink: 0;
+}
+
+.pill-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

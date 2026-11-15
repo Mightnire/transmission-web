@@ -98,6 +98,10 @@ export default {
     downloading: '正在下载',
     seedWait: '等待做种',
     seeding: '正在做种',
+    error: '错误',
+    errorTrackerWarning: 'Tracker 警告',
+    errorTracker: 'Tracker 错误',
+    errorLocal: '本地数据错误',
     unknown: '未知状态',
   },
   table: {
@@ -199,6 +203,18 @@ export default {
     },
     files: {
       loading: '正在拉取文件列表...',
+    },
+    errorAlert: {
+      title: '任务发生异常',
+      code: '错误代码: {code}',
+      categoryWarning: 'Tracker 警告',
+      categoryTracker: 'Tracker 连接错误',
+      categoryLocal: '本地存储或文件丢失',
+      categoryUnknown: '未知错误',
+      localHelp: 'Transmission 无法访问该任务的本地数据文件。通常是因为外接 USB 移动硬盘脱机、目录被重命名或文件路径不匹配。您可以检查外接存储连接，或点击下方按钮重新定位保存路径，然后再进行数据校验。',
+      trackerHelp: '无法与 Tracker 服务器建立通信，请检查路由器的网络连接或尝试“向 Tracker 重新宣告”。',
+      verifyBtn: '重新校验数据',
+      setLocationBtn: '修改保存位置',
     },
   },
   fileTree: {
