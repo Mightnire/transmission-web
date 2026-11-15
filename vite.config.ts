@@ -14,19 +14,16 @@ export default defineConfig({
       },
     },
   },
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    minify: 'esbuild',
     rollupOptions: {
       output: {
-        manualChunks: undefined, // 全部打包为极简轻量文件，减少 HTTP 请求
+        manualChunks: undefined, // 全部打包为极简轻量文件
       },
     },
   },
