@@ -98,28 +98,29 @@ const props = defineProps<{
   fileStats: TorrentFileStat[];
 }>();
 
-// 核心状态：被折叠的目录集合 (使用 LocalStorage 永久持久化记住！)
-const storageKey = `tr_tree_collapsed_${props.torrentId}`;
-const collapsedSet = ref<Set<string>>(new Set());
+// 会话级内存缓存：仅在当前页面会话内记住折叠状态，绝不写入 LocalStorage，杜绝存储膨胀！
+const sessionCollapsedCache = new Map<number, Set<string>>();
 
-// 初始化载入记忆中的折叠状态
-function loadCollapsedState() {
-  try {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      collapsedSet.value = new Set(JSON.parse(saved));
-    } else {
-      collapsedSet.value = new Set();
+// 清理历史遗留在 LocalStorage 中的旧缓存键
+try {
+  Object.keys(localStorage)
+    .filter((k) => k.startsWith('tr_tree_collapsed_'))
+    .forEach((k) => localStorage.removeItem(k));
+} catch {}
+
+const collapsedSet = ref<Set<string>>(
+  sessionCollapsedCache.get(props.torrentId) || new Set()
+);
+
+watch(
+  () => props.torrentId,
+  (newId) => {
+    if (!sessionCollapsedCache.has(newId)) {
+      sessionCollapsedCache.set(newId, new Set());
     }
-  } catch (e) {
-    collapsedSet.value = new Set();
+    collapsedSet.value = sessionCollapsedCache.get(newId)!;
   }
-}
-loadCollapsedState();
-
-watch(() => props.torrentId, () => {
-  loadCollapsedState();
-});
+);
 
 function isCollapsed(path: string): boolean {
   return collapsedSet.value.has(path);
@@ -131,8 +132,7 @@ function toggleCollapse(path: string) {
   } else {
     collapsedSet.value.add(path);
   }
-  // 持久化保存用户的折叠习惯！后台怎么轮询都不会被重置！
-  localStorage.setItem(storageKey, JSON.stringify(Array.from(collapsedSet.value)));
+  sessionCollapsedCache.set(props.torrentId, collapsedSet.value);
 }
 
 async function renamePath(node: TreeNode) {

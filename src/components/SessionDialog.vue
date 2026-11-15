@@ -509,58 +509,66 @@ const timeEndStr = computed({
   },
 });
 
+function initForm(s: any) {
+  if (!s) return;
+  form.speedLimitDown = s['speed-limit-down'] || 0;
+  form.speedLimitDownEnabled = s['speed-limit-down-enabled'] || false;
+  form.speedLimitUp = s['speed-limit-up'] || 0;
+  form.speedLimitUpEnabled = s['speed-limit-up-enabled'] || false;
+  form.altSpeedDown = s['alt-speed-down'] || 50;
+  form.altSpeedUp = s['alt-speed-up'] || 50;
+  form.altSpeedTimeEnabled = s['alt-speed-time-enabled'] || false;
+  form.altSpeedTimeBegin = s['alt-speed-time-begin'] !== undefined ? s['alt-speed-time-begin'] : 540;
+  form.altSpeedTimeEnd = s['alt-speed-time-end'] !== undefined ? s['alt-speed-time-end'] : 1020;
+  form.altSpeedTimeDay = s['alt-speed-time-day'] !== undefined ? s['alt-speed-time-day'] : 127;
+
+  form.downloadQueueEnabled = s['download-queue-enabled'] !== undefined ? s['download-queue-enabled'] : true;
+  form.downloadQueueSize = s['download-queue-size'] || 3;
+  form.seedQueueEnabled = s['seed-queue-enabled'] !== undefined ? s['seed-queue-enabled'] : true;
+  form.seedQueueSize = s['seed-queue-size'] || 5;
+  form.queueStalledEnabled = s['queue-stalled-enabled'] !== undefined ? s['queue-stalled-enabled'] : true;
+  form.queueStalledMinutes = s['queue-stalled-minutes'] || 30;
+  form.seedRatioLimited = s['seedRatioLimited'] || false;
+  form.seedRatioLimit = s['seedRatioLimit'] || 2.0;
+  form.idleSeedingLimitEnabled = s['idle-seeding-limit-enabled'] || false;
+  form.idleSeedingLimit = s['idle-seeding-limit'] || 30;
+
+  form.peerPort = s['peer-port'] || 51413;
+  form.peerPortRandomOnStart = s['peer-port-random-on-start'] || false;
+  form.portForwardingEnabled = s['port-forwarding-enabled'] || false;
+  form.dhtEnabled = s['dht-enabled'] !== undefined ? s['dht-enabled'] : true;
+  form.pexEnabled = s['pex-enabled'] !== undefined ? s['pex-enabled'] : true;
+  form.lpdEnabled = s['lpd-enabled'] || false;
+  form.utpEnabled = s['utp-enabled'] || false;
+  form.encryption = s['encryption'] || 'tolerated';
+  form.peerLimitGlobal = s['peer-limit-global'] || 90;
+  form.peerLimitPerTorrent = s['peer-limit-per-torrent'] || 30;
+
+  form.downloadDir = s['download-dir'] || '';
+  form.incompleteDirEnabled = s['incomplete-dir-enabled'] || false;
+  form.incompleteDir = s['incomplete-dir'] || '';
+  form.cacheSizeMb = (s as any)['cache-size-mb'] || 2;
+  form.renamePartialFiles = s['rename-partial-files'] !== undefined ? s['rename-partial-files'] : true;
+  form.trashOriginalTorrentFiles = s['trash-original-torrent-files'] || false;
+
+  form.blocklistEnabled = s['blocklist-enabled'] || false;
+  form.blocklistUrl = s['blocklist-url'] || '';
+  form.defaultTrackers = s['default-trackers'] || '';
+  form.scriptTorrentDoneEnabled = (s as any)['script-torrent-done-enabled'] || false;
+  form.scriptTorrentDoneFilename = (s as any)['script-torrent-done-filename'] || '';
+
+  if (form.downloadDir) {
+    checkFreeSpace();
+  }
+}
+
+// 核心修复：仅在用户打开弹窗的一瞬间根据当前 session 同步一次表单！
+// 弹窗处于编辑状态期间，严禁后台 3s 轮询覆盖用户正在修改的表单内容！
 watch(
-  () => state.session,
-  (s) => {
-    if (!s) return;
-    form.speedLimitDown = s['speed-limit-down'] || 0;
-    form.speedLimitDownEnabled = s['speed-limit-down-enabled'] || false;
-    form.speedLimitUp = s['speed-limit-up'] || 0;
-    form.speedLimitUpEnabled = s['speed-limit-up-enabled'] || false;
-    form.altSpeedDown = s['alt-speed-down'] || 50;
-    form.altSpeedUp = s['alt-speed-up'] || 50;
-    form.altSpeedTimeEnabled = s['alt-speed-time-enabled'] || false;
-    form.altSpeedTimeBegin = s['alt-speed-time-begin'] || 540;
-    form.altSpeedTimeEnd = s['alt-speed-time-end'] || 1020;
-    form.altSpeedTimeDay = s['alt-speed-time-day'] || 127;
-
-    form.downloadQueueEnabled = s['download-queue-enabled'] !== undefined ? s['download-queue-enabled'] : true;
-    form.downloadQueueSize = s['download-queue-size'] || 3;
-    form.seedQueueEnabled = s['seed-queue-enabled'] !== undefined ? s['seed-queue-enabled'] : true;
-    form.seedQueueSize = s['seed-queue-size'] || 5;
-    form.queueStalledEnabled = s['queue-stalled-enabled'] !== undefined ? s['queue-stalled-enabled'] : true;
-    form.queueStalledMinutes = s['queue-stalled-minutes'] || 30;
-    form.seedRatioLimited = s['seedRatioLimited'] || false;
-    form.seedRatioLimit = s['seedRatioLimit'] || 2.0;
-    form.idleSeedingLimitEnabled = s['idle-seeding-limit-enabled'] || false;
-    form.idleSeedingLimit = s['idle-seeding-limit'] || 30;
-
-    form.peerPort = s['peer-port'] || 51413;
-    form.peerPortRandomOnStart = s['peer-port-random-on-start'] || false;
-    form.portForwardingEnabled = s['port-forwarding-enabled'] || false;
-    form.dhtEnabled = s['dht-enabled'] !== undefined ? s['dht-enabled'] : true;
-    form.pexEnabled = s['pex-enabled'] !== undefined ? s['pex-enabled'] : true;
-    form.lpdEnabled = s['lpd-enabled'] || false;
-    form.utpEnabled = s['utp-enabled'] || false;
-    form.encryption = s['encryption'] || 'tolerated';
-    form.peerLimitGlobal = s['peer-limit-global'] || 90;
-    form.peerLimitPerTorrent = s['peer-limit-per-torrent'] || 30;
-
-    form.downloadDir = s['download-dir'] || '';
-    form.incompleteDirEnabled = s['incomplete-dir-enabled'] || false;
-    form.incompleteDir = s['incomplete-dir'] || '';
-    form.cacheSizeMb = (s as any)['cache-size-mb'] || 2;
-    form.renamePartialFiles = s['rename-partial-files'] !== undefined ? s['rename-partial-files'] : true;
-    form.trashOriginalTorrentFiles = s['trash-original-torrent-files'] || false;
-
-    form.blocklistEnabled = s['blocklist-enabled'] || false;
-    form.blocklistUrl = s['blocklist-url'] || '';
-    form.defaultTrackers = s['default-trackers'] || '';
-    form.scriptTorrentDoneEnabled = (s as any)['script-torrent-done-enabled'] || false;
-    form.scriptTorrentDoneFilename = (s as any)['script-torrent-done-filename'] || '';
-
-    if (form.downloadDir) {
-      checkFreeSpace();
+  () => state.sessionDialogOpen,
+  (open) => {
+    if (open && state.session) {
+      initForm(state.session);
     }
   },
   { immediate: true }
@@ -605,7 +613,7 @@ async function updateBlocklist() {
 }
 
 async function saveSettings() {
-  await rpc.sessionSet({
+  const payload: Record<string, any> = {
     'speed-limit-down': form.speedLimitDown,
     'speed-limit-down-enabled': form.speedLimitDownEnabled,
     'speed-limit-up': form.speedLimitUp,
@@ -639,22 +647,42 @@ async function saveSettings() {
     'peer-limit-global': form.peerLimitGlobal,
     'peer-limit-per-torrent': form.peerLimitPerTorrent,
 
-    'download-dir': form.downloadDir,
-    'incomplete-dir-enabled': form.incompleteDirEnabled,
-    'incomplete-dir': form.incompleteDir,
     'cache-size-mb': form.cacheSizeMb,
     'rename-partial-files': form.renamePartialFiles,
     'trash-original-torrent-files': form.trashOriginalTorrentFiles,
-
+    'incomplete-dir-enabled': form.incompleteDirEnabled,
     'blocklist-enabled': form.blocklistEnabled,
-    'blocklist-url': form.blocklistUrl,
-    'default-trackers': form.defaultTrackers,
     'script-torrent-done-enabled': form.scriptTorrentDoneEnabled,
-    'script-torrent-done-filename': form.scriptTorrentDoneFilename,
-  } as any);
+  };
 
-  state.sessionDialogOpen = false;
-  await fetchSession();
+  // 严格安全校验与防错处理：防止发送非法/相对路径触发 Transmission RPC 错误！
+  if (form.downloadDir && form.downloadDir.trim()) {
+    payload['download-dir'] = form.downloadDir.trim();
+  }
+  if (form.incompleteDirEnabled && form.incompleteDir && form.incompleteDir.trim().startsWith('/')) {
+    payload['incomplete-dir'] = form.incompleteDir.trim();
+  }
+  if (form.blocklistUrl && form.blocklistUrl.trim()) {
+    payload['blocklist-url'] = form.blocklistUrl.trim();
+  }
+  if (form.defaultTrackers && form.defaultTrackers.trim()) {
+    payload['default-trackers'] = form.defaultTrackers.trim();
+  }
+  if (form.scriptTorrentDoneFilename && form.scriptTorrentDoneFilename.trim()) {
+    payload['script-torrent-done-filename'] = form.scriptTorrentDoneFilename.trim();
+  }
+
+  try {
+    await rpc.sessionSet(payload as any);
+    // 立即乐观同步本地 state.session，彻底杜绝异步回读延迟闪烁
+    if (state.session) {
+      Object.assign(state.session, payload);
+    }
+    state.sessionDialogOpen = false;
+    await fetchSession();
+  } catch (err: any) {
+    alert('保存首选项失败: ' + (err.message || err));
+  }
 }
 </script>
 

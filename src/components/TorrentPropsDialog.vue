@@ -205,24 +205,28 @@ async function saveProps() {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  await rpc.torrentSet({
-    ids: [props.torrentId],
-    bandwidthPriority: form.bandwidthPriority,
-    'peer-limit': form.peerLimit,
-    downloadLimit: form.downloadLimit,
-    downloadLimited: form.downloadLimited,
-    uploadLimit: form.uploadLimit,
-    uploadLimited: form.uploadLimited,
-    honorsSessionLimits: form.honorsSessionLimits,
-    seedRatioMode: form.seedRatioMode,
-    seedRatioLimit: form.seedRatioLimit,
-    seedIdleMode: form.seedIdleMode,
-    seedIdleLimit: form.seedIdleLimit,
-    labels,
-  });
+  try {
+    await rpc.torrentSet({
+      ids: [props.torrentId],
+      bandwidthPriority: form.bandwidthPriority,
+      'peer-limit': form.peerLimit,
+      downloadLimit: form.downloadLimit,
+      downloadLimited: form.downloadLimited,
+      uploadLimit: form.uploadLimit,
+      uploadLimited: form.uploadLimited,
+      honorsSessionLimits: form.honorsSessionLimits,
+      seedRatioMode: form.seedRatioMode,
+      seedRatioLimit: form.seedRatioLimit,
+      seedIdleMode: form.seedIdleMode,
+      seedIdleLimit: form.seedIdleLimit,
+      labels,
+    });
 
-  close();
-  await fetchTorrents();
+    close();
+    await fetchTorrents();
+  } catch (err: any) {
+    alert('保存任务属性失败: ' + (err.message || err));
+  }
 }
 </script>
 
