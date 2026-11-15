@@ -482,7 +482,7 @@
                 :title="t('ribbon.highPriority')"
               >
                 <span class="material-icons text-danger">arrow_upward</span>
-                <span>{{ t('table.priorityHigh') }}</span>
+                <span>{{ t('priority.high') }}</span>
               </button>
               <button
                 class="priority-btn"
@@ -491,7 +491,7 @@
                 :title="t('ribbon.normalPriority')"
               >
                 <span class="material-icons text-info">remove</span>
-                <span>{{ t('table.priorityNormal') }}</span>
+                <span>{{ t('priority.normal') }}</span>
               </button>
               <button
                 class="priority-btn"
@@ -500,13 +500,13 @@
                 :title="t('ribbon.lowPriority')"
               >
                 <span class="material-icons text-secondary">arrow_downward</span>
-                <span>{{ t('table.priorityLow') }}</span>
+                <span>{{ t('priority.low') }}</span>
               </button>
             </div>
 
             <!-- 最大连接数 -->
             <div class="fluent-input-compact">
-              <span class="input-prefix-label">{{ t('propsDialog.maxPeers') }}:</span>
+              <span class="input-prefix-label">{{ t('ribbon.maxPeers') || t('props.peerLimit') }}</span>
               <input
                 type="number"
                 class="num-field"
@@ -568,13 +568,13 @@
             </div>
 
             <!-- 遵循全局限制 -->
-            <label class="fluent-check-label mini-check">
+            <label class="fluent-check-label mini-check" :title="t('props.honorsSession')">
               <input
                 type="checkbox"
                 :checked="currentTorrentHonorsSession"
                 @change="onTorrentHonorsSessionToggle"
               />
-              <span>{{ t('propsDialog.honorsSession') }}</span>
+              <span>{{ t('ribbon.honorsSession') || t('props.honorsSession') }}</span>
             </label>
           </div>
           <div class="group-title">{{ t('ribbon.groups.torrentLimits') }}</div>
@@ -585,11 +585,11 @@
           <div class="ribbon-controls seed-rules-col">
             <!-- 分享率 -->
             <div class="seed-row">
-              <span class="input-prefix-label">{{ t('propsDialog.ratioMode') }}:</span>
+              <span class="input-prefix-label">{{ t('ribbon.ratioMode') || t('props.ratioMode') }}</span>
               <select class="fluent-select-mini" :value="currentTorrentSeedRatioMode" @change="onTorrentRatioModeChange">
-                <option :value="0">{{ t('propsDialog.modeGlobal') }}</option>
-                <option :value="1">{{ t('propsDialog.modeSingle') }}</option>
-                <option :value="2">{{ t('propsDialog.modeUnlimited') }}</option>
+                <option :value="0">{{ t('props.ratioGlobal') }}</option>
+                <option :value="1">{{ t('props.ratioSingle') }}</option>
+                <option :value="2">{{ t('props.ratioUnlimited') }}</option>
               </select>
               <input
                 v-if="currentTorrentSeedRatioMode === 1"
@@ -604,11 +604,11 @@
 
             <!-- 空闲超时 -->
             <div class="seed-row">
-              <span class="input-prefix-label">{{ t('propsDialog.idleMode') }}:</span>
+              <span class="input-prefix-label">{{ t('ribbon.idleMode') || t('props.idleMode') }}</span>
               <select class="fluent-select-mini" :value="currentTorrentSeedIdleMode" @change="onTorrentIdleModeChange">
-                <option :value="0">{{ t('propsDialog.modeGlobal') }}</option>
-                <option :value="1">{{ t('propsDialog.modeSingle') }}</option>
-                <option :value="2">{{ t('propsDialog.modeUnlimited') }}</option>
+                <option :value="0">{{ t('props.idleGlobal') }}</option>
+                <option :value="1">{{ t('props.idleSingle') }}</option>
+                <option :value="2">{{ t('props.idleUnlimited') }}</option>
               </select>
               <div class="idle-input-wrap" v-if="currentTorrentSeedIdleMode === 1">
                 <input
@@ -640,9 +640,9 @@
               <span class="material-icons">link</span>
               <span>{{ t('detail.general.copyMagnet') }}</span>
             </button>
-            <button class="fluent-btn-small primary" @click="openProps" :title="t('table.properties')">
+            <button class="fluent-btn-small primary" @click="openProps" :title="t('ribbon.props')">
               <span class="material-icons">tune</span>
-              <span>{{ t('table.properties') }}...</span>
+              <span>{{ t('ribbon.props') }}...</span>
             </button>
           </div>
           <div class="group-title">{{ t('ribbon.groups.torrentMeta') }}</div>
@@ -1087,23 +1087,41 @@ function onLocaleChange(e: Event) {
   font-weight: 600;
 }
 
-/* Word 风格上下文标签 */
+/* Word 风格上下文标签 (微软 Office 经典工具紫，与常规蓝形成鲜明上下文对照) */
 .ribbon-tab-btn.contextual-tab {
-  background-color: rgba(0, 120, 212, 0.08);
-  color: var(--fluent-accent);
+  background-color: rgba(119, 25, 170, 0.08);
+  color: #7719aa;
   font-weight: 600;
-  border-bottom: 2px solid rgba(0, 120, 212, 0.4);
+  border-bottom: 2px solid rgba(119, 25, 170, 0.4);
+}
+
+[data-theme="dark"] .ribbon-tab-btn.contextual-tab {
+  background-color: rgba(177, 151, 252, 0.12);
+  color: #b197fc;
+  border-bottom-color: rgba(177, 151, 252, 0.4);
 }
 
 .ribbon-tab-btn.contextual-tab:hover {
-  background-color: rgba(0, 120, 212, 0.16);
-  color: var(--fluent-accent-hover);
+  background-color: rgba(119, 25, 170, 0.16);
+  color: #58107e;
+}
+
+[data-theme="dark"] .ribbon-tab-btn.contextual-tab:hover {
+  background-color: rgba(177, 151, 252, 0.22);
+  color: #d0bfff;
 }
 
 .ribbon-tab-btn.contextual-tab.active {
   background-color: var(--fluent-bg-canvas);
-  color: var(--fluent-accent);
-  border-bottom-color: var(--fluent-accent);
+  color: #7719aa;
+  border-bottom-color: #7719aa;
+  box-shadow: inset 0 2px 0 0 #7719aa;
+}
+
+[data-theme="dark"] .ribbon-tab-btn.contextual-tab.active {
+  color: #b197fc;
+  border-bottom-color: #b197fc;
+  box-shadow: inset 0 2px 0 0 #b197fc;
 }
 
 .tab-icon {
@@ -1502,11 +1520,33 @@ function onLocaleChange(e: Event) {
   color: var(--md-text-primary);
 }
 
+.contextual-pane {
+  border-top: 1px solid rgba(119, 25, 170, 0.25);
+}
+
+[data-theme="dark"] .contextual-pane {
+  border-top: 1px solid rgba(177, 151, 252, 0.25);
+}
+
+.contextual-pane input[type="checkbox"] {
+  accent-color: #7719aa;
+}
+
+[data-theme="dark"] .contextual-pane input[type="checkbox"] {
+  accent-color: #b197fc;
+}
+
 .priority-btn.active {
   background-color: var(--fluent-bg-canvas);
-  color: var(--fluent-accent);
+  color: #7719aa;
+  border: 1px solid rgba(119, 25, 170, 0.3);
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .priority-btn.active {
+  color: #b197fc;
+  border-color: rgba(177, 151, 252, 0.3);
 }
 
 .priority-btn .material-icons {

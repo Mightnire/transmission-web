@@ -108,6 +108,10 @@ export default {
     lowPriority: '设为低优先级',
     limitDown: '下载限速',
     limitUp: '上传限速',
+    maxPeers: '最大连接数:',
+    ratioMode: '分享率模式:',
+    idleMode: '空闲模式:',
+    honorsSession: '遵循全局限速',
   },
   sidebar: {
     filters: '状态过滤',

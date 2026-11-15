@@ -108,6 +108,10 @@ export default {
     lowPriority: 'Низкий приоритет',
     limitDown: 'Ограничить прием',
     limitUp: 'Ограничить отдачу',
+    maxPeers: 'Макс. пиров:',
+    ratioMode: 'Режим рейтинга:',
+    idleMode: 'Режим простоя:',
+    honorsSession: 'Соблюдать общие лимиты',
   },
   sidebar: {
     filters: 'Фильтры',

@@ -108,6 +108,10 @@ export default {
     lowPriority: 'Low Priority',
     limitDown: 'Limit Download',
     limitUp: 'Limit Upload',
+    maxPeers: 'Max Peers:',
+    ratioMode: 'Ratio Mode:',
+    idleMode: 'Idle Mode:',
+    honorsSession: 'Honor Global Limits',
   },
   sidebar: {
     filters: 'Filters',
