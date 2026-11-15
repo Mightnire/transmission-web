@@ -4,9 +4,9 @@ import { rpc } from '../api/rpc';
 import { t } from '../locales';
 
 export interface TorrentFilter {
-  status: 'all' | 'downloading' | 'seeding' | 'paused' | 'error' | 'finished';
+  status: 'all' | 'active' | 'downloading' | 'seeding' | 'queued' | 'paused' | 'error' | 'finished';
   search: string;
-  sortBy: 'name' | 'percentDone' | 'rateDownload' | 'rateUpload' | 'totalSize' | 'addedDate' | 'uploadRatio';
+  sortBy: 'queuePosition' | 'name' | 'percentDone' | 'rateDownload' | 'rateUpload' | 'totalSize' | 'addedDate' | 'uploadRatio';
   sortAsc: boolean;
 }
 
@@ -36,8 +36,8 @@ export const state = reactive<{
   filter: {
     status: 'all',
     search: '',
-    sortBy: 'addedDate',
-    sortAsc: false,
+    sortBy: 'queuePosition',
+    sortAsc: true,
   },
   sidebarOpen: false,
   addDialogOpen: false,
@@ -238,10 +238,14 @@ export const filteredTorrents = computed(() => {
   if (state.filter.status !== 'all') {
     list = list.filter((t) => {
       switch (state.filter.status) {
+        case 'active':
+          return (t.rateDownload > 0 || t.rateUpload > 0) || (t.status === TorrentStatus.DOWNLOAD || t.status === TorrentStatus.SEED);
         case 'downloading':
           return t.status === TorrentStatus.DOWNLOAD || t.status === TorrentStatus.DOWNLOAD_WAIT;
         case 'seeding':
           return t.status === TorrentStatus.SEED || t.status === TorrentStatus.SEED_WAIT;
+        case 'queued':
+          return t.status === TorrentStatus.DOWNLOAD_WAIT || t.status === TorrentStatus.SEED_WAIT;
         case 'paused':
           return t.status === TorrentStatus.STOPPED;
         case 'finished':
@@ -264,7 +268,9 @@ export const filteredTorrents = computed(() => {
   const { sortBy, sortAsc } = state.filter;
   list = [...list].sort((a, b) => {
     let cmp = 0;
-    if (sortBy === 'name') {
+    if (sortBy === 'queuePosition') {
+      cmp = (a.queuePosition ?? 999999) - (b.queuePosition ?? 999999);
+    } else if (sortBy === 'name') {
       cmp = a.name.localeCompare(b.name);
     } else if (sortBy === 'percentDone') {
       cmp = a.percentDone - b.percentDone;

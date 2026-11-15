@@ -34,6 +34,7 @@ export default {
     min: 'm',
     sec: 's',
     finished: 'Done',
+    queue: 'Queue #',
   },
   app: {
     title: 'Transmission Web',
@@ -105,8 +106,10 @@ export default {
   sidebar: {
     filters: 'Filters',
     all: 'All Torrents',
+    active: 'Active',
     downloading: 'Downloading',
     seeding: 'Seeding',
+    queued: 'Queued',
     finished: 'Finished',
     paused: 'Paused',
     errors: 'Errors & Warnings',

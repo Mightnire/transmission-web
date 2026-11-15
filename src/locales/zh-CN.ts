@@ -34,6 +34,7 @@ export default {
     min: '分',
     sec: '秒',
     finished: '完成',
+    queue: '队列序号',
   },
   app: {
     title: 'Transmission Web',
@@ -105,8 +106,10 @@ export default {
   sidebar: {
     filters: '状态过滤',
     all: '全部任务',
+    active: '活跃传输',
     downloading: '正在下载',
     seeding: '正在做种',
+    queued: '排队等待',
     finished: '已完成',
     paused: '已暂停',
     errors: '异常与警告',

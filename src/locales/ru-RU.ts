@@ -34,6 +34,7 @@ export default {
     min: 'м',
     sec: 'с',
     finished: 'Готово',
+    queue: 'Очередь #',
   },
   app: {
     title: 'Transmission Web',
@@ -105,8 +106,10 @@ export default {
   sidebar: {
     filters: 'Фильтры',
     all: 'Все торренты',
+    active: 'Активные',
     downloading: 'Загружаются',
     seeding: 'Раздаются',
+    queued: 'В очереди',
     finished: 'Завершенные',
     paused: 'Приостановленные',
     errors: 'Ошибки',
