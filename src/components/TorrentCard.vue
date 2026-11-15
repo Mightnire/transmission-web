@@ -16,14 +16,14 @@
         ></div>
       </div>
 
-      <!-- 统计指标网格 -->
-      <div class="torrent-meta">
-        <span class="meta-item bold-percent">
-          {{ progressPercent.toFixed(1) }}%
-        </span>
-        <span class="meta-item">
-          {{ formatBytes(torrent.totalSize * torrent.percentDone) }} / {{ formatBytes(torrent.totalSize) }}
-        </span>
+        <!-- 统计指标网格 -->
+        <div class="torrent-meta">
+          <span class="meta-item bold-percent" :style="isChecking ? 'color: var(--md-warning);' : ''">
+            {{ progressPercent.toFixed(1) }}%{{ isChecking ? ' (校验)' : '' }}
+          </span>
+          <span class="meta-item">
+            {{ formatBytes(torrent.totalSize * torrent.percentDone) }} / {{ formatBytes(torrent.totalSize) }}
+          </span>
         <span class="meta-item down" v-if="torrent.rateDownload > 0">
           ↓ {{ formatSpeed(torrent.rateDownload) }}
         </span>
@@ -84,7 +84,13 @@ const props = defineProps<{ torrent: Torrent }>();
 
 const isSelected = computed(() => state.selectedId === props.torrent.id);
 const isPaused = computed(() => props.torrent.status === TorrentStatus.STOPPED);
-const progressPercent = computed(() => props.torrent.percentDone * 100);
+const isChecking = computed(() => props.torrent.status === TorrentStatus.CHECK || props.torrent.status === TorrentStatus.CHECK_WAIT);
+const progressPercent = computed(() => {
+  if (isChecking.value) {
+    return (props.torrent.recheckProgress || 0) * 100;
+  }
+  return props.torrent.percentDone * 100;
+});
 
 const statusIcon = computed(() => {
   if (props.torrent.error !== 0) return 'error_outline';
@@ -111,6 +117,7 @@ const statusClass = computed(() => {
 
 const progressBarClass = computed(() => {
   if (props.torrent.error !== 0) return 'error';
+  if (isChecking.value) return 'warning';
   if (props.torrent.status === TorrentStatus.SEED || props.torrent.percentDone >= 1) return 'success';
   return '';
 });

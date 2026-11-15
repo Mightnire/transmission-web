@@ -5,7 +5,12 @@
       <div class="dock-title-block">
         <span class="material-icons info-icon">info</span>
         <span class="dock-name" :title="activeTorrent.name">{{ activeTorrent.name }}</span>
-        <span class="dock-meta">
+        <span class="dock-meta" v-if="activeTorrent.status === 2 || activeTorrent.status === 1">
+          <span style="color: #e65100; font-weight: 600;">正在校验: {{ ((activeTorrent.recheckProgress || 0) * 100).toFixed(1) }}%</span> · 
+          已完成大小: {{ formatBytes((activeTorrent.totalSize || 0) * (activeTorrent.percentDone || 0)) }} / 
+          {{ formatBytes(activeTorrent.totalSize || 0) }}
+        </span>
+        <span class="dock-meta" v-else>
           进度: {{ ((activeTorrent.percentDone || 0) * 100).toFixed(1) }}% · 
           {{ formatBytes((activeTorrent.totalSize || 0) * (activeTorrent.percentDone || 0)) }} / 
           {{ formatBytes(activeTorrent.totalSize || 0) }}
@@ -76,6 +81,10 @@
             <div class="info-row">
               <span class="label">完成进度:</span>
               <span class="value font-bold">{{ ((activeTorrent.percentDone || 0) * 100).toFixed(1) }}%</span>
+            </div>
+            <div class="info-row" v-if="activeTorrent.status === 2">
+              <span class="label" style="color: #e65100; font-weight: 600;">数据校验进度:</span>
+              <span class="value font-bold" style="color: #e65100;">{{ ((activeTorrent.recheckProgress || 0) * 100).toFixed(1) }}%</span>
             </div>
             <div class="info-row">
               <span class="label">有效数据:</span>

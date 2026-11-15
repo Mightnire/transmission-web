@@ -84,18 +84,18 @@
           <!-- 大小 -->
           <td class="col-size">{{ formatBytes(torrent.totalSize) }}</td>
 
-          <!-- 进度条 + 百分比 (经典桌面紧凑 progress) -->
+          <!-- 进度条 + 百分比 (经典桌面紧凑 progress，精准区分校验与完成进度) -->
           <td class="col-progress">
             <div class="table-progress-cell">
               <div class="table-progress-bar">
                 <div
                   class="table-progress-fill"
                   :class="getProgressFillClass(torrent)"
-                  :style="{ width: `${Math.min(100, Math.max(0, torrent.percentDone * 100))}%` }"
+                  :style="{ width: `${Math.min(100, Math.max(0, getDisplayPercent(torrent)))}%` }"
                 ></div>
               </div>
-              <span class="table-progress-text">
-                {{ (torrent.percentDone * 100).toFixed(1) }}%
+              <span class="table-progress-text" :class="{ 'text-checking': isChecking(torrent) }">
+                {{ getDisplayPercent(torrent).toFixed(1) }}%
               </span>
             </div>
           </td>
@@ -103,7 +103,7 @@
           <!-- 状态文本 -->
           <td class="col-statustext">
             <span class="status-badge" :class="getStatusBadgeClass(torrent)">
-              {{ getStatusText(torrent.status) }}
+              {{ getStatusDisplayText(torrent) }}
             </span>
           </td>
 
@@ -365,8 +365,32 @@ function getStatusIconClass(t: Torrent): string {
   }
 }
 
+// 校验与进度助手
+function isChecking(t: Torrent): boolean {
+  return t.status === TorrentStatus.CHECK || t.status === TorrentStatus.CHECK_WAIT;
+}
+
+function getDisplayPercent(t: Torrent): number {
+  if (isChecking(t)) {
+    return (t.recheckProgress || 0) * 100;
+  }
+  return (t.percentDone || 0) * 100;
+}
+
+function getStatusDisplayText(t: Torrent): string {
+  if (t.status === TorrentStatus.CHECK) {
+    const p = ((t.recheckProgress || 0) * 100).toFixed(0);
+    return `正在校验 (${p}%)`;
+  }
+  if (t.status === TorrentStatus.CHECK_WAIT) {
+    return '等待校验';
+  }
+  return getStatusText(t.status);
+}
+
 function getProgressFillClass(t: Torrent): string {
   if (t.error !== 0) return 'fill-error';
+  if (isChecking(t)) return 'fill-checking';
   if (t.percentDone >= 1.0) return 'fill-done';
   if (t.status === TorrentStatus.STOPPED) return 'fill-paused';
   return 'fill-active';
@@ -374,6 +398,7 @@ function getProgressFillClass(t: Torrent): string {
 
 function getStatusBadgeClass(t: Torrent): string {
   if (t.error !== 0) return 'badge-error';
+  if (isChecking(t)) return 'badge-check';
   if (t.status === TorrentStatus.DOWNLOAD) return 'badge-download';
   if (t.status === TorrentStatus.SEED) return 'badge-seed';
   return 'badge-idle';
@@ -499,12 +524,37 @@ function getStatusBadgeClass(t: Torrent): string {
 .fill-done { background-color: var(--md-success); }
 .fill-paused { background-color: var(--md-text-secondary); }
 .fill-error { background-color: var(--md-error); }
+.fill-checking {
+  background-color: var(--md-warning);
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.25) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.25) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 16px 16px;
+  animation: progressStripes 1s linear infinite;
+}
+
+@keyframes progressStripes {
+  from { background-position: 0 0; }
+  to { background-position: 16px 0; }
+}
 
 .table-progress-text {
   font-size: 11px;
   width: 42px;
   text-align: right;
   font-family: monospace;
+}
+
+.text-checking {
+  color: #e65100;
+  font-weight: 600;
 }
 
 .status-badge {
@@ -518,6 +568,7 @@ function getStatusBadgeClass(t: Torrent): string {
 .badge-seed { background-color: rgba(76, 175, 80, 0.15); color: #2e7d32; }
 .badge-idle { background-color: rgba(0, 0, 0, 0.06); color: var(--md-text-secondary); }
 .badge-error { background-color: rgba(244, 67, 54, 0.15); color: #c62828; }
+.badge-check { background-color: rgba(255, 152, 0, 0.18); color: #e65100; font-weight: 600; }
 
 .down-val { color: #2e7d32; }
 .up-val { color: #ef6c00; }

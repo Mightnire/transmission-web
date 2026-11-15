@@ -188,7 +188,7 @@ export class TransmissionRPC {
       'uploadRatio', 'rateDownload', 'rateUpload', 'peersConnected',
       'peersSendingToUs', 'peersGettingFromUs', 'eta', 'downloadDir',
       'error', 'errorString', 'addedDate', 'doneDate', 'isFinished', 'labels',
-      'queuePosition', 'bandwidthPriority'
+      'queuePosition', 'bandwidthPriority', 'recheckProgress'
     ];
     const res = await this.torrentGet<Torrent>(fields, ids);
     return res.torrents;
