@@ -300,6 +300,24 @@
             <div class="col-resizer" @mousedown.stop="startResize('priority', $event)"></div>
           </th>
 
+          <!-- 元数据完成度 -->
+          <th class="col-metadata resizable-col" v-if="isColVisible('metadata')" :style="{ width: `${getColWidth('metadata')}px` }" @click="handleSort('metadataPercentComplete')">
+            <div class="th-content">
+              <span>{{ t('tableCols.metadata') }}</span>
+              <span class="sort-indicator" v-if="state.filter.sortBy === 'metadataPercentComplete'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('metadata', $event)"></div>
+          </th>
+
+          <!-- 停滞 -->
+          <th class="col-stalled resizable-col" v-if="isColVisible('stalled')" :style="{ width: `${getColWidth('stalled')}px` }" @click="handleSort('isStalled')">
+            <div class="th-content">
+              <span>{{ t('tableCols.stalled') }}</span>
+              <span class="sort-indicator" v-if="state.filter.sortBy === 'isStalled'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
+            </div>
+            <div class="col-resizer" @mousedown.stop="startResize('stalled', $event)"></div>
+          </th>
+
           <!-- 保存路径 -->
           <th class="col-savepath resizable-col" v-if="isColVisible('savePath')" :style="{ width: `${getColWidth('savePath')}px` }">
             <div class="th-content"><span>{{ t('tableCols.savePath') }}</span></div>
@@ -487,6 +505,13 @@
             <span class="priority-tag" :class="getPriorityClass(torrent.bandwidthPriority)">
               {{ formatPriority(torrent.bandwidthPriority) }}
             </span>
+          </td>
+          <td class="col-metadata" v-if="isColVisible('metadata')">
+            {{ (torrent.metadataPercentComplete ?? 1) < 1 ? `${((torrent.metadataPercentComplete || 0) * 100).toFixed(0)}%` : '—' }}
+          </td>
+          <td class="col-stalled" v-if="isColVisible('stalled')">
+            <span v-if="torrent.isStalled" class="stalled-tag">{{ t('tableCols.stalled') }}</span>
+            <span v-else class="text-muted">—</span>
           </td>
           <td class="col-savepath" v-if="isColVisible('savePath')" :title="torrent.downloadDir">{{ torrent.downloadDir || '—' }}</td>
           <td class="col-labels" v-if="isColVisible('labels')" :title="torrent.labels?.join(', ')">
@@ -1366,6 +1391,15 @@ function getStatusBadgeClass(item: Torrent): string {
 .priority-tag.prio-low {
   color: #0078d4;
   background: rgba(0, 120, 212, 0.1);
+}
+
+.stalled-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  color: #b26a00;
+  background: rgba(255, 152, 0, 0.16);
 }
 
 .empty-table-cell {

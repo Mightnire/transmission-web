@@ -163,6 +163,14 @@
                       <span>{{ t('dialog.activeTime') }}</span>
                       <strong>{{ formatDuration(state.stats?.['current-stats']?.secondsActive) }}</strong>
                     </div>
+                    <div class="stat-row">
+                      <span>{{ t('backstage.filesAdded') }}</span>
+                      <strong>{{ state.stats?.['current-stats']?.filesAdded ?? 0 }}</strong>
+                    </div>
+                    <div class="stat-row">
+                      <span>{{ t('backstage.sessionCount') }}</span>
+                      <strong>{{ state.stats?.['current-stats']?.sessionCount ?? 0 }}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -185,6 +193,14 @@
                       <span>{{ t('dialog.activeTime') }}</span>
                       <strong>{{ formatDuration(state.stats?.['cumulative-stats']?.secondsActive) }}</strong>
                     </div>
+                    <div class="stat-row">
+                      <span>{{ t('backstage.filesAdded') }}</span>
+                      <strong>{{ state.stats?.['cumulative-stats']?.filesAdded ?? 0 }}</strong>
+                    </div>
+                    <div class="stat-row">
+                      <span>{{ t('backstage.sessionCount') }}</span>
+                      <strong>{{ state.stats?.['cumulative-stats']?.sessionCount ?? 0 }}</strong>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -192,6 +208,15 @@
               <div class="panel storage-panel">
                 <h3>{{ t('backstage.storage') }}</h3>
                 <p class="storage-path" :title="downloadDir">{{ downloadDir }}</p>
+                <div class="storage-usage" v-if="freeSpaceBytes !== null">
+                  <div class="storage-usage-head">
+                    <span>{{ freeSpaceLabel }}</span>
+                    <span v-if="usedSpacePct !== null">{{ t('backstage.usedSpace', { pct: usedSpacePct.toFixed(0) }) }}</span>
+                  </div>
+                  <div class="storage-meter" v-if="freeSpaceTotal">
+                    <div class="storage-meter-fill" :style="{ width: `${usedSpacePct ?? 0}%` }"></div>
+                  </div>
+                </div>
                 <div class="mini-metrics">
                   <div class="mini-metric">
                     <span>{{ t('backstage.torrents') }}</span>
@@ -260,6 +285,7 @@ import {
   formatSpeed,
 } from '../stores/transmission';
 import { TorrentStatus } from '../api/types';
+import { rpc } from '../api/rpc';
 import { t } from '../locales';
 import { useEscapeKey } from '../composables/useEscapeKey';
 import SpeedChart from './SpeedChart.vue';
@@ -315,6 +341,39 @@ const trackerCount = computed(() => {
 
 const downloadDir = computed(() => state.session?.['download-dir'] || state.torrents[0]?.downloadDir || '—');
 
+const freeSpaceBytes = ref<number | null>(null);
+const freeSpaceTotal = ref<number | null>(null);
+
+const usedSpacePct = computed(() => {
+  if (freeSpaceBytes.value === null || !freeSpaceTotal.value) return null;
+  return Math.min(100, Math.max(0, ((freeSpaceTotal.value - freeSpaceBytes.value) / freeSpaceTotal.value) * 100));
+});
+
+const freeSpaceLabel = computed(() => {
+  if (freeSpaceBytes.value === null) return '';
+  if (freeSpaceTotal.value) {
+    return t('backstage.freeSpaceOf', {
+      free: formatBytes(freeSpaceBytes.value),
+      total: formatBytes(freeSpaceTotal.value),
+    });
+  }
+  return t('backstage.freeSpace', { free: formatBytes(freeSpaceBytes.value) });
+});
+
+async function loadStorage() {
+  const path = downloadDir.value;
+  if (!path || path === '—') return;
+  try {
+    const result = await rpc.freeSpace(path);
+    freeSpaceBytes.value = result['size-bytes'] ?? null;
+    freeSpaceTotal.value = result.total_size ?? null;
+  } catch (err) {
+    // 存储空间只是附加信息，失败时保持静默，不影响主面板
+    freeSpaceBytes.value = null;
+    freeSpaceTotal.value = null;
+  }
+}
+
 const activeTabTitle = computed(() => {
   if (activeTab.value === 'stats') return t('backstage.stats');
   if (activeTab.value === 'about') return t('backstage.about');
@@ -362,11 +421,16 @@ watch(
     if (open) {
       activeTab.value = 'info';
       document.body.style.overflow = 'hidden';
+      loadStorage();
     } else {
       document.body.style.overflow = '';
     }
   }
 );
+
+watch(activeTab, (tab) => {
+  if (tab === 'stats') loadStorage();
+});
 
 useEscapeKey(() => {
   if (state.fileMenuOpen) closeFileMenu();
@@ -712,6 +776,36 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.storage-usage {
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.storage-usage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--md-text-secondary);
+}
+
+.storage-meter {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--fluent-bg-subtle);
+  overflow: hidden;
+}
+
+.storage-meter-fill {
+  height: 100%;
+  background: var(--fluent-accent);
+  border-radius: 3px;
+  transition: width 0.3s ease;
 }
 
 .mini-metrics {

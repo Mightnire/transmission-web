@@ -119,6 +119,7 @@ export interface Torrent {
   errorString: string;
   eta: number;
   etaIdle?: number;
+  fileCount?: number;
   files?: TorrentFile[];
   fileStats?: TorrentFileStat[];
   group?: string;
@@ -143,6 +144,7 @@ export interface Torrent {
   peersFrom?: {
     fromCache: number;
     fromDht: number;
+    fromHolepunch?: number;
     fromIncoming: number;
     fromLpd: number;
     fromLtep: number;
@@ -156,6 +158,7 @@ export interface Torrent {
   pieces?: string;
   pieceCount: number;
   pieceSize: number;
+  primaryMimeType?: string;
   priorities?: Priority[];
   queuePosition: number;
   rateDownload: number;
@@ -167,6 +170,7 @@ export interface Torrent {
   seedIdleMode: SeedIdleMode;
   seedRatioLimit: number;
   seedRatioMode: SeedRatioMode;
+  sequentialDownload?: boolean;
   sizeWhenDone: number;
   startDate: number;
   status: TorrentStatus;

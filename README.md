@@ -35,6 +35,11 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
   - 文件树目录行的大小与进度由子文件聚合得出，不再显示无意义的 `0 B / 0%`。
   - 文件树与种子列表同样铺满两端，勾选行使用统一的 Fluent 选中色；高/低优先级文件在左侧和下拉框中有独立颜色。
   - 支持对已勾选（要下载）的文件**批量设置优先级**。
+  - 详情页「扩展信息」展示元数据完成度、私有种子、传输停滞、文件数量与连接上限。
+- **更多 RPC 信息**
+  - 统计页通过 `free-space` 显示下载目录可用空间（Transmission 4.x 还会显示总容量与使用进度条）。
+  - 节点页按 Tracker / DHT / PEX / LPD / LTEP / 入站 / 缓存 / 打洞 展示 Peer 来源。
+  - 会话统计补充 `filesAdded` 与 `sessionCount`；种子表新增「元数据」「停滞」可选列。
 - **Tracker 状态与校验**
   - Tracker 结果在本地解析并着色：成功绿色、连接失败/访问拒绝红色、HTTP 429 等限流黄色、等待宣告灰色。
   - 支持 `Could not connect to tracker`、`Connection failed`、`access denied`、`HTTP 401/403/429/5xx` 等常见结果。
@@ -94,8 +99,8 @@ npm run build
 | 文件 | 原始 | gzip |
 | --- | --- | --- |
 | `index.html` | 1.1 kB | 0.6 kB |
-| `assets/index-*.css` | 100 kB | 15.0 kB |
-| `assets/index-*.js` | 358 kB | 108 kB |
+| `assets/index-*.css` | 100 kB | 15.2 kB |
+| `assets/index-*.js` | 363 kB | 109 kB |
 
 `base: './'` 使产物可以部署在任意子路径（如 `/transmission/web/`）下。
 

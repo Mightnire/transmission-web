@@ -26,6 +26,8 @@ export interface TorrentFilter {
     | 'secondsSeeding'
     | 'secondsDownloading'
     | 'bandwidthPriority'
+    | 'isStalled'
+    | 'metadataPercentComplete'
     | 'recheckProgress'
     | 'uploadRatio';
   sortAsc: boolean;
@@ -99,6 +101,8 @@ const DEFAULT_COLUMNS: TableColumnConfig[] = [
   { id: 'peersDetail', labelKey: 'tableCols.peersDetail', visible: false, width: 92, minWidth: 70 },
   { id: 'webSeeds', labelKey: 'tableCols.webSeeds', visible: false, width: 82, minWidth: 60 },
   { id: 'priority', labelKey: 'tableCols.priority', visible: false, width: 72, minWidth: 60 },
+  { id: 'metadata', labelKey: 'tableCols.metadata', visible: false, width: 80, minWidth: 60 },
+  { id: 'stalled', labelKey: 'tableCols.stalled', visible: false, width: 64, minWidth: 50 },
   { id: 'savePath', labelKey: 'tableCols.savePath', visible: false, width: 180, minWidth: 120 },
   { id: 'labels', labelKey: 'tableCols.labels', visible: false, width: 110, minWidth: 70 },
   { id: 'hash', labelKey: 'tableCols.hash', visible: false, width: 130, minWidth: 100 },

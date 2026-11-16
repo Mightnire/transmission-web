@@ -229,6 +229,33 @@
               <span class="value">{{ getPriorityText(activeTorrent.bandwidthPriority) }}</span>
             </div>
           </div>
+
+          <!-- 扩展信息卡片 -->
+          <div class="info-card">
+            <div class="card-title">{{ t('detail.general.extended') }}</div>
+            <div class="info-row">
+              <span class="label">{{ t('detail.general.metadataProgress') }}</span>
+              <span class="value">{{ ((activeTorrent.metadataPercentComplete ?? 1) * 100).toFixed(1) }}%</span>
+            </div>
+            <div class="info-row">
+              <span class="label">{{ t('detail.general.privateTorrent') }}</span>
+              <span class="value">{{ activeTorrent.isPrivate ? t('detail.general.yes') : t('detail.general.no') }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">{{ t('detail.general.stalled') }}</span>
+              <span class="value" :class="{ 'text-warning': activeTorrent.isStalled }">
+                {{ activeTorrent.isStalled ? t('detail.general.yes') : t('detail.general.no') }}
+              </span>
+            </div>
+            <div class="info-row">
+              <span class="label">{{ t('detail.general.fileCount') }}</span>
+              <span class="value">{{ activeTorrent.files?.length ?? '—' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">{{ t('detail.general.peerLimit') }}</span>
+              <span class="value">{{ activeTorrent.maxConnectedPeers ?? activeTorrent.peerLimit ?? '—' }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -248,6 +275,18 @@
 
       <!-- 3. 节点列表 (Peers) -->
       <div v-else-if="currentTab === 'peers'" class="tab-pane peers-pane">
+        <div class="peer-source-bar" v-if="activeTorrent.peersFrom && (peerSources.length > 0 || activeTorrent.webseeds?.length)">
+          <span class="peer-source-label">{{ t('detail.peers.sources') }}</span>
+          <span class="peer-source-chip" v-for="source in peerSources" :key="source.label">
+            <i :style="{ backgroundColor: source.color }"></i>{{ source.label }}
+            <b>{{ source.value }}</b>
+          </span>
+          <span class="peer-source-chip webseed-chip" v-if="activeTorrent.webseeds?.length">
+            <FluentIcon name="cloud_download" />
+            {{ t('detail.peers.webSeeds') }}
+            <b>{{ activeTorrent.webseeds.length }}</b>
+          </span>
+        </div>
         <table class="detail-table" v-if="activeTorrent.peers && activeTorrent.peers.length > 0">
           <thead>
             <tr>
@@ -364,6 +403,21 @@ const activeTorrent = computed(() => {
     return state.activeTorrentDetail;
   }
   return state.torrents.find((t) => t.id === state.selectedId) || null;
+});
+
+const peerSources = computed(() => {
+  const from = activeTorrent.value?.peersFrom;
+  if (!from) return [];
+  return [
+    { label: t('detail.peers.sourceTracker'), value: from.fromTracker, color: '#0078d4' },
+    { label: 'DHT', value: from.fromDht, color: '#8e44ad' },
+    { label: 'PEX', value: from.fromPex, color: '#2e7d32' },
+    { label: 'LPD', value: from.fromLpd, color: '#ef6c00' },
+    { label: 'LTEP', value: from.fromLtep, color: '#00838f' },
+    { label: t('detail.peers.sourceIncoming'), value: from.fromIncoming, color: '#6d4c41' },
+    { label: t('detail.peers.sourceCache'), value: from.fromCache, color: '#757575' },
+    { label: t('detail.peers.sourceHolepunch'), value: from.fromHolepunch || 0, color: '#c62828' },
+  ].filter((source) => source.value > 0);
 });
 
 const isDetailExpanded = computed(() => state.detailHeight > 420);
@@ -844,8 +898,52 @@ function handleSetLocation() {
 
 /* 文件树与 Tracker 表格铺满详情面板两端 */
 .files-pane,
+.peers-pane,
 .trackers-pane {
   padding: 0;
+}
+
+.peer-source-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  background: var(--fluent-bg-subtle);
+  font-size: 11px;
+  color: var(--md-text-secondary);
+}
+
+.peer-source-label {
+  font-weight: 600;
+  color: var(--md-text-primary);
+}
+
+.peer-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+}
+
+.peer-source-chip i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.peer-source-chip b {
+  font-weight: 600;
+  color: var(--md-text-primary);
+}
+
+.webseed-chip {
+  color: var(--fluent-accent);
 }
 
 .trackers-pane .tracker-actions-bar {
