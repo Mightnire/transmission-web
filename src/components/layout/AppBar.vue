@@ -2353,6 +2353,16 @@ function toggleTheme() {
   word-break: normal;
 }
 
+.fluent-ribbon-root .btn-stack {
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+}
+
+.fluent-ribbon-root .btn-stack .fluent-btn-small {
+  height: 28px;
+}
+
 .fluent-ribbon-root .btn-stack-2row,
 .fluent-ribbon-root .btn-matrix-2x2 {
   flex-direction: row;
