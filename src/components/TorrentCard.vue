@@ -153,7 +153,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Torrent, TorrentStatus } from '../api/types';
-import { state, selectTorrent, formatBytes, formatSpeed, formatETA } from '../stores/transmission';
+import {
+  state,
+  selectTorrent,
+  formatBytes,
+  formatSpeed,
+  formatETA,
+  openConfirmRemove,
+  startTorrentsAction,
+  stopTorrentsAction,
+} from '../stores/transmission';
 import { t } from '../locales';
 import { rpc } from '../api/rpc';
 
@@ -273,20 +282,16 @@ function openProps() {
 
 async function togglePlay() {
   if (isPaused.value) {
-    await rpc.startTorrents([props.torrent.id]);
+    await startTorrentsAction([props.torrent.id]);
   } else {
-    await rpc.stopTorrents([props.torrent.id]);
+    await stopTorrentsAction([props.torrent.id]);
   }
 }
 
-async function removeTorrent() {
-  if (confirm(t('menu.confirmRemove', { count: 1 }))) {
-    const deleteData = confirm(t('menu.confirmRemoveData', { count: 1 }));
-    await rpc.removeTorrents([props.torrent.id], deleteData);
-    if (state.selectedId === props.torrent.id) {
-      state.selectedId = null;
-    }
-  }
+function removeTorrent() {
+  state.selectedId = props.torrent.id;
+  state.selectedIds = [props.torrent.id];
+  openConfirmRemove(false);
 }
 </script>
 

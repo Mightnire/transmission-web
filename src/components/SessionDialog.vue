@@ -431,7 +431,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue';
-import { state, fetchSession, formatBytes } from '../stores/transmission';
+import { state, fetchSession, formatBytes, showToast, describeError } from '../stores/transmission';
+import { useEscapeKey } from '../composables/useEscapeKey';
 import { t } from '../locales';
 import { rpc } from '../api/rpc';
 
@@ -440,6 +441,10 @@ const testingPort = ref(false);
 const portStatus = ref<boolean | null>(null);
 const freeSpaceBytes = ref<number | null>(null);
 const updatingBlocklist = ref(false);
+
+useEscapeKey(() => {
+  if (state.sessionDialogOpen) state.sessionDialogOpen = false;
+});
 
 const form = reactive({
   // 速度
@@ -611,10 +616,10 @@ async function updateBlocklist() {
   updatingBlocklist.value = true;
   try {
     const res = await rpc.blocklistUpdate();
-    alert(t('session.automation.blocklistSuccess', { count: res['blocklist-size'] }));
+    showToast(t('session.automation.blocklistSuccess', { count: res['blocklist-size'] }), 'success');
     await fetchSession();
   } catch (e) {
-    alert(t('session.automation.blocklistFailed'));
+    showToast(t('session.automation.blocklistFailed'), 'error');
   } finally {
     updatingBlocklist.value = false;
   }
@@ -688,8 +693,9 @@ async function saveSettings() {
     }
     state.sessionDialogOpen = false;
     await fetchSession();
+    showToast(t('toast.saved'), 'success');
   } catch (err: any) {
-    alert('保存首选项失败: ' + (err.message || err));
+    showToast(t('common.failed', { error: describeError(err) }), 'error');
   }
 }
 </script>

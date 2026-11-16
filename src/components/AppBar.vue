@@ -11,40 +11,60 @@
         <FluentIcon name="menu" />
       </button>
 
-      <!-- 应用标题 / 品牌标识 -->
+      <!-- 应用标题 / 品牌标识 (Transmission 官方高保真变速杆 Logo) -->
       <div class="fluent-brand">
-        <FluentIcon name="cloud_download" class="brand-icon" />
+        <TransmissionLogo :size="20" class="brand-logo" />
         <span class="brand-text">Transmission</span>
       </div>
 
-      <!-- Ribbon 选项卡列表 (桌面端展示) -->
+      <!-- 正统 Office 风格“文件 (File)”主菜单 -->
+      <div class="file-menu-wrapper">
+        <button
+          class="ribbon-file-btn"
+          :class="{ active: fileMenuOpen }"
+          @click.stop="toggleFileMenu"
+        >
+          <span>{{ t('ribbon.file') }}</span>
+        </button>
+
+        <div class="fluent-dropdown-menu file-dropdown-panel" v-if="fileMenuOpen" @click.stop>
+          <button class="fluent-menu-item" @click="handleFileAction('add')">
+            <FluentIcon name="add" />
+            <span>{{ t('toolbar.add') }}</span>
+          </button>
+          <div class="menu-divider"></div>
+          <button class="fluent-menu-item" @click="handleFileAction('settings')">
+            <FluentIcon name="settings" />
+            <span>{{ t('toolbar.settings') }}</span>
+          </button>
+          <button class="fluent-menu-item" @click="handleFileAction('stats')">
+            <FluentIcon name="insights" />
+            <span>{{ t('sidebar.stats') }}</span>
+          </button>
+          <div class="menu-divider"></div>
+          <button class="fluent-menu-item" @click="handleFileAction('checkUpdate')">
+            <FluentIcon name="info" />
+            <span>{{ t('ribbon.about') }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Ribbon 选项卡列表 (桌面端展示，纯正 Office 2016 纯文字高效规范) -->
       <nav class="ribbon-tabs desktop-only">
         <button
           class="ribbon-tab-btn"
           :class="{ active: currentTab === 'tasks' && !isRibbonCollapsed }"
           @click.stop="selectTab('tasks')"
         >
-          <FluentIcon name="home" class="tab-icon" />
           <span class="tab-text">{{ t('ribbon.tabs.tasks') }}</span>
         </button>
 
         <button
           class="ribbon-tab-btn"
-          v-if="isQueueEnabled"
-          :class="{ active: currentTab === 'queue' && !isRibbonCollapsed }"
-          @click.stop="selectTab('queue')"
+          :class="{ active: currentTab === 'transfer' && !isRibbonCollapsed }"
+          @click.stop="selectTab('transfer')"
         >
-          <FluentIcon name="low_priority" class="tab-icon" />
-          <span class="tab-text">{{ t('ribbon.tabs.queue') }}</span>
-        </button>
-
-        <button
-          class="ribbon-tab-btn"
-          :class="{ active: currentTab === 'bandwidth' && !isRibbonCollapsed }"
-          @click.stop="selectTab('bandwidth')"
-        >
-          <FluentIcon name="speed" class="tab-icon" />
-          <span class="tab-text">{{ t('ribbon.tabs.bandwidth') }}</span>
+          <span class="tab-text">{{ t('ribbon.tabs.transfer') }}</span>
         </button>
 
         <button
@@ -52,7 +72,6 @@
           :class="{ active: currentTab === 'tools' && !isRibbonCollapsed }"
           @click.stop="selectTab('tools')"
         >
-          <FluentIcon name="build" class="tab-icon" />
           <span class="tab-text">{{ t('ribbon.tabs.tools') }}</span>
         </button>
 
@@ -61,7 +80,6 @@
           :class="{ active: currentTab === 'view' && !isRibbonCollapsed }"
           @click.stop="selectTab('view')"
         >
-          <FluentIcon name="tune" class="tab-icon" />
           <span class="tab-text">{{ t('ribbon.tabs.view') }}</span>
         </button>
 
@@ -73,7 +91,6 @@
           @click.stop="selectTab('torrentProps')"
           :title="t('ribbon.tabs.torrentProps')"
         >
-          <FluentIcon name="tune" class="tab-icon" />
           <span class="tab-text">{{ t('ribbon.tabs.torrentProps') }}</span>
         </button>
       </nav>
@@ -204,293 +221,364 @@
               </button>
             </div>
           </div>
-          <div class="group-title">{{ t('ribbon.groups.basic') }}</div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.basic') }}</span>
+            <button class="dialog-launcher-btn" @click="state.addDialogOpen = true" :title="t('toolbar.addTitle')">
+              <FluentIcon name="dialog_launcher" size="10" />
+            </button>
+          </div>
         </div>
 
-        <!-- 校验与链接组 -->
+        <!-- 组织与标记组 (✨特色新功能：批量标签 + 优先级) -->
         <div class="ribbon-group">
           <div class="ribbon-controls">
-            <!-- 重新校验 -->
+            <!-- 批量设置标签大按钮 -->
             <button
-              class="fluent-btn-small"
+              class="fluent-btn-large"
               :disabled="!hasSelection"
-              @click="verifySelected"
-              :title="t('toolbar.verifyTitle')"
+              @click="state.batchTagsDialogOpen = true"
+              :title="t('ribbon.batchTags')"
             >
-              <FluentIcon name="check_circle_outline" />
-              <span>{{ t('toolbar.verify') }}</span>
+              <FluentIcon name="local_offer" class="large-icon text-accent" />
+              <span class="btn-caption">{{ t('ribbon.batchTags') }}</span>
             </button>
 
-            <!-- 复制磁链 -->
-            <button
-              class="fluent-btn-small"
-              :disabled="!selectedTorrentId"
-              @click="copyMagnet"
-              :title="t('menu.copyMagnet')"
-            >
-              <FluentIcon name="link" />
-              <span>{{ t('menu.copyMagnet') }}</span>
-            </button>
-
-            <!-- 任务属性 -->
-            <button
-              class="fluent-btn-small"
-              :disabled="!selectedTorrentId"
-              @click="openProps"
-              :title="t('ribbon.props')"
-            >
-              <FluentIcon name="tune" />
-              <span>{{ t('ribbon.props') }}</span>
-            </button>
-          </div>
-          <div class="group-title">{{ t('ribbon.groups.data') }}</div>
-        </div>
-
-        <!-- 视图与快速搜索组 -->
-        <div class="ribbon-group search-group">
-          <div class="ribbon-controls">
-            <!-- 详情面板切换 -->
-            <button
-              class="fluent-btn-small"
-              :class="{ 'btn-selected': state.detailOpen }"
-              @click="state.detailOpen = !state.detailOpen"
-              :title="t('toolbar.detailTitle')"
-            >
-              <FluentIcon name="vertical_split" />
-              <span>{{ t('toolbar.detail') }}</span>
-            </button>
-
-            <!-- Fluent 极简搜索框 -->
-            <div class="fluent-search-box">
-              <FluentIcon name="search" class="search-ico" />
-              <input
-                type="text"
-                class="fluent-search-input"
-                :placeholder="t('app.searchPlaceholder')"
-                v-model="state.filter.search"
-              />
-              <FluentIcon name="close" class="clear-ico" v-if="state.filter.search" @click="state.filter.search = ''" />
+            <!-- 快速优先级按钮列 -->
+            <div class="btn-stack">
+              <button
+                class="fluent-btn-small"
+                :disabled="!hasSelection"
+                @click="setPriority(1)"
+                :title="t('ribbon.highPriority')"
+              >
+                <FluentIcon name="arrow_upward" class="text-danger" />
+                <span>{{ t('props.priorityHigh') }}</span>
+              </button>
+              <button
+                class="fluent-btn-small"
+                :disabled="!hasSelection"
+                @click="setPriority(0)"
+                :title="t('ribbon.normalPriority')"
+              >
+                <FluentIcon name="remove" />
+                <span>{{ t('props.priorityNormal') }}</span>
+              </button>
+              <button
+                class="fluent-btn-small"
+                :disabled="!hasSelection"
+                @click="setPriority(-1)"
+                :title="t('ribbon.lowPriority')"
+              >
+                <FluentIcon name="arrow_downward" class="text-primary" />
+                <span>{{ t('props.priorityLow') }}</span>
+              </button>
             </div>
           </div>
-          <div class="group-title">{{ t('sidebar.filters') }}</div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.organize') }}</span>
+            <button class="dialog-launcher-btn" :disabled="!hasSelection" @click="state.batchTagsDialogOpen = true" :title="t('ribbon.batchTags')">
+              <FluentIcon name="dialog_launcher" size="10" />
+            </button>
+          </div>
+        </div>
+
+        <!-- 检索与视图组 -->
+        <div class="ribbon-group search-group">
+          <div class="ribbon-controls">
+            <button
+              class="fluent-btn-large"
+              :class="{ active: state.detailOpen }"
+              @click="state.detailOpen = !state.detailOpen"
+              :title="t('ribbon.props')"
+            >
+              <FluentIcon name="tune" class="large-icon" />
+              <span class="btn-caption">{{ t('ribbon.props') }}</span>
+            </button>
+
+            <div class="search-box-wrap">
+              <div class="fluent-search-input">
+                <FluentIcon name="search" class="search-ico" />
+                <input
+                  type="text"
+                  v-model="state.filter.search"
+                  :placeholder="t('app.searchPlaceholder')"
+                  class="search-native-input"
+                />
+                <button
+                  class="search-clear-btn"
+                  v-if="state.filter.search"
+                  @click="state.filter.search = ''"
+                >
+                  <FluentIcon name="close" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.find') }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- 2.2 队列与调度标签页 (Queue) -->
-      <div class="ribbon-tab-pane" v-else-if="currentTab === 'queue'">
-        <!-- 队列排序 -->
-        <div class="ribbon-group">
+      <!-- 2.2 传输与网络标签页 (Transfer) -->
+      <div class="ribbon-tab-pane" v-else-if="currentTab === 'transfer'">
+        <!-- 队列调度组 (2x2 双行矩阵 + 立即开始大按钮) -->
+        <div class="ribbon-group" v-if="isQueueEnabled">
           <div class="ribbon-controls">
+            <!-- 立即开始 (高保真大按钮) -->
             <button
-              class="fluent-btn-small"
-              :disabled="!hasSelection"
-              @click="moveQueue('top')"
-              title="Move to Top"
-            >
-              <FluentIcon name="vertical_align_top" />
-              <span>{{ t('menu.moveTop') }}</span>
-            </button>
-            <button
-              class="fluent-btn-small"
-              :disabled="!hasSelection"
-              @click="moveQueue('up')"
-              title="Move Up"
-            >
-              <FluentIcon name="arrow_upward" />
-              <span>{{ t('menu.moveUp') }}</span>
-            </button>
-            <button
-              class="fluent-btn-small"
-              :disabled="!hasSelection"
-              @click="moveQueue('down')"
-              title="Move Down"
-            >
-              <FluentIcon name="arrow_downward" />
-              <span>{{ t('menu.moveDown') }}</span>
-            </button>
-            <button
-              class="fluent-btn-small"
-              :disabled="!hasSelection"
-              @click="moveQueue('bottom')"
-              title="Move to Bottom"
-            >
-              <FluentIcon name="vertical_align_bottom" />
-              <span>{{ t('menu.moveBottom') }}</span>
-            </button>
-          </div>
-          <div class="group-title">{{ t('ribbon.groups.queueOrder') }}</div>
-        </div>
-
-        <!-- 调度执行 -->
-        <div class="ribbon-group">
-          <div class="ribbon-controls">
-            <button
-              class="fluent-btn-small"
+              class="fluent-btn-large primary-btn"
               :disabled="!hasSelection"
               @click="handleStartNow"
               :title="t('ribbon.startNow')"
             >
-              <FluentIcon name="bolt" class="text-warning" />
-              <span>{{ t('ribbon.startNow') }}</span>
+              <FluentIcon name="bolt" class="large-icon text-warning" />
+              <span class="btn-caption">{{ t('ribbon.startNow') }}</span>
             </button>
 
+            <!-- 2x2 队列调整双行矩阵 -->
+            <div class="btn-matrix-2x2">
+              <div class="btn-stack-2row">
+                <button
+                  class="fluent-btn-small"
+                  :disabled="!hasSelection"
+                  @click="moveQueue('top')"
+                  :title="t('toolbar.queueTop')"
+                >
+                  <FluentIcon name="vertical_align_top" />
+                  <span>{{ t('toolbar.queueTop') }}</span>
+                </button>
+                <button
+                  class="fluent-btn-small"
+                  :disabled="!hasSelection"
+                  @click="moveQueue('bottom')"
+                  :title="t('toolbar.queueBottom')"
+                >
+                  <FluentIcon name="vertical_align_bottom" />
+                  <span>{{ t('toolbar.queueBottom') }}</span>
+                </button>
+              </div>
+              <div class="btn-stack-2row">
+                <button
+                  class="fluent-btn-small"
+                  :disabled="!hasSelection"
+                  @click="moveQueue('up')"
+                  :title="t('toolbar.queueUp')"
+                >
+                  <FluentIcon name="arrow_upward" />
+                  <span>{{ t('toolbar.queueUp') }}</span>
+                </button>
+                <button
+                  class="fluent-btn-small"
+                  :disabled="!hasSelection"
+                  @click="moveQueue('down')"
+                  :title="t('toolbar.queueDown')"
+                >
+                  <FluentIcon name="arrow_downward" />
+                  <span>{{ t('toolbar.queueDown') }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.queue') }}</span>
+            <button class="dialog-launcher-btn" @click="state.sessionDialogOpen = true" :title="t('toolbar.settings')">
+              <FluentIcon name="dialog_launcher" size="10" />
+            </button>
+          </div>
+        </div>
+
+        <!-- 网络与 Tracker 组 (重新宣告大按钮 + 校验/磁链双行堆叠) -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls">
+            <!-- 重新宣告 -->
             <button
-              class="fluent-btn-small"
+              class="fluent-btn-large"
               :disabled="!hasSelection"
               @click="handleReannounce"
               :title="t('ribbon.reannounce')"
             >
-              <FluentIcon name="sync" />
-              <span>{{ t('ribbon.reannounce') }}</span>
+              <FluentIcon name="broadcast" class="large-icon text-accent" />
+              <span class="btn-caption">{{ t('ribbon.reannounce') }}</span>
             </button>
-          </div>
-          <div class="group-title">{{ t('ribbon.groups.exec') }}</div>
-        </div>
-      </div>
 
-      <!-- 2.3 限速与做种规则标签页 (Bandwidth) -->
-      <div class="ribbon-tab-pane" v-else-if="currentTab === 'bandwidth'">
-        <!-- 乌龟临时限速模式 -->
+            <!-- 垂直双行堆叠：数据校验 + 复制磁链 -->
+            <div class="btn-stack-2row">
+              <button
+                class="fluent-btn-small"
+                :disabled="!hasSelection"
+                @click="verifySelected()"
+                :title="t('toolbar.verify')"
+              >
+                <FluentIcon name="check_circle" class="text-info" />
+                <span>{{ t('toolbar.verify') }}</span>
+              </button>
+              <button
+                class="fluent-btn-small"
+                :disabled="!hasSelection"
+                @click="copyMagnet"
+                :title="t('detail.general.copyMagnet')"
+              >
+                <FluentIcon name="content_copy" />
+                <span>{{ t('detail.general.copyMagnet') }}</span>
+              </button>
+            </div>
+          </div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.network') }}</span>
+          </div>
+        </div>
+
+        <!-- 乌龟临时限速模式组 -->
         <div class="ribbon-group">
           <div class="ribbon-controls">
             <button
               class="fluent-btn-large"
-              :class="{ 'btn-active-turtle': state.session?.['alt-speed-enabled'] }"
+              :class="{ active: state.session?.['alt-speed-enabled'] }"
               @click="toggleTurtleMode"
               :title="t('toolbar.turtle')"
             >
               <FluentIcon name="speed" class="large-icon" />
               <span class="btn-caption">{{ t('toolbar.turtle') }}</span>
             </button>
+          </div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.turtle') }}</span>
+            <button class="dialog-launcher-btn" @click="state.sessionDialogOpen = true" :title="t('toolbar.settings')">
+              <FluentIcon name="dialog_launcher" size="10" />
+            </button>
+          </div>
+        </div>
+      </div>
 
-            <div class="turtle-info-card" v-if="state.session">
-              <div class="turtle-rate">⬇ {{ state.session['alt-speed-down'] }} KB/s</div>
-              <div class="turtle-rate">⬆ {{ state.session['alt-speed-up'] }} KB/s</div>
+      <!-- 2.3 存储与维护标签页 (Tools) -->
+      <div class="ribbon-tab-pane" v-else-if="currentTab === 'tools'">
+        <!-- 存储与重命名组 (双行堆叠) -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls">
+            <div class="btn-stack-2row">
+              <button
+                class="fluent-btn-small"
+                :disabled="!hasSelection"
+                @click="handleSetLocation"
+                :title="t('ribbon.setLocation')"
+              >
+                <FluentIcon name="folder_open" />
+                <span>{{ t('ribbon.setLocation') }}</span>
+              </button>
+              <button
+                class="fluent-btn-small"
+                :disabled="!hasSelection"
+                @click="handleRename"
+                :title="t('ribbon.rename')"
+              >
+                <FluentIcon name="edit" />
+                <span>{{ t('ribbon.rename') }}</span>
+              </button>
             </div>
           </div>
-          <div class="group-title">{{ t('ribbon.groups.turtle') }}</div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.storage') }}</span>
+          </div>
         </div>
 
-        <!-- 优先级快速分配 -->
+        <!-- 服务与系统维护组 (首选项大按钮 + 统计/关于双行堆叠) -->
         <div class="ribbon-group">
           <div class="ribbon-controls">
-            <button
-              class="fluent-btn-small"
-              :class="{ active: currentTorrentPriority === 1 }"
-              :disabled="!hasSelection"
-              @click="setPriority(1)"
-              :title="t('ribbon.highPriority')"
-            >
-              <FluentIcon name="priority_high" class="text-danger" />
-              <span>{{ t('ribbon.highPriority') }}</span>
+            <button class="fluent-btn-large" @click="state.sessionDialogOpen = true" :title="t('toolbar.settings')">
+              <FluentIcon name="settings" class="large-icon" />
+              <span class="btn-caption">{{ t('toolbar.settings') }}</span>
             </button>
-            <button
-              class="fluent-btn-small"
-              :class="{ active: currentTorrentPriority === 0 }"
-              :disabled="!hasSelection"
-              @click="setPriority(0)"
-              :title="t('ribbon.normalPriority')"
-            >
-              <FluentIcon name="remove" />
-              <span>{{ t('ribbon.normalPriority') }}</span>
-            </button>
-            <button
-              class="fluent-btn-small"
-              :class="{ active: currentTorrentPriority === -1 }"
-              :disabled="!hasSelection"
-              @click="setPriority(-1)"
-              :title="t('ribbon.lowPriority')"
-            >
-              <FluentIcon name="arrow_downward" class="text-secondary" />
-              <span>{{ t('ribbon.lowPriority') }}</span>
+            <div class="btn-stack-2row">
+              <button class="fluent-btn-small" @click="openStatsDialog" :title="t('sidebar.stats')">
+                <FluentIcon name="insights" />
+                <span>{{ t('sidebar.stats') }}</span>
+              </button>
+              <button class="fluent-btn-small" @click="openAboutDialog" :title="t('ribbon.about')">
+                <FluentIcon name="info" />
+                <span>{{ t('ribbon.about') }}</span>
+              </button>
+            </div>
+          </div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.maintenance') }}</span>
+            <button class="dialog-launcher-btn" @click="state.sessionDialogOpen = true" :title="t('toolbar.settings')">
+              <FluentIcon name="dialog_launcher" size="10" />
             </button>
           </div>
-          <div class="group-title">{{ t('ribbon.groups.rules') }}</div>
         </div>
       </div>
 
-      <!-- 2.4 维护与工具标签页 (Tools) -->
-      <div class="ribbon-tab-pane" v-else-if="currentTab === 'tools'">
-        <!-- 存储与重命名 -->
-        <div class="ribbon-group">
-          <div class="ribbon-controls">
-            <button
-              class="fluent-btn-small"
-              :disabled="!selectedTorrentId"
-              @click="handleSetLocation"
-              :title="t('ribbon.setLocation')"
-            >
-              <FluentIcon name="folder_open" />
-              <span>{{ t('ribbon.setLocation') }}</span>
-            </button>
-
-            <button
-              class="fluent-btn-small"
-              :disabled="!selectedTorrentId"
-              @click="handleRename"
-              :title="t('ribbon.rename')"
-            >
-              <FluentIcon name="edit" />
-              <span>{{ t('ribbon.rename') }}</span>
-            </button>
-          </div>
-          <div class="group-title">{{ t('ribbon.groups.location') }}</div>
-        </div>
-
-        <!-- 系统与首选项 -->
-        <div class="ribbon-group">
-          <div class="ribbon-controls">
-            <button class="fluent-btn-small" @click="state.sessionDialogOpen = true" :title="t('toolbar.settings')">
-              <FluentIcon name="settings" />
-              <span>{{ t('toolbar.settings') }}</span>
-            </button>
-
-            <button class="fluent-btn-small" @click="fetchTorrents" title="Refresh">
-              <FluentIcon name="refresh" />
-              <span>{{ t('common.verify') }}</span>
-            </button>
-          </div>
-          <div class="group-title">{{ t('ribbon.groups.system') }}</div>
-        </div>
-      </div>
-
-      <!-- 2.5 视图与首选项画板 -->
+      <!-- 2.4 视图与偏好标签页 (View) -->
       <div class="ribbon-tab-pane" v-else-if="currentTab === 'view'">
-        <!-- 侧边栏与分组 (Word 风格 Toggle 激活高亮) -->
+        <!-- 侧边栏与分组 (Office 2016 规范双行切换按钮，大方干掉复选框) -->
         <div class="ribbon-group">
-          <div class="ribbon-controls view-prefs-col">
-            <button
-              type="button"
-              class="fluent-toggle-btn"
-              :class="{ active: state.uiPreferences.showTrackerGroup }"
-              @click="togglePreference('showTrackerGroup')"
-              :title="t('ribbon.showTrackers')"
-            >
-              <FluentIcon :name="state.uiPreferences.showTrackerGroup ? 'check_box' : 'check_box_outline_blank'" class="btn-icon" />
-              <span>{{ t('ribbon.showTrackers') }}</span>
-            </button>
-            <button
-              type="button"
-              class="fluent-toggle-btn"
-              :class="{ active: state.uiPreferences.showTagGroup }"
-              @click="togglePreference('showTagGroup')"
-              :title="t('ribbon.showTags')"
-            >
-              <FluentIcon :name="state.uiPreferences.showTagGroup ? 'check_box' : 'check_box_outline_blank'" class="btn-icon" />
-              <span>{{ t('ribbon.showTags') }}</span>
-            </button>
+          <div class="ribbon-controls">
+            <div class="btn-stack-2row">
+              <button
+                class="fluent-btn-small ribbon-toggle-btn"
+                :class="{ active: state.uiPreferences.showTrackerGroup }"
+                @click="state.uiPreferences.showTrackerGroup = !state.uiPreferences.showTrackerGroup; saveUIPreferences()"
+                :title="t('ribbon.showTrackers')"
+              >
+                <FluentIcon name="dns" />
+                <span>{{ t('ribbon.showTrackers') }}</span>
+              </button>
+              <button
+                class="fluent-btn-small ribbon-toggle-btn"
+                :class="{ active: state.uiPreferences.showTagGroup }"
+                @click="state.uiPreferences.showTagGroup = !state.uiPreferences.showTagGroup; saveUIPreferences()"
+                :title="t('ribbon.showTags')"
+              >
+                <FluentIcon name="local_offer" />
+                <span>{{ t('ribbon.showTags') }}</span>
+              </button>
+            </div>
           </div>
-          <div class="group-title">{{ t('ribbon.groups.sidebarView') }}</div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.panels') }}</span>
+          </div>
         </div>
 
-        <!-- 刷新频率 -->
+        <!-- 表格列自定义组 (双行堆叠) -->
         <div class="ribbon-group">
-          <div class="ribbon-controls view-prefs-col">
-            <div class="poll-row">
+          <div class="ribbon-controls">
+            <div class="btn-stack-2row">
+              <button
+                class="fluent-btn-small"
+                @click.stop="toggleMenu('columns', $event)"
+                :title="t('ribbon.customizeCols')"
+              >
+                <FluentIcon name="view_column" />
+                <span>{{ t('ribbon.customizeCols') }}</span>
+              </button>
+              <button
+                class="fluent-btn-small"
+                @click="handleResetColumns"
+                :title="t('ribbon.resetCols')"
+              >
+                <FluentIcon name="restart_alt" />
+                <span>{{ t('ribbon.resetCols') }}</span>
+              </button>
+            </div>
+          </div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.columns') }}</span>
+            <button class="dialog-launcher-btn" @click.stop="toggleMenu('columns', $event)" :title="t('ribbon.customizeCols')">
+              <FluentIcon name="dialog_launcher" size="10" />
+            </button>
+          </div>
+        </div>
+
+        <!-- 刷新频率调节 (Office 规范带图标紧凑行) -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls view-prefs-col office-select-group">
+            <div class="office-select-row" :title="t('ribbon.pollTorrents')">
+              <FluentIcon name="sync" class="row-icon text-muted" size="14" />
               <span class="input-prefix-label">{{ t('ribbon.pollTorrents') }}</span>
               <select
-                class="fluent-select-mini"
-                v-model.number="state.uiPreferences.pollIntervalTorrents"
+                class="fluent-select"
+                v-model="state.uiPreferences.pollIntervalTorrents"
                 @change="saveUIPreferences"
               >
                 <option :value="1">{{ t('ribbon.sec1s') }}</option>
@@ -500,11 +588,12 @@
                 <option :value="10">{{ t('ribbon.sec10s') }}</option>
               </select>
             </div>
-            <div class="poll-row">
+            <div class="office-select-row" :title="t('ribbon.pollStats')">
+              <FluentIcon name="insights" class="row-icon text-muted" size="14" />
               <span class="input-prefix-label">{{ t('ribbon.pollStats') }}</span>
               <select
-                class="fluent-select-mini"
-                v-model.number="state.uiPreferences.pollIntervalStats"
+                class="fluent-select"
+                v-model="state.uiPreferences.pollIntervalStats"
                 @change="saveUIPreferences"
               >
                 <option :value="1">{{ t('ribbon.sec1s') }}</option>
@@ -515,34 +604,13 @@
               </select>
             </div>
           </div>
-          <div class="group-title">{{ t('ribbon.groups.polling') }}</div>
-        </div>
-
-        <!-- 表格列自定义 -->
-        <div class="ribbon-group">
-          <div class="ribbon-controls">
-            <button
-              class="fluent-btn-small"
-              @click.stop="toggleMenu('columns', $event)"
-              :title="t('ribbon.customizeCols')"
-            >
-              <FluentIcon name="view_column" />
-              <span>{{ t('ribbon.customizeCols') }}</span>
-            </button>
-            <button
-              class="fluent-btn-small"
-              @click="handleResetColumns"
-              :title="t('ribbon.resetCols')"
-            >
-              <FluentIcon name="restart_alt" />
-              <span>{{ t('ribbon.resetCols') }}</span>
-            </button>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.frequency') }}</span>
           </div>
-          <div class="group-title">{{ t('ribbon.groups.columns') }}</div>
         </div>
       </div>
 
-      <!-- 2.6 选中种子专属上下文画板 (Contextual Ribbon Pane - 类似 Word 图片格式) -->
+      <!-- 2.5 种子设置上下文专用标签页 (Torrent Props) -->
       <div class="ribbon-tab-pane contextual-pane" v-else-if="currentTab === 'torrentProps'">
         <!-- 优先级与连接数 -->
         <div class="ribbon-group">
@@ -555,7 +623,7 @@
                 :title="t('ribbon.highPriority')"
               >
                 <FluentIcon name="arrow_upward" class="text-danger" />
-                <span>{{ t('priority.high') }}</span>
+                <span>{{ t('props.priorityHigh') }}</span>
               </button>
               <button
                 class="priority-btn"
@@ -563,8 +631,8 @@
                 @click="setTorrentPriority(0)"
                 :title="t('ribbon.normalPriority')"
               >
-                <FluentIcon name="remove" class="text-info" />
-                <span>{{ t('priority.normal') }}</span>
+                <FluentIcon name="remove" />
+                <span>{{ t('props.priorityNormal') }}</span>
               </button>
               <button
                 class="priority-btn"
@@ -572,159 +640,159 @@
                 @click="setTorrentPriority(-1)"
                 :title="t('ribbon.lowPriority')"
               >
-                <FluentIcon name="arrow_downward" class="text-secondary" />
-                <span>{{ t('priority.low') }}</span>
+                <FluentIcon name="arrow_downward" class="text-primary" />
+                <span>{{ t('props.priorityLow') }}</span>
               </button>
             </div>
 
-            <!-- 最大连接数 -->
-            <div class="fluent-input-compact">
-              <span class="input-prefix-label">{{ t('ribbon.maxPeers') || t('props.peerLimit') }}</span>
+            <div class="single-row-input">
+              <span class="input-prefix-label">{{ t('ribbon.maxPeers') }}</span>
               <input
                 type="number"
-                class="num-field"
+                class="fluent-mini-input"
                 :value="currentTorrentPeerLimit"
                 @change="onTorrentPeerLimitChange"
                 min="1"
-                max="1000"
+                max="500"
               />
             </div>
           </div>
-          <div class="group-title">{{ t('ribbon.groups.rules') }}</div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.rules') }}</span>
+          </div>
         </div>
 
         <!-- 独立限速 (Down/Up) -->
         <div class="ribbon-group">
           <div class="ribbon-controls limits-col">
-            <!-- 下载限速 (Word 激活高亮 Toggle) -->
-            <div class="limit-row">
-              <button
-                type="button"
-                class="limit-toggle-pill"
-                :class="{ active: currentTorrentDownloadLimited }"
-                @click="toggleTorrentDownloadLimited"
-                :title="t('ribbon.limitDown')"
-              >
-                <FluentIcon :name="currentTorrentDownloadLimited ? 'check_box' : 'check_box_outline_blank'" class="mini-check-ico" />
-                <span>{{ t('ribbon.limitDown') }}</span>
-              </button>
+            <div class="limit-setting-row">
+              <label class="office-checkbox-row compact" :title="t('ribbon.limitDown')">
+                <input
+                  type="checkbox"
+                  class="office-checkbox-native"
+                  :checked="currentTorrentDownloadLimited"
+                  @change="toggleTorrentDownloadLimited"
+                />
+                <span class="row-label">{{ t('ribbon.limitDown') }}</span>
+              </label>
               <input
                 type="number"
-                class="num-field limit-num"
+                class="fluent-mini-input"
                 :disabled="!currentTorrentDownloadLimited"
                 :value="currentTorrentDownloadLimit"
                 @change="onTorrentDownloadLimitChange"
                 min="0"
                 step="50"
               />
-              <span class="unit-txt">KB/s</span>
+              <span class="unit-text">KB/s</span>
             </div>
 
-            <!-- 上传限速 (Word 激活高亮 Toggle) -->
-            <div class="limit-row">
-              <button
-                type="button"
-                class="limit-toggle-pill"
-                :class="{ active: currentTorrentUploadLimited }"
-                @click="toggleTorrentUploadLimited"
-                :title="t('ribbon.limitUp')"
-              >
-                <FluentIcon :name="currentTorrentUploadLimited ? 'check_box' : 'check_box_outline_blank'" class="mini-check-ico" />
-                <span>{{ t('ribbon.limitUp') }}</span>
-              </button>
+            <div class="limit-setting-row">
+              <label class="office-checkbox-row compact" :title="t('ribbon.limitUp')">
+                <input
+                  type="checkbox"
+                  class="office-checkbox-native"
+                  :checked="currentTorrentUploadLimited"
+                  @change="toggleTorrentUploadLimited"
+                />
+                <span class="row-label">{{ t('ribbon.limitUp') }}</span>
+              </label>
               <input
                 type="number"
-                class="num-field limit-num"
+                class="fluent-mini-input"
                 :disabled="!currentTorrentUploadLimited"
                 :value="currentTorrentUploadLimit"
                 @change="onTorrentUploadLimitChange"
                 min="0"
                 step="50"
               />
-              <span class="unit-txt">KB/s</span>
+              <span class="unit-text">KB/s</span>
             </div>
-
-            <!-- 遵循全局限制 (Word 激活高亮 Toggle) -->
-            <button
-              type="button"
-              class="limit-toggle-pill honors-pill"
-              :class="{ active: currentTorrentHonorsSession }"
-              @click="toggleTorrentHonorsSession"
-              :title="t('props.honorsSession')"
-            >
-              <FluentIcon :name="currentTorrentHonorsSession ? 'check_box' : 'check_box_outline_blank'" class="mini-check-ico" />
-              <span>{{ t('ribbon.honorsSession') || t('props.honorsSession') }}</span>
-            </button>
           </div>
-          <div class="group-title">{{ t('ribbon.groups.torrentLimits') }}</div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.torrentLimits') }}</span>
+          </div>
         </div>
 
-        <!-- 做种停止规则 -->
+        <!-- 做种停止规则 (规整双行参数网格) -->
         <div class="ribbon-group">
           <div class="ribbon-controls seed-rules-col">
-            <!-- 分享率 -->
-            <div class="seed-row">
-              <span class="input-prefix-label">{{ t('ribbon.ratioMode') || t('props.ratioMode') }}</span>
-              <select class="fluent-select-mini" :value="currentTorrentSeedRatioMode" @change="onTorrentRatioModeChange">
+            <div class="seed-rule-row">
+              <span class="rule-label">{{ t('ribbon.ratioMode') }}</span>
+              <select class="fluent-select compact rule-select" :value="currentTorrentSeedRatioMode" @change="onTorrentRatioModeChange">
                 <option :value="0">{{ t('props.ratioGlobal') }}</option>
                 <option :value="1">{{ t('props.ratioSingle') }}</option>
                 <option :value="2">{{ t('props.ratioUnlimited') }}</option>
               </select>
               <input
-                v-if="currentTorrentSeedRatioMode === 1"
                 type="number"
-                class="num-field seed-num"
-                :value="currentTorrentSeedRatioLimit"
+                class="fluent-mini-input rule-input"
+                :disabled="currentTorrentSeedRatioMode !== 1"
+                :value="currentTorrentSeedRatioMode === 1 ? currentTorrentSeedRatioLimit : ''"
+                :placeholder="currentTorrentSeedRatioMode === 1 ? '' : '—'"
                 @change="onTorrentRatioLimitChange"
                 step="0.1"
                 min="0"
               />
+              <span class="unit-text" :class="{ 'unit-muted': currentTorrentSeedRatioMode !== 1 }">×</span>
             </div>
 
-            <!-- 空闲超时 -->
-            <div class="seed-row">
-              <span class="input-prefix-label">{{ t('ribbon.idleMode') || t('props.idleMode') }}</span>
-              <select class="fluent-select-mini" :value="currentTorrentSeedIdleMode" @change="onTorrentIdleModeChange">
-                <option :value="0">{{ t('props.idleGlobal') }}</option>
+            <div class="seed-rule-row">
+              <span class="rule-label">{{ t('ribbon.idleMode') }}</span>
+              <select class="fluent-select compact rule-select" :value="currentTorrentSeedIdleMode" @change="onTorrentIdleModeChange">
+                <option :value="0">{{ t('props.ratioGlobal') }}</option>
                 <option :value="1">{{ t('props.idleSingle') }}</option>
-                <option :value="2">{{ t('props.idleUnlimited') }}</option>
+                <option :value="2">{{ t('props.ratioUnlimited') }}</option>
               </select>
-              <div class="idle-input-wrap" v-if="currentTorrentSeedIdleMode === 1">
-                <input
-                  type="number"
-                  class="num-field seed-num"
-                  :value="currentTorrentSeedIdleLimit"
-                  @change="onTorrentIdleLimitChange"
-                  min="1"
-                />
-                <span class="unit-txt">min</span>
+              <input
+                type="number"
+                class="fluent-mini-input rule-input"
+                :disabled="currentTorrentSeedIdleMode !== 1"
+                :value="currentTorrentSeedIdleMode === 1 ? currentTorrentSeedIdleLimit : ''"
+                :placeholder="currentTorrentSeedIdleMode === 1 ? '' : '—'"
+                @change="onTorrentIdleLimitChange"
+                min="1"
+              />
+              <span class="unit-text" :class="{ 'unit-muted': currentTorrentSeedIdleMode !== 1 }">{{ t('common.min') }}</span>
+            </div>
+          </div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.torrentSeed') }}</span>
+          </div>
+        </div>
+
+        <!-- 属性与操作 (2x2 双行矩阵) -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls">
+            <div class="btn-matrix-2x2">
+              <div class="btn-stack-2row">
+                <button class="fluent-btn-small" @click="handleSetLocation" :title="t('ribbon.setLocation')">
+                  <FluentIcon name="folder_open" />
+                  <span>{{ t('ribbon.setLocation') }}</span>
+                </button>
+                <button class="fluent-btn-small" @click="handleRename" :title="t('ribbon.rename')">
+                  <FluentIcon name="edit" />
+                  <span>{{ t('ribbon.rename') }}</span>
+                </button>
+              </div>
+              <div class="btn-stack-2row">
+                <button class="fluent-btn-small" @click="copyMagnet" :title="t('detail.general.copyMagnet')">
+                  <FluentIcon name="content_copy" />
+                  <span>{{ t('detail.general.copyMagnet') }}</span>
+                </button>
+                <button class="fluent-btn-small primary" @click="openProps" :title="t('ribbon.props')">
+                  <FluentIcon name="tune" />
+                  <span>{{ t('ribbon.props') }}...</span>
+                </button>
               </div>
             </div>
           </div>
-          <div class="group-title">{{ t('ribbon.groups.torrentSeed') }}</div>
-        </div>
-
-        <!-- 存储、信息与操作 -->
-        <div class="ribbon-group">
-          <div class="ribbon-controls">
-            <button class="fluent-btn-small" @click="handleSetLocation" :title="t('ribbon.setLocation')">
-              <FluentIcon name="folder_open" />
-              <span>{{ t('ribbon.setLocation') }}</span>
-            </button>
-            <button class="fluent-btn-small" @click="handleRename" :title="t('ribbon.rename')">
-              <FluentIcon name="edit" />
-              <span>{{ t('ribbon.rename') }}</span>
-            </button>
-            <button class="fluent-btn-small" @click="copyMagnet" :title="t('detail.general.copyMagnet')">
-              <FluentIcon name="link" />
-              <span>{{ t('detail.general.copyMagnet') }}</span>
-            </button>
-            <button class="fluent-btn-small primary" @click="openProps" :title="t('ribbon.props')">
-              <FluentIcon name="tune" />
-              <span>{{ t('ribbon.props') }}...</span>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.torrentMeta') }}</span>
+            <button class="dialog-launcher-btn" @click="openProps" :title="t('ribbon.props')">
+              <FluentIcon name="dialog_launcher" size="10" />
             </button>
           </div>
-          <div class="group-title">{{ t('ribbon.groups.torrentMeta') }}</div>
         </div>
       </div>
     </div>
@@ -770,6 +838,9 @@
         </div>
         <button class="fluent-btn-mobile" @click="selectAllTorrents" :title="t('ribbon.selectAll')">
           <FluentIcon name="select_all" />
+        </button>
+        <button class="fluent-btn-mobile" @click="state.batchTagsDialogOpen = true" :title="t('ribbon.batchTags')">
+          <FluentIcon name="local_offer" class="text-accent" />
         </button>
         <button class="fluent-btn-mobile" @click="handleStart" :title="t('common.start')">
           <FluentIcon name="play_arrow" class="text-success" />
@@ -875,10 +946,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import {
   state,
-  formatSpeed,
   toggleTurtleMode,
   startSelected,
   stopSelected,
@@ -892,13 +962,26 @@ import {
   toggleViewMode,
   selectAllTorrents,
   clearSelection,
+  openLocationDialog,
+  openRenameDialog,
+  openConfirmRemove,
+  openAboutDialog,
+  openStatsDialog,
+  showToast,
+  describeError,
+  copyTorrentMagnet,
+  startTorrentsAction,
+  stopTorrentsAction,
+  startNowTorrentsAction,
+  reannounceSelected,
 } from '../stores/transmission';
 import { rpc } from '../api/rpc';
 import { t, currentLocale, setLocale, LocaleKey } from '../locales';
 
 const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
-const currentTab = ref<'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps' | 'view'>('tasks');
+const currentTab = ref<'tasks' | 'transfer' | 'tools' | 'view' | 'torrentProps'>('tasks');
 const isRibbonCollapsed = ref(localStorage.getItem('ribbon_collapsed') === 'true');
+const fileMenuOpen = ref(false);
 
 // 下拉菜单浮层状态
 const menus = reactive({
@@ -912,11 +995,31 @@ const menus = reactive({
 const menuPos = reactive({ top: 0, left: 0 });
 
 function closeAllMenus() {
+  fileMenuOpen.value = false;
   menus.start = false;
   menus.stop = false;
   menus.delete = false;
   menus.lang = false;
   menus.columns = false;
+}
+
+function toggleFileMenu() {
+  const willOpen = !fileMenuOpen.value;
+  closeAllMenus();
+  fileMenuOpen.value = willOpen;
+}
+
+function handleFileAction(action: 'add' | 'settings' | 'stats' | 'checkUpdate') {
+  closeAllMenus();
+  if (action === 'add') {
+    state.addDialogOpen = true;
+  } else if (action === 'settings') {
+    state.sessionDialogOpen = true;
+  } else if (action === 'stats') {
+    openStatsDialog();
+  } else if (action === 'checkUpdate') {
+    openAboutDialog();
+  }
 }
 
 function toggleMenu(type: 'start' | 'stop' | 'delete' | 'lang' | 'columns', event?: MouseEvent) {
@@ -990,16 +1093,22 @@ const currentTorrentDownloadLimited = computed(() => primaryTorrent.value?.downl
 const currentTorrentDownloadLimit = computed(() => primaryTorrent.value?.downloadLimit ?? 100);
 const currentTorrentUploadLimited = computed(() => primaryTorrent.value?.uploadLimited ?? false);
 const currentTorrentUploadLimit = computed(() => primaryTorrent.value?.uploadLimit ?? 100);
-const currentTorrentHonorsSession = computed(() => primaryTorrent.value?.honorsSessionLimits ?? true);
 const currentTorrentSeedRatioMode = computed(() => primaryTorrent.value?.seedRatioMode ?? 0);
 const currentTorrentSeedRatioLimit = computed(() => primaryTorrent.value?.seedRatioLimit ?? 2.0);
 const currentTorrentSeedIdleMode = computed(() => primaryTorrent.value?.seedIdleMode ?? 0);
 const currentTorrentSeedIdleLimit = computed(() => primaryTorrent.value?.seedIdleLimit ?? 30);
 
-// 当没有选中任何种子且当前在上下文标签页时，自动切回主任务标签
+// 当没有选中任何种子且当前在上下文标签页时，自动切回主任务标签；反之若选中则确保上下文 Tab 完整可见
 watch(hasSelection, (newVal) => {
   if (!newVal && currentTab.value === 'torrentProps') {
     currentTab.value = 'tasks';
+  } else if (newVal) {
+    nextTick(() => {
+      const ctxTab = document.querySelector('.ribbon-tab-btn.contextual-tab') as HTMLElement | null;
+      if (ctxTab) {
+        ctxTab.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+      }
+    });
   }
 });
 
@@ -1013,7 +1122,8 @@ async function updateSelectedTorrents(props: Record<string, any>) {
   try {
     await rpc.torrentSet({ ids, ...props });
   } catch (err: any) {
-    alert(t('common.failed', { error: err.message || err }));
+    await fetchTorrents();
+    showToast(t('common.failed', { error: describeError(err) }), 'error');
   }
 }
 
@@ -1041,15 +1151,6 @@ function toggleTorrentUploadLimited() {
   updateSelectedTorrents({ uploadLimited: !currentTorrentUploadLimited.value });
 }
 
-function toggleTorrentHonorsSession() {
-  updateSelectedTorrents({ honorsSessionLimits: !currentTorrentHonorsSession.value });
-}
-
-function onTorrentDownloadLimitedToggle(e: Event) {
-  const checked = (e.target as HTMLInputElement).checked;
-  updateSelectedTorrents({ downloadLimited: checked });
-}
-
 function onTorrentDownloadLimitChange(e: Event) {
   const val = parseInt((e.target as HTMLInputElement).value, 10);
   if (!isNaN(val) && val >= 0) {
@@ -1057,21 +1158,11 @@ function onTorrentDownloadLimitChange(e: Event) {
   }
 }
 
-function onTorrentUploadLimitedToggle(e: Event) {
-  const checked = (e.target as HTMLInputElement).checked;
-  updateSelectedTorrents({ uploadLimited: checked });
-}
-
 function onTorrentUploadLimitChange(e: Event) {
   const val = parseInt((e.target as HTMLInputElement).value, 10);
   if (!isNaN(val) && val >= 0) {
     updateSelectedTorrents({ uploadLimit: val });
   }
-}
-
-function onTorrentHonorsSessionToggle(e: Event) {
-  const checked = (e.target as HTMLInputElement).checked;
-  updateSelectedTorrents({ honorsSessionLimits: checked });
 }
 
 function onTorrentRatioModeChange(e: Event) {
@@ -1098,13 +1189,19 @@ function onTorrentIdleLimitChange(e: Event) {
   }
 }
 
-function selectTab(tab: 'tasks' | 'queue' | 'bandwidth' | 'tools' | 'torrentProps' | 'view') {
+function selectTab(tab: 'tasks' | 'transfer' | 'tools' | 'view' | 'torrentProps') {
   currentTab.value = tab;
   state.ribbonTab = tab;
   if (isRibbonCollapsed.value) {
     isRibbonCollapsed.value = false;
     localStorage.setItem('ribbon_collapsed', 'false');
   }
+  nextTick(() => {
+    const activeEl = document.querySelector('.ribbon-tab-btn.active') as HTMLElement | null;
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+    }
+  });
 }
 
 function toggleRibbonCollapse() {
@@ -1114,15 +1211,16 @@ function toggleRibbonCollapse() {
 
 // 快捷键 Ctrl+F1 折叠/展开
 function onGlobalClick(e: MouseEvent) {
-  if (!menus.start && !menus.stop && !menus.delete && !menus.lang && !menus.columns) {
+  if (!fileMenuOpen.value && !menus.start && !menus.stop && !menus.delete && !menus.lang && !menus.columns) {
     return;
   }
   const target = e.target as HTMLElement | null;
   if (!target) return;
-  if (target.closest('.fluent-dropdown-menu')) {
+  if (target.closest('.fluent-dropdown-menu, .file-dropdown-panel')) {
     return;
   }
   if (
+    target.closest('.ribbon-file-btn') ||
     target.closest('.split-arrow-btn') ||
     target.closest('.lang-dropdown-wrapper') ||
     target.closest('.fluent-btn-small')
@@ -1166,15 +1264,14 @@ function handleStart() {
 function handleStartAll() {
   closeAllMenus();
   const allIds = state.torrents.map((t) => t.id);
-  if (allIds.length > 0) rpc.startTorrents(allIds);
+  if (allIds.length > 0) startTorrentsAction(allIds);
 }
 
 async function handleStartNow() {
   closeAllMenus();
   const ids = state.selectedIds.length > 0 ? state.selectedIds : (state.selectedId ? [state.selectedId] : []);
   if (ids.length === 0) return;
-  await rpc.torrentStartNow(ids);
-  await fetchTorrents();
+  await startNowTorrentsAction(ids);
 }
 
 function handleStop() {
@@ -1189,36 +1286,18 @@ function handleStop() {
 function handleStopAll() {
   closeAllMenus();
   const allIds = state.torrents.map((t) => t.id);
-  if (allIds.length > 0) rpc.stopTorrents(allIds);
+  if (allIds.length > 0) stopTorrentsAction(allIds);
 }
 
 function handleRemove(trashData = false) {
   closeAllMenus();
-  const count = state.selectedIds.length > 0 ? state.selectedIds.length : (state.selectedId ? 1 : 0);
-  if (count === 0) return;
-  const msg = trashData
-    ? t('menu.confirmRemoveData', { count })
-    : t('toolbar.confirmDelete', { count });
-  if (confirm(msg)) {
-    removeSelected(trashData);
-  }
+  if (!hasSelection.value) return;
+  openConfirmRemove(trashData);
 }
 
 function copyMagnet() {
   if (!selectedTorrentId.value) return;
-  const tId = selectedTorrentId.value;
-  const target = state.torrents.find((t) => t.id === tId);
-  if (target?.magnetLink) {
-    navigator.clipboard.writeText(target.magnetLink);
-    alert(t('menu.magnetCopied'));
-  } else {
-    rpc.getTorrentDetail(tId).then((d) => {
-      if (d?.magnetLink) {
-        navigator.clipboard.writeText(d.magnetLink);
-        alert(t('menu.magnetCopied'));
-      }
-    });
-  }
+  copyTorrentMagnet(selectedTorrentId.value);
 }
 
 function openProps() {
@@ -1238,47 +1317,21 @@ async function moveQueue(action: 'top' | 'up' | 'down' | 'bottom') {
 }
 
 async function handleReannounce() {
-  const ids = state.selectedIds.length > 0 ? state.selectedIds : (state.selectedId ? [state.selectedId] : []);
-  if (ids.length === 0) return;
-  await rpc.torrentReannounce(ids);
-  alert(t('ribbon.reannounce') + ': OK');
+  await reannounceSelected(targetTorrentIds.value);
 }
 
 async function setPriority(pri: number) {
-  const ids = state.selectedIds.length > 0 ? state.selectedIds : (state.selectedId ? [state.selectedId] : []);
-  if (ids.length === 0) return;
-  for (const id of ids) {
-    await rpc.torrentSet({ ids: [id], bandwidthPriority: pri });
-  }
-  await fetchTorrents();
+  await updateSelectedTorrents({ bandwidthPriority: pri });
 }
 
-async function handleSetLocation() {
-  if (!selectedTorrentId.value) return;
-  const id = selectedTorrentId.value;
-  const curT = state.torrents.find((t) => t.id === id);
-  const newLoc = prompt(t('menu.promptLocation'), curT?.downloadDir || '/mnt');
-  if (newLoc && newLoc !== curT?.downloadDir) {
-    const moveData = confirm(t('menu.confirmMoveData'));
-    await rpc.torrentSetLocation([id], newLoc, moveData);
-    await fetchTorrents();
-  }
+function handleSetLocation() {
+  if (!hasSelection.value) return;
+  openLocationDialog();
 }
 
-async function handleRename() {
-  if (!selectedTorrentId.value) return;
-  const id = selectedTorrentId.value;
-  const curT = state.torrents.find((t) => t.id === id);
-  if (!curT) return;
-  const newName = prompt(t('menu.promptRename'), curT.name);
-  if (newName && newName !== curT.name) {
-    try {
-      await rpc.torrentRenamePath(id, curT.name, newName);
-      await fetchTorrents();
-    } catch (e: any) {
-      alert(t('menu.renameFailed', { error: e.message }));
-    }
-  }
+function handleRename() {
+  if (!hasSelection.value) return;
+  openRenameDialog();
 }
 
 function toggleTheme() {
@@ -1287,62 +1340,142 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', val);
   localStorage.setItem('theme', val);
 }
-
-function onLocaleChange(e: Event) {
-  const target = e.target as HTMLSelectElement;
-  setLocale(target.value as LocaleKey);
-}
 </script>
 
 <style scoped>
-/* Fluent Ribbon Root 架构 */
+/* Fluent Ribbon Root 架构 (Office 2016 纯平扁平化，零圆角、零外阴影) */
 .fluent-ribbon-root {
-  background-color: var(--fluent-bg-subtle);
+  background-color: var(--fluent-bg-canvas);
   border-bottom: 1px solid var(--fluent-border-subtle);
   display: flex;
   flex-direction: column;
   user-select: none;
   position: relative;
   z-index: 200;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: none !important;
+  flex-shrink: 0;
 }
 
-/* 1. 标题与 Tab 行 (高度 36px) */
+/* 1. 标题与 Tab 行 (高度 38px，Office 2016 纯平单色，无渐变、无底边线) */
 .ribbon-header-row {
-  height: 36px;
+  height: 38px;
   display: flex;
-  align-items: center;
-  padding: 0 8px;
-  gap: 8px;
-  border-bottom: 1px solid var(--fluent-border-subtle);
+  align-items: stretch;
+  padding: 0 8px 0 8px;
+  gap: 4px;
+  background-color: var(--ribbon-header-bg);
+  border-bottom: none !important;
+  position: relative;
+  box-shadow: none !important;
+}
+
+.hamburger-btn {
+  color: var(--ribbon-header-text) !important;
+  align-self: center;
+}
+
+.hamburger-btn:hover {
+  background-color: var(--ribbon-header-tab-hover) !important;
 }
 
 .fluent-brand {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-right: 8px;
+  margin-right: 6px;
+  align-self: center;
 }
 
-.brand-icon {
-  font-size: 20px;
-  color: var(--fluent-accent);
+.brand-logo {
+  flex-shrink: 0;
 }
 
 .brand-text {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--md-text-primary);
-  letter-spacing: 0.01em;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.02em;
 }
 
-/* Fluent 选项卡导航 */
+/* 文件 (File) 菜单按钮 (Office 2016 纯平直角块，零 border-radius) */
+.file-menu-wrapper {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.ribbon-file-btn {
+  height: 100%;
+  padding: 0 16px;
+  background-color: var(--ribbon-file-btn-bg);
+  color: #ffffff;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+.ribbon-file-btn:hover,
+.ribbon-file-btn.active {
+  background-color: var(--ribbon-file-btn-hover);
+}
+
+.file-dropdown-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 190px;
+  background: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-divider);
+  border-radius: 0 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 10000;
+}
+
+.fluent-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 0 !important;
+  color: var(--md-text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.fluent-menu-item:hover {
+  background-color: var(--fluent-bg-hover);
+  color: var(--fluent-accent);
+}
+
+.menu-divider {
+  height: 1px;
+  background-color: var(--fluent-border-subtle);
+  margin: 4px 0;
+}
+
+/* Fluent 选项卡导航 (Office 2016 零缝隙纯文字与纯平直角) */
 .ribbon-tabs {
   display: flex;
+  align-items: stretch;
   height: 100%;
-  gap: 2px;
+  gap: 0;
   flex: 1;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -1352,69 +1485,86 @@ function onLocaleChange(e: Event) {
 }
 
 .ribbon-tab-btn {
+  height: 100%;
+  padding: 0 12px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 12px;
-  height: 100%;
+  justify-content: center;
+  line-height: 1;
+  gap: 0;
   background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
+  border: none !important;
   font-size: 12px;
   font-weight: 500;
-  color: var(--md-text-secondary);
+  color: rgba(255, 255, 255, 0.92);
   cursor: pointer;
-  border-radius: 0;
-  transition: all 0.15s ease;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transition: all 0.1s ease;
   white-space: nowrap;
   flex-shrink: 0;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .ribbon-tab-btn:hover {
-  background-color: var(--fluent-bg-hover);
-  color: var(--md-text-primary);
+  background-color: var(--ribbon-header-tab-hover);
+  color: #ffffff;
 }
 
+/* 激活状态：彻底消除 1px 底横线，无缝与画板融为一体，坚决无 border-radius */
 .ribbon-tab-btn.active {
-  color: var(--fluent-accent);
-  border-bottom-color: var(--fluent-accent);
   background-color: var(--fluent-bg-canvas);
+  color: var(--ribbon-header-tab-active-text);
   font-weight: 600;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  z-index: 2;
 }
 
-/* Word 风格上下文标签 (微软 Office 经典工具紫，与常规蓝形成鲜明上下文对照) */
+/* Office 2016 鲜艳上下文选项卡 (告别与红色混浊的脏暗紫！高辨识度琥珀指示金顶) */
 .ribbon-tab-btn.contextual-tab {
-  background-color: rgba(119, 25, 170, 0.08);
-  color: #7719aa;
+  background-color: var(--ribbon-contextual-bg);
+  color: #ffffff;
+  border: none !important;
+  border-radius: 0 !important;
   font-weight: 600;
-  border-bottom: 2px solid rgba(119, 25, 170, 0.4);
+  line-height: 1;
 }
 
-[data-theme="dark"] .ribbon-tab-btn.contextual-tab {
-  background-color: rgba(177, 151, 252, 0.12);
-  color: #b197fc;
-  border-bottom-color: rgba(177, 151, 252, 0.4);
+.ribbon-tab-btn.contextual-tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--ribbon-contextual-border);
+  z-index: 3;
 }
 
 .ribbon-tab-btn.contextual-tab:hover {
-  background-color: rgba(119, 25, 170, 0.16);
-  color: #58107e;
-}
-
-[data-theme="dark"] .ribbon-tab-btn.contextual-tab:hover {
-  background-color: rgba(177, 151, 252, 0.22);
-  color: #d0bfff;
+  background-color: rgba(255, 255, 255, 0.32);
 }
 
 .ribbon-tab-btn.contextual-tab.active {
   background-color: var(--fluent-bg-canvas);
-  color: #7719aa;
-  border-bottom-color: #7719aa;
+  color: #b71c1c;
+  border: none !important;
+  border-bottom: none !important;
+  border-radius: 0 !important;
 }
 
 [data-theme="dark"] .ribbon-tab-btn.contextual-tab.active {
-  color: #b197fc;
-  border-bottom-color: #b197fc;
+  color: #ffa000;
+}
+
+.tab-text {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .tab-icon {
@@ -1425,30 +1575,20 @@ function onLocaleChange(e: Event) {
 .ribbon-sys-tools {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  align-self: center;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
-.speed-capsule {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background-color: var(--fluent-bg-hover);
-  border: 1px solid var(--fluent-border-subtle);
-  border-radius: 12px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-family: monospace;
+.ribbon-sys-tools .fluent-tool-btn {
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.speed-part {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
+.ribbon-sys-tools .fluent-tool-btn:hover {
+  background-color: var(--ribbon-header-tab-hover);
+  color: #ffffff;
 }
-
-.speed-part.down { color: var(--md-info); }
-.speed-part.up { color: var(--md-success); }
-.speed-part .material-icons { font-size: 13px; }
 
 .fluent-tool-btn {
   width: 28px;
@@ -1469,41 +1609,29 @@ function onLocaleChange(e: Event) {
   color: var(--md-text-primary);
 }
 
-.fluent-tool-btn .material-icons {
-  font-size: 18px;
-}
-
 .btn-active-turtle {
-  background-color: rgba(255, 152, 0, 0.15) !important;
-  color: #ef6c00 !important;
+  background-color: #ff9800 !important;
+  color: #ffffff !important;
 }
 
-.fluent-lang-select select {
-  background: transparent;
-  border: 1px solid var(--fluent-border-subtle);
-  border-radius: 4px;
-  color: var(--md-text-primary);
-  font-size: 11px;
-  padding: 2px 4px;
-  outline: none;
-  cursor: pointer;
-}
-
-/* 2. 第二层：Ribbon 命令画板 (高度 80px，支持水平滚动) */
+/* 2. 第二层：Ribbon 命令画板 (Office 2016 规范高度 94px，宽裕无截断) */
 .ribbon-body {
-  height: 80px;
+  height: 94px;
+  min-height: 94px;
   background-color: var(--fluent-bg-canvas);
   display: flex;
-  padding: 3px 10px;
+  padding: 4px 10px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .ribbon-tab-pane {
   display: flex;
   align-items: stretch;
-  gap: 8px;
+  gap: 10px;
   height: 100%;
   flex-shrink: 0;
 }
@@ -1514,9 +1642,11 @@ function onLocaleChange(e: Event) {
   flex-direction: column;
   justify-content: space-between;
   border-right: 1px solid var(--fluent-border-divider);
-  padding-right: 8px;
+  padding-right: 10px;
   position: relative;
   flex-shrink: 0;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .ribbon-group:last-child {
@@ -1526,17 +1656,58 @@ function onLocaleChange(e: Event) {
 .ribbon-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   flex: 1;
 }
 
+/* 功能组底栏 (标题 + Launcher) */
+.group-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
 .group-title {
-  text-align: center;
   font-size: 10px;
+  line-height: 16px;
   color: var(--md-text-disabled);
   letter-spacing: 0.02em;
-  margin-top: 2px;
   white-space: nowrap;
+  text-align: center;
+}
+
+.dialog-launcher-btn {
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--md-text-disabled);
+  padding: 1px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  line-height: 1;
+  width: 14px;
+  height: 14px;
+}
+
+.dialog-launcher-btn:hover {
+  color: var(--fluent-accent);
+  background-color: var(--fluent-bg-hover);
+}
+
+.dialog-launcher-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
 }
 
 /* Fluent 大按钮 (Large Button) */
@@ -1545,15 +1716,16 @@ function onLocaleChange(e: Event) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 54px;
-  height: 52px;
+  min-width: 52px;
+  height: 58px;
+  padding: 2px 6px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--fluent-radius);
-  color: var(--md-text-primary);
   cursor: pointer;
+  color: var(--md-text-primary);
   transition: all 0.15s ease;
-  padding: 2px;
+  flex-shrink: 0;
 }
 
 .fluent-btn-large:hover:not(:disabled) {
@@ -1561,77 +1733,115 @@ function onLocaleChange(e: Event) {
   border-color: var(--fluent-border-subtle);
 }
 
-.fluent-btn-large:active:not(:disabled) {
-  transform: scale(0.97);
-  background-color: var(--fluent-bg-active);
-}
-
 .fluent-btn-large.primary-btn {
-  background-color: var(--fluent-accent);
-  color: #ffffff;
+  color: var(--fluent-accent);
 }
 
-.fluent-btn-large.primary-btn:hover {
-  background-color: var(--fluent-accent-hover);
+.fluent-btn-large.primary-btn .large-icon {
+  color: var(--fluent-accent);
 }
 
-.fluent-btn-large .large-icon {
+.fluent-btn-large.active {
+  background-color: rgba(0, 120, 212, 0.12);
+  border-color: var(--fluent-accent);
+  color: var(--fluent-accent);
+}
+
+.fluent-btn-large:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.large-icon {
   font-size: 24px;
   margin-bottom: 2px;
 }
 
-.fluent-btn-large .btn-caption {
+.btn-caption {
   font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
+  line-height: 1.15;
+  text-align: center;
+  max-width: 68px;
+  word-break: break-word;
 }
 
-/* Fluent 分裂按钮 (Split Button) */
+/* 按钮垂直堆叠列 (三行紧凑排版，高度与大按钮精确对齐) */
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  justify-content: center;
+}
+
+.btn-stack .fluent-btn-small {
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  gap: 4px;
+}
+
+/* 双行紧凑按钮堆叠 (Office 规范，饱满无空旷) */
+.btn-stack-2row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+}
+
+.btn-stack-2row .fluent-btn-small {
+  height: 25px;
+  padding: 0 8px;
+  font-size: 11px;
+  gap: 5px;
+}
+
+/* 2x2 按钮矩阵 (队列调度与属性操作) */
+.btn-matrix-2x2 {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 拆分操作按钮 (Split Button) */
 .fluent-split-btn {
   display: inline-flex;
   align-items: center;
-  height: 52px;
-  border: 1px solid transparent;
+  height: 26px;
+  border: 1px solid var(--fluent-border-subtle);
   border-radius: var(--fluent-radius);
-  position: relative;
+  background-color: var(--fluent-bg-canvas);
+  transition: all 0.15s ease;
 }
 
 .fluent-split-btn:hover {
+  border-color: var(--fluent-border-divider);
   background-color: var(--fluent-bg-hover);
-  border-color: var(--fluent-border-subtle);
 }
 
 .split-main-btn {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
   height: 100%;
   padding: 0 8px;
   background: transparent;
   border: none;
   font-size: 11px;
-  font-weight: 500;
   color: var(--md-text-primary);
   cursor: pointer;
 }
 
 .split-main-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.split-main-btn .material-icons {
-  font-size: 20px;
-  margin-bottom: 2px;
+  opacity: 0.38;
+  cursor: default;
 }
 
 .split-arrow-btn {
-  width: 16px;
-  height: 100%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 100%;
+  padding: 0 4px;
   background: transparent;
   border: none;
   border-left: 1px solid var(--fluent-border-subtle);
@@ -1640,86 +1850,22 @@ function onLocaleChange(e: Event) {
 }
 
 .split-arrow-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  opacity: 0.38;
+  cursor: default;
 }
 
-.split-arrow-btn:hover:not(:disabled) {
-  background-color: var(--fluent-bg-active);
-}
-
-.split-arrow-btn .material-icons {
-  font-size: 14px;
-}
-
-/* Fluent 下拉浮动菜单 */
-.fluent-dropdown-menu {
-  position: absolute;
-  top: 54px;
-  left: 0;
-  background-color: var(--fluent-bg-canvas);
-  border: 1px solid var(--fluent-border-subtle);
-  border-radius: 4px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-  min-width: 150px;
-  z-index: 500;
-  padding: 4px 0;
-}
-
-.menu-opt {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  font-size: 12px;
-  color: var(--md-text-primary);
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.menu-opt:hover:not(.disabled) {
-  background-color: var(--fluent-bg-hover);
-}
-
-.menu-opt.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.menu-opt .material-icons {
-  font-size: 16px;
-}
-
-.menu-check-ico {
-  font-size: 15px !important;
-  color: var(--fluent-accent);
-}
-
-/* 图五：Word 风格下拉菜单选中项高亮 */
-.menu-opt.active {
-  background-color: rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  font-weight: 600;
-  border-radius: 4px;
-}
-
-[data-theme='dark'] .menu-opt.active {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.22);
-}
-
-/* Fluent 小按钮 (Small Button) */
+/* Fluent 小型横向按钮 */
 .fluent-btn-small {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 28px;
+  height: 22px;
   padding: 0 8px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--fluent-radius);
-  font-size: 12px;
   color: var(--md-text-primary);
+  font-size: 11px;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
@@ -1730,384 +1876,329 @@ function onLocaleChange(e: Event) {
   border-color: var(--fluent-border-subtle);
 }
 
-.fluent-btn-small:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
 .fluent-btn-small:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  opacity: 0.38;
+  cursor: default;
 }
 
-.fluent-btn-small .material-icons {
-  font-size: 16px;
-}
-
-/* =========================================================
-   Microsoft Word / Fluent Ribbon 激活高亮规范 (Toggle Active)
-   ========================================================= */
-
-/* 1. 图三：详情按钮与小型 Toggle 按钮激活状态 (对齐 Word Ribbon 激活状态：细腻底色 + 微边框，无内凹阴影) */
-.btn-selected,
-.fluent-btn-small.active,
-.fluent-toggle-btn.active,
-.limit-toggle-pill.active {
-  background-color: rgba(0, 0, 0, 0.07) !important;
-  border-color: rgba(0, 0, 0, 0.2) !important;
-  color: var(--md-text-primary) !important;
-  box-shadow: none !important;
+.fluent-btn-small.primary {
+  color: var(--fluent-accent);
   font-weight: 500;
 }
 
-[data-theme='dark'] .btn-selected,
-[data-theme='dark'] .fluent-btn-small.active,
-[data-theme='dark'] .fluent-toggle-btn.active,
-[data-theme='dark'] .limit-toggle-pill.active {
-  background-color: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.28) !important;
-  color: var(--md-text-primary) !important;
-  box-shadow: none !important;
-}
-
-/* 2. 图二：视图与首选项中的 Toggle 按钮基础样式 */
-.fluent-toggle-btn {
-  height: 24px;
-  padding: 0 6px;
-  border: 1px solid transparent;
-  background: transparent;
-  border-radius: var(--fluent-radius);
-  color: var(--md-text-secondary);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  font-size: 11.5px;
-  user-select: none;
-  transition: all 0.12s ease;
-  white-space: nowrap;
-}
-
-.fluent-toggle-btn:hover {
-  background-color: var(--fluent-bg-hover);
-  color: var(--md-text-primary);
-}
-
-.fluent-toggle-btn .btn-icon {
-  font-size: 15px;
-  color: var(--md-text-secondary);
-}
-
-.fluent-toggle-btn.active .btn-icon {
+.fluent-btn-small.ribbon-toggle-btn.active {
+  background-color: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.18);
   color: var(--fluent-accent);
+  font-weight: 600;
 }
 
-/* 3. 图四：独立限速与遵循全局限速的 Toggle 按钮基础样式 */
-.limit-toggle-pill {
-  height: 22px;
-  padding: 0 5px;
-  border: 1px solid transparent;
-  background: transparent;
-  border-radius: var(--fluent-radius);
-  color: var(--md-text-secondary);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  user-select: none;
-  transition: all 0.12s ease;
-  white-space: nowrap;
+[data-theme="dark"] .fluent-btn-small.ribbon-toggle-btn.active {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #60cdff;
 }
 
-.limit-toggle-pill:hover {
-  background-color: var(--fluent-bg-hover);
-  color: var(--md-text-primary);
-}
-
-.limit-toggle-pill .mini-check-ico {
-  font-size: 14px;
-  color: var(--md-text-secondary);
-}
-
-.limit-toggle-pill.active .mini-check-ico {
-  color: var(--fluent-accent);
-}
-
-.limit-toggle-pill.honors-pill {
-  height: 22px;
-  align-self: flex-start;
-  margin-top: 1px;
-}
-
-/* Fluent 搜索框 */
-.fluent-search-box {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 28px;
-  padding: 0 8px;
-  background-color: var(--fluent-bg-subtle);
-  border: 1px solid var(--fluent-border-subtle);
-  border-radius: var(--fluent-radius);
-  transition: border-color 0.15s;
-}
-
-.fluent-search-box:focus-within {
-  border-color: var(--fluent-accent);
-  box-shadow: 0 0 0 1px var(--fluent-accent);
-}
-
-.fluent-search-input {
-  border: none;
-  background: transparent;
-  font-size: 12px;
-  color: var(--md-text-primary);
-  outline: none;
-  width: 140px;
-}
-
-.fluent-search-box .search-ico {
-  font-size: 16px;
-  color: var(--md-text-secondary);
-}
-
-.fluent-search-box .clear-ico {
-  font-size: 14px;
-  cursor: pointer;
-  color: var(--md-text-secondary);
-}
-
-/* 乌龟卡片微显 */
-.turtle-info-card {
+/* Office 2016 规范左对齐复选框行与控件组 (无圆角药丸框、紧凑整洁) */
+.office-checkbox-group,
+.office-select-group {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  font-size: 11px;
-  font-family: monospace;
-  color: var(--md-text-secondary);
-  padding: 0 6px;
-  line-height: 1.3;
+  gap: 3px;
+  align-items: flex-start;
+  min-width: 116px;
 }
 
-/* 颜色状态类 */
-.text-success { color: var(--md-success) !important; }
-.text-warning { color: var(--md-warning) !important; }
-.text-danger { color: var(--md-error) !important; }
-.text-secondary { color: var(--md-text-secondary) !important; }
+.office-checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 0;
+  cursor: pointer;
+  user-select: none;
+  font-size: 11px;
+  color: var(--md-text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background-color 0.1s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
 
-/* 上下文面板控件组 */
-.priority-btn-group {
+.office-checkbox-row:hover {
+  background-color: var(--fluent-bg-hover);
+}
+
+.office-checkbox-row.compact {
+  height: 20px;
+  padding: 0 2px;
+}
+
+.office-checkbox-native {
+  margin: 0;
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+  accent-color: var(--fluent-accent);
+}
+
+.office-checkbox-row .row-icon {
+  flex-shrink: 0;
+}
+
+.office-checkbox-row .row-label {
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.office-select-row {
   display: flex;
-  gap: 2px;
-  background-color: var(--fluent-bg-subtle);
-  border-radius: var(--fluent-radius);
-  padding: 2px;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  font-size: 11px;
+  width: 100%;
+}
+
+.office-select-row .row-icon {
+  flex-shrink: 0;
+}
+
+.office-select-row .input-prefix-label {
+  font-size: 11px;
+  color: var(--md-text-secondary);
+  white-space: nowrap;
+}
+
+.office-select-row .fluent-select {
+  height: 20px;
+  padding: 0 4px;
+  font-size: 11px;
   border: 1px solid var(--fluent-border-subtle);
+  background: var(--fluent-bg-canvas);
+  color: var(--md-text-primary);
+  border-radius: 0;
+  outline: none;
+}
+
+.office-select-row .fluent-select:focus {
+  border-color: var(--fluent-accent);
+}
+
+/* 切换状态按钮 */
+.fluent-toggle-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--fluent-radius);
+  color: var(--md-text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fluent-toggle-item:hover {
+  background-color: var(--fluent-bg-hover);
+}
+
+.fluent-toggle-item.active {
+  background-color: rgba(0, 120, 212, 0.12);
+  border-color: rgba(0, 120, 212, 0.3);
+  color: var(--fluent-accent);
+  font-weight: 500;
+}
+
+.fluent-toggle-item.compact {
+  height: 22px;
+  padding: 0 4px;
+}
+
+/* 输入框与控件排版 */
+.view-prefs-col,
+.limits-col,
+.seed-rules-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+}
+
+.poll-row,
+.limit-setting-row,
+.seed-rule-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.seed-rule-row .rule-label {
+  width: 68px;
+  font-size: 11px;
+  color: var(--md-text-secondary);
+  white-space: nowrap;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.seed-rule-row .rule-select {
+  width: 108px;
+  flex-shrink: 0;
+}
+
+.seed-rule-row .rule-input {
+  width: 44px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.seed-rule-row .rule-input:disabled {
+  opacity: 0.35;
+  background-color: var(--fluent-bg-canvas);
+  border-color: var(--fluent-border-subtle);
+  cursor: not-allowed;
+}
+
+.seed-rule-row .unit-text {
+  width: 16px;
+  font-size: 10px;
+  color: var(--md-text-disabled);
+  flex-shrink: 0;
+}
+
+.seed-rule-row .unit-muted {
+  visibility: hidden;
+}
+
+.input-prefix-label {
+  font-size: 11px;
+  color: var(--md-text-secondary);
+  white-space: nowrap;
+}
+
+.fluent-select {
+  height: 22px;
+  padding: 0 4px;
+  font-size: 11px;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 4px;
+  background: var(--fluent-bg-canvas);
+  color: var(--md-text-primary);
+  outline: none;
+}
+
+.fluent-select.compact {
+  height: 20px;
+}
+
+.fluent-mini-input {
+  width: 52px;
+  height: 20px;
+  padding: 0 4px;
+  font-size: 11px;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 3px;
+  background: var(--fluent-bg-canvas);
+  color: var(--md-text-primary);
+  outline: none;
+}
+
+.unit-text {
+  font-size: 10px;
+  color: var(--md-text-disabled);
+}
+
+/* 优先级三段组 */
+.priority-btn-group {
+  display: inline-flex;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .priority-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 6px;
-  border: none;
+  height: 24px;
+  padding: 0 8px;
   background: transparent;
-  border-radius: var(--fluent-radius);
+  border: none;
   font-size: 11px;
-  color: var(--md-text-secondary);
   cursor: pointer;
-  transition: all 0.12s ease;
+  color: var(--md-text-primary);
+  border-right: 1px solid var(--fluent-border-subtle);
+}
+
+.priority-btn:last-child {
+  border-right: none;
 }
 
 .priority-btn:hover {
   background-color: var(--fluent-bg-hover);
-  color: var(--md-text-primary);
-}
-
-.contextual-pane {
-  border-top: 1px solid rgba(119, 25, 170, 0.25);
-}
-
-[data-theme="dark"] .contextual-pane {
-  border-top: 1px solid rgba(177, 151, 252, 0.25);
-}
-
-.contextual-pane input[type="checkbox"] {
-  accent-color: #7719aa;
-}
-
-[data-theme="dark"] .contextual-pane input[type="checkbox"] {
-  accent-color: #b197fc;
 }
 
 .priority-btn.active {
-  background-color: var(--fluent-bg-canvas);
-  color: var(--md-text-primary);
-  border: none;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-
-[data-theme="dark"] .priority-btn.active {
-  background-color: var(--fluent-bg-active);
-  color: #ffffff;
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-}
-
-.priority-btn .material-icons {
-  font-size: 14px;
-}
-
-.fluent-input-compact {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--md-text-secondary);
-}
-
-.input-prefix-label {
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.num-field {
-  width: 54px;
-  padding: 2px 6px;
-  border: 1px solid var(--fluent-border-subtle);
-  border-radius: var(--fluent-radius);
-  background-color: var(--fluent-bg-canvas);
-  color: var(--md-text-primary);
-  font-size: 11px;
-  outline: none;
-  font-family: monospace;
-  text-align: right;
-  transition: border-color 0.15s;
-}
-
-.num-field:focus {
-  border-color: var(--fluent-accent);
-}
-
-.num-field:disabled {
-  opacity: 0.5;
-  background-color: var(--fluent-bg-subtle);
-}
-
-.limits-col, .seed-rules-col, .view-prefs-col {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  justify-content: center;
-}
-
-.limit-row, .seed-row, .poll-row {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  height: 20px;
-}
-
-.columns-dropdown-menu {
-  min-width: 170px;
-  max-height: 280px;
-  overflow-y: auto;
-  padding: 6px;
-}
-
-.cols-menu-header {
-  font-size: 11px;
-  font-weight: 600;
+  background-color: rgba(0, 120, 212, 0.15);
   color: var(--fluent-accent);
-  padding: 3px 6px;
-  border-bottom: 1px solid var(--fluent-border-subtle);
-  margin-bottom: 4px;
+  font-weight: 600;
 }
 
-.cols-menu-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cols-menu-item {
+.single-row-input {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 6px;
-  font-size: 11px;
-  border-radius: var(--fluent-radius);
-  cursor: pointer;
-  transition: background-color 0.12s;
 }
 
-.cols-menu-item:hover {
-  background-color: var(--fluent-bg-hover);
+/* 搜索框 */
+.search-group {
+  margin-left: auto;
 }
 
-.cols-menu-item input[type="checkbox"] {
-  accent-color: var(--fluent-accent);
-}
-
-.fluent-check-label {
-  display: inline-flex;
+.fluent-search-input {
+  display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--md-text-primary);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.fluent-check-label input[type="checkbox"] {
-  accent-color: var(--fluent-accent);
-  cursor: pointer;
-}
-
-.limit-num {
-  width: 50px;
-}
-
-.unit-txt {
-  font-size: 10px;
-  color: var(--md-text-disabled);
-}
-
-.mini-check {
-  font-size: 10px;
-  color: var(--md-text-secondary);
-}
-
-.fluent-select-mini {
-  padding: 1px 4px;
+  height: 28px;
+  padding: 0 8px;
+  background-color: var(--fluent-bg-subtle);
   border: 1px solid var(--fluent-border-subtle);
-  border-radius: var(--fluent-radius);
-  background-color: var(--fluent-bg-canvas);
+  border-radius: 4px;
+  gap: 6px;
+  width: 170px;
+}
+
+.search-native-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
   color: var(--md-text-primary);
   font-size: 11px;
-  outline: none;
+}
+
+.search-clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--md-text-disabled);
   cursor: pointer;
+  display: flex;
+  padding: 0;
 }
 
-.seed-num {
-  width: 44px;
-}
-
-.idle-input-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
-/* 3. 移动端紧凑模式 */
+/* 移动端紧凑工具条 */
 .mobile-compact-bar {
-  display: none;
-  height: 44px;
+  display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 10px;
+  padding: 6px 10px;
   background-color: var(--fluent-bg-canvas);
   border-bottom: 1px solid var(--fluent-border-subtle);
 }
@@ -2115,158 +2206,146 @@ function onLocaleChange(e: Event) {
 .fluent-btn-mobile {
   width: 32px;
   height: 32px;
-  border-radius: var(--fluent-radius);
-  border: 1px solid var(--fluent-border-subtle);
-  background: var(--fluent-bg-subtle);
-  color: var(--md-text-primary);
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--fluent-bg-subtle);
+  border: 1px solid var(--fluent-border-subtle);
+  color: var(--md-text-primary);
   cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-
-.fluent-btn-mobile:active {
-  background-color: var(--fluent-bg-hover);
-  transform: scale(0.96);
 }
 
 .fluent-btn-mobile.btn-primary {
-  background-color: rgba(0, 120, 212, 0.12);
-  border-color: rgba(0, 120, 212, 0.35);
-  color: var(--fluent-accent);
-}
-
-.fluent-btn-mobile.clear-sel-btn {
-  margin-left: auto;
-}
-
-.fluent-btn-mobile .material-icons {
-  font-size: 18px;
-}
-
-.selection-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  background-color: rgba(0, 120, 212, 0.12);
-  border: 1px solid rgba(0, 120, 212, 0.3);
-  border-radius: 12px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--fluent-accent);
-  white-space: nowrap;
-  flex-shrink: 0;
+  background-color: var(--fluent-accent);
+  color: #ffffff;
+  border-color: transparent;
 }
 
 .mobile-search-wrap {
   flex: 1;
-  position: relative;
   display: flex;
   align-items: center;
-  min-width: 0;
-}
-
-.search-prefix-icon {
-  position: absolute;
-  left: 7px;
-  font-size: 16px;
-  color: var(--md-text-secondary);
-  pointer-events: none;
+  height: 32px;
+  background-color: var(--fluent-bg-subtle);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 4px;
+  padding: 0 8px;
+  gap: 6px;
 }
 
 .mobile-search-input {
-  width: 100%;
-  height: 30px;
-  border-radius: var(--fluent-radius);
-  border: 1px solid var(--fluent-border-subtle);
-  padding: 0 26px 0 28px;
-  background: var(--fluent-bg-subtle);
-  color: var(--md-text-primary);
-  font-size: 11.5px;
-  outline: none;
-  transition: all 0.15s ease;
-}
-
-.mobile-search-input:focus {
-  border-color: var(--fluent-accent);
-  background-color: var(--fluent-bg-canvas);
-}
-
-.mobile-clear-btn {
-  position: absolute;
-  right: 4px;
-  width: 20px;
-  height: 20px;
+  flex: 1;
   border: none;
   background: transparent;
-  color: var(--md-text-secondary);
+  outline: none;
+  font-size: 12px;
+  color: var(--md-text-primary);
+}
+
+.selection-badge {
+  padding: 4px 8px;
+  background-color: rgba(0, 120, 212, 0.1);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--fluent-accent);
+  font-weight: 600;
+}
+
+/* 通用 Teleport 下拉菜单 */
+.fluent-dropdown-menu.teleported {
+  min-width: 150px;
+  background-color: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-divider);
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-opt {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--md-text-primary);
+  border-radius: 4px;
   cursor: pointer;
-  border-radius: 50%;
+  transition: background-color 0.15s ease;
 }
 
-.mobile-clear-btn .material-icons {
+.menu-opt:hover:not(.disabled) {
+  background-color: var(--fluent-bg-hover);
+}
+
+.menu-opt.disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.menu-check-ico {
   font-size: 14px;
+  color: var(--fluent-accent);
 }
 
-.lang-dropdown-wrapper {
-  position: relative;
-  display: inline-flex;
+.columns-dropdown-menu {
+  width: 180px;
 }
 
-.lang-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
-  min-width: 120px;
-  z-index: 300;
+.cols-menu-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--md-text-secondary);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--fluent-border-subtle);
 }
 
-/* 响应式断点 */
-@media (max-width: 1080px) {
-  .ribbon-tab-btn .tab-text {
-    display: none;
-  }
-  .ribbon-tab-btn {
-    padding: 0 10px;
-  }
+.cols-menu-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px 0;
 }
 
-@media (max-width: 768px) {
-  .desktop-only {
+.cols-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cols-menu-item:hover {
+  background-color: var(--fluent-bg-hover);
+}
+
+/* 响应式断点 (支持小屏笔记本与窄窗自适应，绝不挤压 Tab 栏) */
+@media (min-width: 768px) {
+  .mobile-only {
     display: none !important;
   }
-  .mobile-only {
-    display: flex !important;
-  }
+}
 
-  .ribbon-header-row {
-    height: 42px;
-    padding: 0 8px;
+@media (max-width: 1080px) {
+  .fluent-brand .brand-text {
+    display: none; /* 释放 ~85px 空间 */
   }
-
-  .fluent-tool-btn {
-    width: 28px;
-    height: 28px;
+  .ribbon-tab-btn {
+    padding: 0 9px; /* 紧凑 Tab 内边距 */
   }
-
-  .fluent-tool-btn .material-icons {
-    font-size: 16px;
-  }
-
-  .brand-text {
-    font-size: 12px;
+  .ribbon-sys-tools {
+    gap: 2px;
   }
 }
 
-@media (max-width: 480px) {
-  .brand-text {
-    display: none;
+@media (max-width: 767px) {
+  .desktop-only {
+    display: none !important;
   }
 }
 </style>

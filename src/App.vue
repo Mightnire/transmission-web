@@ -21,6 +21,12 @@
     <!-- 全局首选项弹窗 (RPC session-get/set 端口测试与黑名单更新) -->
     <SessionDialog />
 
+    <!-- 批量修改标签弹窗 (特色功能) -->
+    <BatchTagsDialog />
+
+    <!-- Fluent 动作弹窗与 Toast (彻底消除任何原生 prompt/alert/confirm) -->
+    <FluentActionDialogs />
+
     <!-- 单任务独立属性配置弹窗 -->
     <TorrentPropsDialog :torrentId="state.propsTorrentId" v-model="state.propsDialogOpen" />
   </div>
@@ -37,6 +43,8 @@ import TorrentDetail from './components/TorrentDetail.vue';
 import AddDialog from './components/AddDialog.vue';
 import SessionDialog from './components/SessionDialog.vue';
 import TorrentPropsDialog from './components/TorrentPropsDialog.vue';
+import BatchTagsDialog from './components/BatchTagsDialog.vue';
+import FluentActionDialogs from './components/FluentActionDialogs.vue';
 
 onMounted(() => {
   // 恢复保存的主题

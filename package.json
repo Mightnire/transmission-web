@@ -1,6 +1,6 @@
 {
   "name": "transmission-web",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "private": true,
   "description": "Transmission Web - A lightweight, robust, and classic desktop-grade Web Client for Transmission BT.",
   "type": "module",

@@ -82,7 +82,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { state, fetchTorrents } from '../stores/transmission';
+import { state, fetchTorrents, showToast, describeError } from '../stores/transmission';
+import { useEscapeKey } from '../composables/useEscapeKey';
 import { t } from '../locales';
 import { rpc } from '../api/rpc';
 
@@ -93,6 +94,10 @@ const isDragging = ref(false);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const selectedFileName = ref('');
 const torrentBase64 = ref('');
+
+useEscapeKey(() => {
+  if (state.addDialogOpen) state.addDialogOpen = false;
+});
 
 const canSubmit = computed(() => {
   return !!magnetUrl.value.trim() || !!torrentBase64.value;
@@ -146,8 +151,9 @@ async function submit() {
     torrentBase64.value = '';
     selectedFileName.value = '';
     fetchTorrents();
+    showToast(t('toast.added'), 'success');
   } catch (err: any) {
-    alert(t('addDialog.failed', { error: err.message || err }));
+    showToast(t('addDialog.failed', { error: describeError(err) }), 'error');
   }
 }
 </script>

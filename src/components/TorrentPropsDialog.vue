@@ -133,7 +133,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue';
-import { state, fetchTorrents } from '../stores/transmission';
+import { state, fetchTorrents, showToast, describeError } from '../stores/transmission';
+import { useEscapeKey } from '../composables/useEscapeKey';
 import { Torrent, Priority, SeedRatioMode, SeedIdleMode } from '../api/types';
 import { t } from '../locales';
 import { rpc } from '../api/rpc';
@@ -197,6 +198,10 @@ function close() {
   isOpen.value = false;
 }
 
+useEscapeKey(() => {
+  if (isOpen.value) close();
+});
+
 async function saveProps() {
   if (!props.torrentId) return;
 
@@ -224,8 +229,9 @@ async function saveProps() {
 
     close();
     await fetchTorrents();
+    showToast(t('toast.saved'), 'success');
   } catch (err: any) {
-    alert('保存任务属性失败: ' + (err.message || err));
+    showToast(t('common.failed', { error: describeError(err) }), 'error');
   }
 }
 </script>

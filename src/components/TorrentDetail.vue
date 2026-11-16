@@ -322,7 +322,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { state, formatBytes, formatSpeed } from '../stores/transmission';
+import { state, formatBytes, formatSpeed, openLocationDialog, openPrompt, openConfirm, showToast, describeError, copyTorrentMagnet } from '../stores/transmission';
 import { Priority } from '../api/types';
 import { t } from '../locales';
 import { rpc } from '../api/rpc';
@@ -344,52 +344,64 @@ function closeDetail() {
 }
 
 function copyMagnet() {
-  if (activeTorrent.value?.magnetLink) {
-    navigator.clipboard.writeText(activeTorrent.value.magnetLink);
-    alert(t('menu.magnetCopied'));
+  if (activeTorrent.value) {
+    copyTorrentMagnet(activeTorrent.value.id);
   }
 }
 
-async function addTrackersPrompt() {
+function addTrackersPrompt() {
   if (!activeTorrent.value) return;
-  const input = prompt(t('detail.trackers.promptAdd'));
-  if (!input) return;
-  const urls = input
-    .split(/[\n,]/)
-    .map((s) => s.trim())
-    .filter((s) => s.startsWith('http') || s.startsWith('udp'));
-  if (urls.length === 0) {
-    alert(t('detail.trackers.noValidUrls'));
-    return;
-  }
-  await rpc.torrentSet({
-    ids: [activeTorrent.value.id],
-    trackerAdd: urls,
+  const torrentId = activeTorrent.value.id;
+  openPrompt({
+    title: t('detail.trackers.addTrackers'),
+    label: t('detail.trackers.promptAdd'),
+    multiline: true,
+    rows: 4,
+    placeholder: 'udp://tracker.example.org:6969/announce',
+    onConfirm: async (input) => {
+      const urls = input
+        .split(/[\n,]/)
+        .map((s) => s.trim())
+        .filter((s) => s.startsWith('http') || s.startsWith('udp'));
+      if (urls.length === 0) {
+        throw new Error(t('detail.trackers.noValidUrls'));
+      }
+      await rpc.torrentSet({ ids: [torrentId], trackerAdd: urls });
+      showToast(t('detail.trackers.addSuccess', { count: urls.length }), 'success');
+      const refreshed = await rpc.getTorrentDetail(torrentId);
+      if (refreshed) {
+        state.activeTorrentDetail = { ...(activeTorrent.value || {}), ...refreshed };
+      }
+    },
   });
-  alert(t('detail.trackers.addSuccess', { count: urls.length }));
-  // 刷新详情
-  const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
-  if (refreshed) {
-    state.activeTorrentDetail = { ...activeTorrent.value, ...refreshed };
-  }
 }
 
-async function removeTracker(trackerId: number) {
+function removeTracker(trackerId: number) {
   if (!activeTorrent.value) return;
-  if (!confirm(t('detail.trackers.confirmRemove'))) return;
-  await rpc.torrentSet({
-    ids: [activeTorrent.value.id],
-    trackerRemove: [trackerId],
+  const torrentId = activeTorrent.value.id;
+  openConfirm({
+    title: t('detail.trackers.removeTitle'),
+    message: t('detail.trackers.confirmRemove'),
+    confirmText: t('common.delete'),
+    danger: true,
+    onConfirm: async () => {
+      await rpc.torrentSet({ ids: [torrentId], trackerRemove: [trackerId] });
+      showToast(t('toast.trackerRemoved'), 'success');
+      const refreshed = await rpc.getTorrentDetail(torrentId);
+      if (refreshed) {
+        state.activeTorrentDetail = { ...(activeTorrent.value || {}), ...refreshed };
+      }
+    },
   });
-  const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
-  if (refreshed) {
-    state.activeTorrentDetail = { ...activeTorrent.value, ...refreshed };
-  }
 }
 
-function askMorePeers() {
-  if (state.selectedId !== null) {
-    rpc.torrentReannounce([state.selectedId]);
+async function askMorePeers() {
+  if (state.selectedId === null) return;
+  try {
+    await rpc.torrentReannounce([state.selectedId]);
+    showToast(t('toast.reannounced'), 'success');
+  } catch (err: any) {
+    showToast(t('common.failed', { error: describeError(err) }), 'error');
   }
 }
 
@@ -414,25 +426,23 @@ function getErrorCategoryTitle(error?: number): string {
 
 async function handleVerifyTorrent() {
   if (!activeTorrent.value) return;
-  await rpc.torrentVerify([activeTorrent.value.id]);
-  const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
-  if (refreshed) {
-    state.activeTorrentDetail = { ...activeTorrent.value, ...refreshed };
-  }
-}
-
-async function handleSetLocation() {
-  if (!activeTorrent.value) return;
-  const currentDir = activeTorrent.value.downloadDir || '/mnt';
-  const newLoc = prompt(t('menu.promptLocation'), currentDir);
-  if (newLoc && newLoc !== currentDir) {
-    const moveData = confirm(t('menu.confirmMoveData'));
-    await rpc.torrentSetLocation([activeTorrent.value.id], newLoc, moveData);
+  try {
+    await rpc.torrentVerify([activeTorrent.value.id]);
+    showToast(t('toast.verifyStarted'), 'success');
     const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
     if (refreshed) {
       state.activeTorrentDetail = { ...activeTorrent.value, ...refreshed };
     }
+  } catch (err: any) {
+    showToast(t('common.failed', { error: describeError(err) }), 'error');
   }
+}
+
+function handleSetLocation() {
+  if (!activeTorrent.value) return;
+  state.selectedId = activeTorrent.value.id;
+  state.selectedIds = [activeTorrent.value.id];
+  openLocationDialog();
 }
 </script>
 

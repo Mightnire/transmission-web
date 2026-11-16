@@ -13,10 +13,10 @@
             />
           </th>
 
-          <!-- 队列序号 (#) 排序列：仅在顶部处于“队列与调度”Tab 时显示 -->
+          <!-- 队列序号 (#) 排序列：在“传输与网络”Tab 下显示，便于观察调度顺序 -->
           <th
             class="col-queue"
-            v-if="state.ribbonTab === 'queue'"
+            v-if="state.ribbonTab === 'transfer'"
             @click="handleSort('queuePosition')"
             :title="t('common.queue')"
           >
@@ -207,12 +207,12 @@
             />
           </td>
 
-          <!-- 队列顺序号 (#)：仅在处于“队列与调度”Tab 时显示 -->
-          <td class="col-queue" v-if="state.ribbonTab === 'queue'">
+          <!-- 队列顺序号 (#)：在“传输与网络”Tab 下显示 -->
+          <td class="col-queue" v-if="state.ribbonTab === 'transfer'">
             <span
               class="queue-cell-badge"
               :class="{ 'queue-waiting': isQueueWaiting(torrent) }"
-              :title="`Queue Position: ${torrent.queuePosition}`"
+              :title="`${t('common.queue')}: ${torrent.queuePosition}`"
             >
               {{ torrent.queuePosition !== undefined && torrent.queuePosition >= 0 ? torrent.queuePosition + 1 : '—' }}
             </span>
@@ -420,6 +420,15 @@ import {
   fetchTorrents,
   saveColumns,
   resetColumns,
+  openLocationDialog,
+  openRenameDialog,
+  openConfirmRemove,
+  copyTorrentMagnet,
+  startTorrentsAction,
+  stopTorrentsAction,
+  startNowTorrentsAction,
+  verifySelected,
+  reannounceSelected,
 } from '../stores/transmission';
 import { Torrent, TorrentStatus } from '../api/types';
 import { t } from '../locales';
@@ -444,7 +453,7 @@ function handleResetColumns() {
 
 const visibleColumnCount = computed(() => {
   let count = 1;
-  if (state.ribbonTab === 'queue') count++;
+  if (state.ribbonTab === 'transfer') count++;
   count += state.columns.filter((c) => c.visible).length;
   return count;
 });
@@ -579,31 +588,35 @@ async function handleAction(action: string) {
 
   switch (action) {
     case 'start':
-      await rpc.torrentStart(ids);
+      await startTorrentsAction(ids);
       break;
     case 'start-now':
-      await rpc.torrentStartNow(ids);
+      await startNowTorrentsAction(ids);
       break;
     case 'stop':
-      await rpc.torrentStop(ids);
+      await stopTorrentsAction(ids);
       break;
     case 'verify':
-      await rpc.torrentVerify(ids);
+      await verifySelected();
       break;
     case 'reannounce':
-      await rpc.torrentReannounce(ids);
+      await reannounceSelected();
       break;
     case 'move-top':
       await rpc.queueMoveTop(ids);
+      await fetchTorrents();
       break;
     case 'move-up':
       await rpc.queueMoveUp(ids);
+      await fetchTorrents();
       break;
     case 'move-down':
       await rpc.queueMoveDown(ids);
+      await fetchTorrents();
       break;
     case 'move-bottom':
       await rpc.queueMoveBottom(ids);
+      await fetchTorrents();
       break;
     case 'detail':
       toggleDetail(ids[0]);
@@ -612,54 +625,35 @@ async function handleAction(action: string) {
       openTorrentProps(ids[0]);
       break;
     case 'copy-magnet':
-      const targetTorrent = state.torrents.find((t) => t.id === ids[0]);
-      if (targetTorrent?.magnetLink) {
-        navigator.clipboard.writeText(targetTorrent.magnetLink);
-        alert(t('menu.magnetCopied'));
-      } else {
-        rpc.getTorrentDetail(ids[0]).then((d) => {
-          if (d?.magnetLink) {
-            navigator.clipboard.writeText(d.magnetLink);
-            alert(t('menu.magnetCopied'));
-          }
-        });
+      if (ids.length > 0) {
+        copyTorrentMagnet(ids[0]);
       }
       break;
     case 'rename':
-      const curT = state.torrents.find((t) => t.id === ids[0]);
-      if (!curT) break;
-      const newName = prompt(t('menu.promptRename'), curT.name);
-      if (newName && newName !== curT.name) {
-        try {
-          await rpc.torrentRenamePath(ids[0], curT.name, newName);
-          await fetchTorrents();
-        } catch (e: any) {
-          alert(t('menu.renameFailed', { error: e.message }));
-        }
+      if (ids.length > 0) {
+        state.selectedId = ids[0];
+        openRenameDialog();
       }
       break;
     case 'set-location':
-      const newLoc = prompt(t('menu.promptLocation'), state.torrents.find((t) => t.id === ids[0])?.downloadDir || '/mnt');
-      if (newLoc) {
-        const moveData = confirm(t('menu.confirmMoveData'));
-        await rpc.torrentSetLocation(ids, newLoc, moveData);
-        await fetchTorrents();
+      if (ids.length > 0) {
+        state.selectedIds = ids;
+        state.selectedId = ids[0];
+        openLocationDialog();
       }
       break;
     case 'remove':
-      if (confirm(t('menu.confirmRemove', { count: ids.length }))) {
-        await rpc.torrentRemove(ids, false);
-        state.selectedIds = [];
-        state.selectedId = null;
-        await fetchTorrents();
+      if (ids.length > 0) {
+        state.selectedIds = ids;
+        state.selectedId = ids[0];
+        openConfirmRemove(false);
       }
       break;
     case 'remove-data':
-      if (confirm(t('menu.confirmRemoveData', { count: ids.length }))) {
-        await rpc.torrentRemove(ids, true);
-        state.selectedIds = [];
-        state.selectedId = null;
-        await fetchTorrents();
+      if (ids.length > 0) {
+        state.selectedIds = ids;
+        state.selectedId = ids[0];
+        openConfirmRemove(true);
       }
       break;
   }
@@ -765,8 +759,8 @@ function getStatusBadgeClass(item: Torrent): string {
 }
 
 .fluent-desktop-table {
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
+  min-width: 900px;
   border-collapse: collapse;
   font-size: 12px;
   text-align: left;

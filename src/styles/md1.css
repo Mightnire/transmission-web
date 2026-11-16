@@ -51,6 +51,17 @@
   --fluent-border-subtle: rgba(0, 0, 0, 0.08);
   --fluent-border-divider: rgba(0, 0, 0, 0.14);
   --fluent-radius: 4px;
+
+  /* Office 2016 Flat Design Tokens (Pure Flat Solid Color, Zero Gradient) */
+  --ribbon-header-bg: #b71c1c;
+  --ribbon-header-text: #ffffff;
+  --ribbon-header-tab-hover: rgba(255, 255, 255, 0.15);
+  --ribbon-header-tab-active-bg: var(--fluent-bg-canvas);
+  --ribbon-header-tab-active-text: #b71c1c;
+  --ribbon-file-btn-bg: #8e1515;
+  --ribbon-file-btn-hover: #7b0f0f;
+  --ribbon-contextual-border: #ffb300;
+  --ribbon-contextual-bg: rgba(255, 255, 255, 0.20);
 }
 
 /* Dark Mode Theme */
@@ -76,7 +87,26 @@
   --fluent-border-subtle: rgba(255, 255, 255, 0.08);
   --fluent-border-divider: rgba(255, 255, 255, 0.14);
   --fluent-radius: 4px;
+
+  /* Office 2016 Flat Dark */
+  --ribbon-header-bg: #222222;
+  --ribbon-header-text: rgba(255, 255, 255, 0.95);
+  --ribbon-header-tab-hover: rgba(255, 255, 255, 0.10);
+  --ribbon-header-tab-active-bg: var(--fluent-bg-canvas);
+  --ribbon-header-tab-active-text: #ff8a80;
+  --ribbon-file-btn-bg: #8e1515;
+  --ribbon-file-btn-hover: #a81c1c;
+  --ribbon-contextual-border: #ffa000;
+  --ribbon-contextual-bg: rgba(255, 179, 0, 0.18);
 }
+
+/* Global semantic text colors (used by icon captions and toast variants) */
+.text-accent { color: var(--fluent-accent) !important; }
+.text-info { color: var(--md-info) !important; }
+.text-success { color: var(--md-success) !important; }
+.text-warning { color: var(--md-warning) !important; }
+.text-danger { color: var(--md-error) !important; }
+.text-muted { color: var(--md-text-secondary) !important; }
 
 /* Global Reset */
 * {
@@ -87,7 +117,7 @@
 }
 
 body {
-  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
   background-color: var(--md-bg);
   color: var(--md-text-primary);
   line-height: 1.5;

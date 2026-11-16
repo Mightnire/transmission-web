@@ -80,7 +80,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { TorrentFile, TorrentFileStat } from '../api/types';
-import { state, fetchTorrents, formatBytes } from '../stores/transmission';
+import { state, fetchTorrents, formatBytes, openPrompt, showToast } from '../stores/transmission';
 import { t } from '../locales';
 import { rpc } from '../api/rpc';
 
@@ -127,19 +127,23 @@ function toggleCollapse(path: string) {
   sessionCollapsedCache.set(props.torrentId, collapsedSet.value);
 }
 
-async function renamePath(node: TreeNode) {
-  const newName = prompt(t('fileTree.renamePrompt'), node.name);
-  if (!newName || newName === node.name) return;
-  try {
-    await rpc.torrentRenamePath(props.torrentId, node.path, newName);
-    const detail = await rpc.getTorrentDetail(props.torrentId);
-    if (detail) {
-      state.activeTorrentDetail = { ...(state.activeTorrentDetail || {}), ...detail };
-    }
-    await fetchTorrents();
-  } catch (e: any) {
-    alert(t('fileTree.renameFailed', { error: e.message }));
-  }
+function renamePath(node: TreeNode) {
+  openPrompt({
+    title: t('fileTree.renameTitle'),
+    label: t('fileTree.renamePrompt'),
+    value: node.name,
+    confirmText: t('common.save'),
+    onConfirm: async (newName) => {
+      if (newName === node.name) return;
+      await rpc.torrentRenamePath(props.torrentId, node.path, newName);
+      const detail = await rpc.getTorrentDetail(props.torrentId);
+      if (detail) {
+        state.activeTorrentDetail = { ...(state.activeTorrentDetail || {}), ...detail };
+      }
+      await fetchTorrents();
+      showToast(t('toast.renamed'), 'success');
+    },
+  });
 }
 
 // 树节点结构

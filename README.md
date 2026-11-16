@@ -1,70 +1,171 @@
-# Transmission Web MD1
+# Transmission Web · Office 2016 Fluent Ribbon
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Vue 3](https://img.shields.io/badge/Vue-3.4-brightgreen.svg)](https://vuejs.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.0-646CFF.svg)](https://vitejs.dev/)
-[![Material Design 1](https://img.shields.io/badge/Design-Material%20Design%201-indigo.svg)](https://material.io/)
+[![Vue 3](https://img.shields.io/badge/Vue-3.4-42b883.svg)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF.svg)](https://vitejs.dev/)
+[![Transmission RPC](https://img.shields.io/badge/Transmission-RPC%2016%20(3.x%20%2F%204.x)-1b5e20.svg)](https://github.com/transmission/transmission/blob/main/docs/rpc-spec.md)
+[![Offline](https://img.shields.io/badge/offline-100%25-0078d4.svg)](#-功能亮点)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A lightweight, robust, and responsive Transmission Web UI designed with classic **Material Design 1 (MD1)** for routers and low-spec embedded devices.
+A lightweight, dependency-free **Transmission Web UI** for routers and low-spec embedded devices.
+The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid colors, tabbed command groups, contextual tab) while keeping the final bundle small enough for router flash storage.
 
-一款专为路由器（Padavan、OpenWrt）与资源受限设备设计的轻量级 Transmission Web 客户端，采用经典的 **Material Design 1 (MD1)** 设计规范。
-
----
-
-## 🌟 设计初衷与核心特性 (Design Philosophy)
-
-在嵌入式路由器（如 16MB SPI Flash 闪存）场景下，我们希望为 Transmission 提供一个既具备现代响应式交互、又兼顾极简体积与高鲁棒性的 Web 前端：
-
-1. **精准的真实进度展示**：
-   - 严格基于 Transmission 内核校验通过的有效数据百分比（`percentDone`）进行渲染；
-   - 独立统计网络传输中的重传与校验损耗（`corruptEver`），提供客观透明的数据指标。
-2. **完全受控与状态持久化的文件树**：
-   - 树状结构采用完全受控设计，并结合 `localStorage` 记录各任务独特的折叠与展开偏好；
-   - 在高频数据轮询刷新期间，目录折叠状态保持稳定，不会产生意外重置。
-3. **极简轻量化体积 (Zero Bloat, Gzip ~45 KB)**：
-   - 采用纯原生 CSS 实现经典的 Material Design 1 样式规范（纸张阴影 Elevation、56dp 经典 AppBar、FAB 悬浮按钮、水波纹 Ripple 动效）；
-   - 零重型第三方组件库依赖，构建产物 Gzip 压缩后仅约 **45 KB**，秒开、秒加载，对路由器闪存零压力。
-4. **原生多语言国际化支持 (i18n)**：
-   - 内置轻量级响应式国际化系统，开箱支持 **简体中文 (zh-CN)**、**English (en-US)** 与 **Русский (ru-RU)**。
-5. **现代响应式布局**：
-   - 适配 PC 桌面端、平板与移动端屏幕，提供平滑自然的流式卡片与详情抽屉。
+一款为路由器（Padavan / OpenWrt）与低配设备打造的轻量 **Transmission Web 客户端**。
+界面采用 **Microsoft Office 2016 Ribbon** 设计语言：纯平色块、选项卡式功能分组、选中任务时出现上下文选项卡，同时保持极小的构建体积与完全离线自治。
 
 ---
 
-## 🛠️ 本地开发与构建 (Getting Started)
+## ✨ 功能亮点
 
-### 环境依赖
-- Node.js >= 18.0.0
-- npm >= 9.0.0
+- **Office 2016 Fluent Ribbon**
+  - 顶层 `文件` 菜单 + `任务` / `传输与网络` / `维护工具` / `视图与首选项` 四个选项卡。
+  - 选中种子后动态出现 `种子设置` 上下文选项卡（琥珀色顶栏标识），集中放置优先级、独立限速、做种停止规则、重命名/移动目录等属性。
+  - 所有下拉菜单通过 `Teleport` 挂载到 `body`，不被 Ribbon 的 `overflow` 裁剪；支持点击空白处、按 `Esc` 关闭。
+- **批量标签（Batch Labels）**
+  - 多选种子后一次性追加 / 覆盖 / 清空标签；相同标签集合自动合并为单次 `torrent-set`，结束后只刷新一次列表。
+- **真正的即时反馈（Optimistic Update + Confirm）**
+  - 暂停 / 开始 / 立即开始 / 校验 / 删除会在本地立即改变状态。
+  - 新增「服务端确认保护层」：RPC 返回后若快照仍是旧状态，不会把刚点下的暂停冲回「正在做种」，消除数秒抖动。
+- **完整 Fluent 对话框，零原生弹窗**
+  - 添加、属性、首选项、重命名、移动目录、删除确认、统计、关于、批量标签、Tracker 增删全部为应用内对话框。
+  - 支持 `Esc` 关闭、自动聚焦输入框、危险操作二次确认、成功/失败 Toast（不同图标与颜色）。
+- **全量离线图标**
+  - 80+ 个 Microsoft Fluent System Icons 24 Regular 矢量路径内联在 `FluentIcon.vue` 中，**0 外部字体、0 外部图标、0 CDN 请求**。
+- **三语国际化**
+  - 简体中文 / English / Русский，所有新增文案、Toast、单位与时间格式均同步维护；缺失键自动回退英文。
+- **桌面与移动端**
+  - 桌面端为可排序、可拖拽列宽、可自定义显示列的表格；移动端自动切换为卡片视图 + 抽屉侧栏 + 紧凑工具栏。
+  - 支持浅色 / 深色主题、轮询频率调节、会话统计、Tracker / 标签侧栏分组。
+- **轻量且无重型依赖**
+  - 运行时仅依赖 Vue 3；无 UI 组件库、无图标库、无状态管理库。
 
-### 安装依赖
+---
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Node.js >= 18
+- npm >= 9
+
+### 安装与本地联调
+
 ```bash
 npm install
-```
-
-### 本地联调
-修改 `vite.config.ts` 中的代理目标为你的路由器 IP（默认 `http://192.168.2.1:9091`），随后启动开发服务器：
-```bash
+cp .env.example .env.local   # Windows: copy .env.example .env.local
 npm run dev
 ```
-打开浏览器访问 `http://localhost:3000` 即可实时热重载联调。
 
-### 生产环境打包
+打开 `http://localhost:3000`。开发服务器会把 `/transmission` 反向代理到路由器，并自动注入 HTTP Basic Auth，避免浏览器 401 弹窗。
+
+`.env.local` 可用变量：
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `TRANSMISSION_HOST` | `192.168.2.1` | 路由器 Transmission RPC 主机 |
+| `TRANSMISSION_PORT` | `9091` | RPC 端口 |
+| `TRANSMISSION_USER` | `admin` | Basic Auth 用户名（留空则不注入） |
+| `TRANSMISSION_PASS` | `admin` | Basic Auth 密码 |
+
+> 也兼容 `VITE_ROUTER_HOST` / `VITE_ROUTER_PORT` / `VITE_ROUTER_USER` / `VITE_ROUTER_PASS` 旧变量名。
+
+### 生产构建
+
 ```bash
 npm run build
 ```
-打包产物将输出至 `dist/` 目录。
+
+构建由 `vue-tsc && vite build` 驱动，产物输出到 `dist/`。当前约：
+
+| 文件 | 原始 | gzip |
+| --- | --- | --- |
+| `index.html` | 1.1 kB | 0.6 kB |
+| `assets/index-*.css` | 84 kB | 12.6 kB |
+| `assets/index-*.js` | 316 kB | 97 kB |
+
+`base: './'` 使产物可以部署在任意子路径（如 `/transmission/web/`）下。
 
 ---
 
-## 📦 部署到路由器 (Deployment to Padavan / OpenWrt)
+## 📦 部署到路由器
 
-直接将 `dist/` 目录下的所有文件上传并替换路由器的 Transmission 静态 Web 目录：
-- **Padavan**: `/usr/share/transmission/web/`
-- **OpenWrt**: `/usr/share/transmission/web/`
+将 `dist/` 内所有文件上传并替换 Transmission 的 Web 目录：
+
+- **Padavan**：`/usr/share/transmission/web/`
+- **OpenWrt**：`/usr/share/transmission/web/`
+
+也可以把 `dist/` 同步到 `/tmp` 后 `mount --bind` 做无损热更新，无需重启 Transmission。
 
 ---
 
-## 📄 开源许可证 (License)
+## 🧱 项目结构
 
-本项目采用 [MIT License](LICENSE) 开源协议。
+```text
+transmission-web-md1/
+├── index.html                     # 入口，内联 favicon，无外部字体
+├── vite.config.ts                 # 开发代理 / Basic Auth / 版本号注入
+├── .env.example                   # 本地联调环境变量样例
+├── src/
+│   ├── main.ts                    # 应用入口，全局注册 FluentIcon / TransmissionLogo / Ripple
+│   ├── api/
+│   │   ├── rpc.ts                 # Transmission JSON-RPC（含 409 session-id 握手）
+│   │   └── types.ts               # 全量 RPC 类型契约
+│   ├── stores/
+│   │   └── transmission.ts        # 全局状态、轮询、过滤排序、乐观更新、对话框/Toast 控制
+│   ├── components/
+│   │   ├── AppBar.vue             # Office 2016 Ribbon、上下文选项卡、文件菜单、移动端工具条
+│   │   ├── Drawer.vue             # 状态过滤、标签/Tracker 分组、会话统计
+│   │   ├── TorrentTable.vue       # 桌面端表格：排序、列宽拖拽、列显隐、右键菜单
+│   │   ├── TorrentCard.vue        # 移动端卡片视图
+│   │   ├── TorrentDetail.vue      # 详情抽屉：概览、文件树、Peers、Trackers
+│   │   ├── BatchTagsDialog.vue    # 批量标签对话框
+│   │   ├── FluentActionDialogs.vue# 重命名/移动目录/删除确认/统计/关于/通用 Prompt+Confirm/Toast
+│   │   ├── AddDialog.vue          # 添加种子
+│   │   ├── SessionDialog.vue      # Transmission 全局首选项
+│   │   ├── TorrentPropsDialog.vue # 单任务属性
+│   │   ├── FluentIcon.vue         # Fluent System Icons 24 Regular 矢量字典
+│   │   └── TransmissionLogo.vue   # Transmission 官方变速杆 Logo（纯 SVG）
+│   ├── locales/                   # zh-CN / en-US / ru-RU
+│   └── styles/
+│       ├── md1.css                # 设计令牌（Fluent + Office 2016 色板）
+│       └── ripple.ts              # Material Ripple 指令
+```
+
+> 目录名与 `md1.css` 保留了项目早期的 Material Design 1 历史命名；当前视觉规范已统一为 Fluent / Office 2016。
+
+---
+
+## 🎨 设计令牌
+
+| Token | Light | Dark | 用途 |
+| --- | --- | --- | --- |
+| `--ribbon-header-bg` | `#b71c1c` | `#222222` | Office 标题栏 / 选项卡背景 |
+| `--ribbon-header-tab-active-bg` | `#ffffff` | `#2c2c2c` | 激活选项卡 |
+| `--ribbon-contextual-border` | `#ffb300` | `#ffa000` | 上下文选项卡顶部指示条 |
+| `--fluent-accent` | `#0078d4` | `#2886de` | 选中、链接、主按钮 |
+| `--fluent-bg-canvas` | `#ffffff` | `#2c2c2c` | 内容画布 |
+| `--fluent-bg-subtle` | `#f3f3f3` | `#202020` | 表头 / 分组背景 |
+
+所有颜色均通过 CSS 变量切换，主题跟随 `data-theme="dark"`。
+
+---
+
+## 🌐 国际化约定
+
+- 新增任何界面文案时，必须同步更新 `src/locales/zh-CN.ts`、`en-US.ts`、`ru-RU.ts`。
+- 动态占位符使用 `{name}` 形式，`t(key, params)` 会统一替换。
+- 时间、速率、容量单位使用 `common.day` / `common.hour` / `common.min` / `common.sec` 等现有键，禁止硬编码英文。
+- Toast 统一使用 `toast.*` 命名空间，并按 `success` / `error` / `info` 传入类型。
+
+---
+
+## 🔌 Transmission RPC 兼容性
+
+- 支持 Transmission 3.x / 4.x 的 JSON-RPC（RPC 版本 16）。
+- 首次请求会收到 `409 Conflict`，客户端自动读取 `X-Transmission-Session-Id` 并重试。
+- 长任务（校验、移动目录）通过轮询同步；短任务使用乐观更新 + 服务端确认保护。
+
+---
+
+## 📄 License
+
+[MIT](LICENSE) © 2026 Mightnire
