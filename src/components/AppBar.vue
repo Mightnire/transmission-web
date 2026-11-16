@@ -380,6 +380,7 @@
           <div class="ribbon-controls">
             <button
               class="fluent-btn-small"
+              :class="{ active: currentTorrentPriority === 1 }"
               :disabled="!hasSelection"
               @click="setPriority(1)"
               :title="t('ribbon.highPriority')"
@@ -389,6 +390,7 @@
             </button>
             <button
               class="fluent-btn-small"
+              :class="{ active: currentTorrentPriority === 0 }"
               :disabled="!hasSelection"
               @click="setPriority(0)"
               :title="t('ribbon.normalPriority')"
@@ -398,6 +400,7 @@
             </button>
             <button
               class="fluent-btn-small"
+              :class="{ active: currentTorrentPriority === -1 }"
               :disabled="!hasSelection"
               @click="setPriority(-1)"
               :title="t('ribbon.lowPriority')"
@@ -457,25 +460,29 @@
 
       <!-- 2.5 视图与首选项画板 -->
       <div class="ribbon-tab-pane" v-else-if="currentTab === 'view'">
-        <!-- 侧边栏与分组 -->
+        <!-- 侧边栏与分组 (Word 风格 Toggle 激活高亮) -->
         <div class="ribbon-group">
           <div class="ribbon-controls view-prefs-col">
-            <label class="fluent-check-label">
-              <input
-                type="checkbox"
-                v-model="state.uiPreferences.showTrackerGroup"
-                @change="saveUIPreferences"
-              />
+            <button
+              type="button"
+              class="fluent-toggle-btn"
+              :class="{ active: state.uiPreferences.showTrackerGroup }"
+              @click="togglePreference('showTrackerGroup')"
+              :title="t('ribbon.showTrackers')"
+            >
+              <span class="material-icons btn-icon">{{ state.uiPreferences.showTrackerGroup ? 'check_box' : 'check_box_outline_blank' }}</span>
               <span>{{ t('ribbon.showTrackers') }}</span>
-            </label>
-            <label class="fluent-check-label">
-              <input
-                type="checkbox"
-                v-model="state.uiPreferences.showTagGroup"
-                @change="saveUIPreferences"
-              />
+            </button>
+            <button
+              type="button"
+              class="fluent-toggle-btn"
+              :class="{ active: state.uiPreferences.showTagGroup }"
+              @click="togglePreference('showTagGroup')"
+              :title="t('ribbon.showTags')"
+            >
+              <span class="material-icons btn-icon">{{ state.uiPreferences.showTagGroup ? 'check_box' : 'check_box_outline_blank' }}</span>
               <span>{{ t('ribbon.showTags') }}</span>
-            </label>
+            </button>
           </div>
           <div class="group-title">{{ t('ribbon.groups.sidebarView') }}</div>
         </div>
@@ -593,16 +600,18 @@
         <!-- 独立限速 (Down/Up) -->
         <div class="ribbon-group">
           <div class="ribbon-controls limits-col">
-            <!-- 下载限速 -->
+            <!-- 下载限速 (Word 激活高亮 Toggle) -->
             <div class="limit-row">
-              <label class="fluent-check-label">
-                <input
-                  type="checkbox"
-                  :checked="currentTorrentDownloadLimited"
-                  @change="onTorrentDownloadLimitedToggle"
-                />
+              <button
+                type="button"
+                class="limit-toggle-pill"
+                :class="{ active: currentTorrentDownloadLimited }"
+                @click="toggleTorrentDownloadLimited"
+                :title="t('ribbon.limitDown')"
+              >
+                <span class="material-icons mini-check-ico">{{ currentTorrentDownloadLimited ? 'check_box' : 'check_box_outline_blank' }}</span>
                 <span>{{ t('ribbon.limitDown') }}</span>
-              </label>
+              </button>
               <input
                 type="number"
                 class="num-field limit-num"
@@ -615,16 +624,18 @@
               <span class="unit-txt">KB/s</span>
             </div>
 
-            <!-- 上传限速 -->
+            <!-- 上传限速 (Word 激活高亮 Toggle) -->
             <div class="limit-row">
-              <label class="fluent-check-label">
-                <input
-                  type="checkbox"
-                  :checked="currentTorrentUploadLimited"
-                  @change="onTorrentUploadLimitedToggle"
-                />
+              <button
+                type="button"
+                class="limit-toggle-pill"
+                :class="{ active: currentTorrentUploadLimited }"
+                @click="toggleTorrentUploadLimited"
+                :title="t('ribbon.limitUp')"
+              >
+                <span class="material-icons mini-check-ico">{{ currentTorrentUploadLimited ? 'check_box' : 'check_box_outline_blank' }}</span>
                 <span>{{ t('ribbon.limitUp') }}</span>
-              </label>
+              </button>
               <input
                 type="number"
                 class="num-field limit-num"
@@ -637,15 +648,17 @@
               <span class="unit-txt">KB/s</span>
             </div>
 
-            <!-- 遵循全局限制 -->
-            <label class="fluent-check-label mini-check" :title="t('props.honorsSession')">
-              <input
-                type="checkbox"
-                :checked="currentTorrentHonorsSession"
-                @change="onTorrentHonorsSessionToggle"
-              />
+            <!-- 遵循全局限制 (Word 激活高亮 Toggle) -->
+            <button
+              type="button"
+              class="limit-toggle-pill honors-pill"
+              :class="{ active: currentTorrentHonorsSession }"
+              @click="toggleTorrentHonorsSession"
+              :title="t('props.honorsSession')"
+            >
+              <span class="material-icons mini-check-ico">{{ currentTorrentHonorsSession ? 'check_box' : 'check_box_outline_blank' }}</span>
               <span>{{ t('ribbon.honorsSession') || t('props.honorsSession') }}</span>
-            </label>
+            </button>
           </div>
           <div class="group-title">{{ t('ribbon.groups.torrentLimits') }}</div>
         </div>
@@ -833,12 +846,15 @@
         @click.stop
       >
         <div class="menu-opt" :class="{ active: currentLocale === 'zh-CN' }" @click="selectLocale('zh-CN')">
+          <span class="material-icons menu-check-ico" :style="{ visibility: currentLocale === 'zh-CN' ? 'visible' : 'hidden' }">check</span>
           <span>简体中文</span>
         </div>
         <div class="menu-opt" :class="{ active: currentLocale === 'en-US' }" @click="selectLocale('en-US')">
+          <span class="material-icons menu-check-ico" :style="{ visibility: currentLocale === 'en-US' ? 'visible' : 'hidden' }">check</span>
           <span>English</span>
         </div>
         <div class="menu-opt" :class="{ active: currentLocale === 'ru-RU' }" @click="selectLocale('ru-RU')">
+          <span class="material-icons menu-check-ico" :style="{ visibility: currentLocale === 'ru-RU' ? 'visible' : 'hidden' }">check</span>
           <span>Русский</span>
         </div>
       </div>
@@ -1014,6 +1030,23 @@ function onTorrentPeerLimitChange(e: Event) {
   if (!isNaN(val) && val > 0) {
     updateSelectedTorrents({ 'peer-limit': val });
   }
+}
+
+function togglePreference(key: 'showTrackerGroup' | 'showTagGroup') {
+  state.uiPreferences[key] = !state.uiPreferences[key];
+  saveUIPreferences();
+}
+
+function toggleTorrentDownloadLimited() {
+  updateSelectedTorrents({ downloadLimited: !currentTorrentDownloadLimited.value });
+}
+
+function toggleTorrentUploadLimited() {
+  updateSelectedTorrents({ uploadLimited: !currentTorrentUploadLimited.value });
+}
+
+function toggleTorrentHonorsSession() {
+  updateSelectedTorrents({ honorsSessionLimits: !currentTorrentHonorsSession.value });
 }
 
 function onTorrentDownloadLimitedToggle(e: Event) {
@@ -1636,6 +1669,24 @@ function onLocaleChange(e: Event) {
   font-size: 16px;
 }
 
+.menu-check-ico {
+  font-size: 15px !important;
+  color: var(--fluent-accent);
+}
+
+/* 图五：Word 风格下拉菜单选中项高亮 */
+.menu-opt.active {
+  background-color: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+[data-theme='dark'] .menu-opt.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
 /* Fluent 小按钮 (Small Button) */
 .fluent-btn-small {
   display: inline-flex;
@@ -1671,10 +1722,100 @@ function onLocaleChange(e: Event) {
   font-size: 16px;
 }
 
-.btn-selected {
-  background-color: var(--fluent-bg-active) !important;
-  border-color: var(--fluent-accent) !important;
-  color: var(--fluent-accent) !important;
+/* =========================================================
+   Microsoft Word / Fluent Ribbon 激活高亮规范 (Toggle Active)
+   ========================================================= */
+
+/* 1. 图三：详情按钮与小型 Toggle 按钮激活状态 */
+.btn-selected,
+.fluent-btn-small.active,
+.fluent-toggle-btn.active,
+.limit-toggle-pill.active {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(0, 0, 0, 0.24) !important;
+  color: var(--md-text-primary) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  font-weight: 500;
+}
+
+[data-theme='dark'] .btn-selected,
+[data-theme='dark'] .fluent-btn-small.active,
+[data-theme='dark'] .fluent-toggle-btn.active,
+[data-theme='dark'] .limit-toggle-pill.active {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  color: var(--md-text-primary) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 2. 图二：视图与首选项中的 Toggle 按钮基础样式 */
+.fluent-toggle-btn {
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--fluent-radius);
+  color: var(--md-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 11.5px;
+  user-select: none;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.fluent-toggle-btn:hover {
+  background-color: var(--fluent-bg-hover);
+  color: var(--md-text-primary);
+}
+
+.fluent-toggle-btn .btn-icon {
+  font-size: 15px;
+  color: var(--md-text-secondary);
+}
+
+.fluent-toggle-btn.active .btn-icon {
+  color: var(--fluent-accent);
+}
+
+/* 3. 图四：独立限速与遵循全局限速的 Toggle 按钮基础样式 */
+.limit-toggle-pill {
+  height: 22px;
+  padding: 0 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--fluent-radius);
+  color: var(--md-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  user-select: none;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.limit-toggle-pill:hover {
+  background-color: var(--fluent-bg-hover);
+  color: var(--md-text-primary);
+}
+
+.limit-toggle-pill .mini-check-ico {
+  font-size: 14px;
+  color: var(--md-text-secondary);
+}
+
+.limit-toggle-pill.active .mini-check-ico {
+  color: var(--fluent-accent);
+}
+
+.limit-toggle-pill.honors-pill {
+  height: 22px;
+  align-self: flex-start;
+  margin-top: 1px;
 }
 
 /* Fluent 搜索框 */
