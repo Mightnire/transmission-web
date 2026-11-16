@@ -1066,12 +1066,17 @@ function getRatio(): string {
     width: min(300px, 84vw);
     z-index: 999;
     transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
-    box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+    transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1), box-shadow 0.25s ease, visibility 0.25s ease;
+    box-shadow: none;
+    visibility: hidden;
+    pointer-events: none;
   }
 
   .fluent-navigation-pane.mobile-open {
     transform: translateX(0);
+    box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .mobile-drawer-header {

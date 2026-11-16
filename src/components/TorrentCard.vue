@@ -6,7 +6,7 @@
   >
     <!-- 卡片主体内容 -->
     <div class="card-inner">
-      <!-- 1. 顶部：选择框、状态徽标与种子名称 -->
+      <!-- 1. 顶部：选择框 + 状态胶囊 + 种子名称 -->
       <div class="card-header">
         <label class="checkbox-wrapper" @click.stop>
           <input
@@ -17,20 +17,29 @@
           />
         </label>
 
-        <div class="title-block">
-          <div class="title-row">
+        <div class="header-main">
+          <div class="pill-row">
             <span class="status-pill" :class="statusClass">
               <span class="material-icons pill-icon">{{ statusIcon }}</span>
               <span class="pill-text">{{ statusText }}</span>
             </span>
-            <div class="torrent-name" :title="torrent.name">
-              {{ torrent.name }}
-            </div>
+            <span
+              class="corrupt-pill"
+              v-if="torrent.corruptEver > 0"
+              :title="t('table.corruptTitle', { size: formatBytes(torrent.corruptEver) })"
+            >
+              <span class="material-icons pill-icon">warning</span>
+              <span>{{ t('common.corrupt') }}: {{ formatBytes(torrent.corruptEver) }}</span>
+            </span>
+          </div>
+
+          <div class="torrent-name" :title="torrent.name">
+            {{ torrent.name }}
           </div>
         </div>
       </div>
 
-      <!-- 2. 进度条 (Fluent 2 细腻进度条) -->
+      <!-- 2. Fluent 进度条 -->
       <div class="progress-container">
         <div class="fluent-progress-track">
           <div
@@ -41,107 +50,100 @@
         </div>
       </div>
 
-      <!-- 3. 统计指标网格 (移动端优化的紧凑双列布局) -->
-      <div class="meta-grid">
-        <!-- 进度与已下载 -->
-        <div class="meta-cell">
-          <span class="meta-label">{{ t('table.percent') }}:</span>
-          <span class="meta-value font-bold" :class="{ 'text-warning': isChecking }">
-            {{ progressPercent.toFixed(1) }}%
-            <span class="meta-sub" v-if="torrent.totalSize > 0">
-              ({{ formatBytes(torrent.totalSize * torrent.percentDone) }} / {{ formatBytes(torrent.totalSize) }})
+      <!-- 3. 统计指标 (精炼排版，彻底消除冗余与重复) -->
+      <div class="metrics-block">
+        <!-- 第一行：进度百分比与文件体积 · 状态/剩余时间/分享率 -->
+        <div class="metric-row">
+          <div class="metric-group-left">
+            <span class="metric-pct" :class="{ 'text-warning': isChecking }">
+              {{ progressPercent.toFixed(1) }}%
             </span>
-          </span>
+            <span class="metric-divider">·</span>
+            <span class="metric-size" v-if="torrent.totalSize > 0">
+              {{ formatBytes(torrent.totalSize * torrent.percentDone) }} / {{ formatBytes(torrent.totalSize) }}
+            </span>
+          </div>
+
+          <div class="metric-group-right">
+            <span class="metric-eta" v-if="torrent.eta > 0 && !isPaused && torrent.percentDone < 1">
+              <span class="material-icons mini-icon">schedule</span>
+              {{ formatETA(torrent.eta) }}
+            </span>
+            <span class="metric-ratio" v-else-if="torrent.percentDone >= 1">
+              {{ t('common.ratio') }}: {{ torrent.uploadRatio < 0 ? '0.00' : torrent.uploadRatio.toFixed(2) }}
+            </span>
+          </div>
         </div>
 
-        <!-- 剩余时间 / 节点数 -->
-        <div class="meta-cell text-right">
-          <span class="meta-label" v-if="torrent.eta > 0">{{ t('common.eta') }}:</span>
-          <span class="meta-value" v-if="torrent.eta > 0">{{ formatETA(torrent.eta) }}</span>
-          <span class="meta-sub" v-else>{{ t('table.peers') }}: {{ torrent.peersConnected }}</span>
-        </div>
+        <!-- 第二行：即时上下行速度 · 节点总数与分享率 -->
+        <div class="metric-row secondary-row">
+          <div class="metric-speeds">
+            <span class="speed-item speed-down" :class="{ inactive: torrent.rateDownload === 0 }">
+              <span class="speed-arrow">↓</span> {{ formatSpeed(torrent.rateDownload) }}
+            </span>
+            <span class="speed-item speed-up" :class="{ inactive: torrent.rateUpload === 0 }">
+              <span class="speed-arrow">↑</span> {{ formatSpeed(torrent.rateUpload) }}
+            </span>
+          </div>
 
-        <!-- 即时下载速度 -->
-        <div class="meta-cell">
-          <span class="meta-label">↓ {{ t('table.downSpeed') }}:</span>
-          <span class="meta-value speed-down font-bold">
-            {{ formatSpeed(torrent.rateDownload) }}
-          </span>
-        </div>
-
-        <!-- 即时上传速度 -->
-        <div class="meta-cell text-right">
-          <span class="meta-label">↑ {{ t('table.upSpeed') }}:</span>
-          <span class="meta-value speed-up font-bold">
-            {{ formatSpeed(torrent.rateUpload) }}
-          </span>
-        </div>
-
-        <!-- 分享率 -->
-        <div class="meta-cell">
-          <span class="meta-label">{{ t('table.ratio') }}:</span>
-          <span class="meta-value">{{ torrent.uploadRatio < 0 ? '0.00' : torrent.uploadRatio.toFixed(2) }}</span>
-        </div>
-
-        <!-- 节点总览 -->
-        <div class="meta-cell text-right">
-          <span class="meta-label">Peers:</span>
-          <span class="meta-value">{{ torrent.peersConnected }} ({{ torrent.peersGettingFromUs }} ↑ / {{ torrent.peersSendingToUs }} ↓)</span>
+          <div class="metric-peers">
+            <span class="peers-badge" :title="`${torrent.peersGettingFromUs} ↑ / ${torrent.peersSendingToUs} ↓`">
+              <span class="material-icons mini-icon">group</span>
+              {{ t('common.peers') }}: {{ torrent.peersConnected }}
+            </span>
+            <span class="metric-ratio-downloading" v-if="torrent.percentDone < 1">
+              {{ t('common.ratio') }}: {{ torrent.uploadRatio < 0 ? '0.00' : torrent.uploadRatio.toFixed(2) }}
+            </span>
+          </div>
         </div>
       </div>
 
-      <!-- 坏块与网络浪费损耗专属徽标 (特色功能) -->
-      <div class="badges-row" v-if="torrent.corruptEver > 0 || torrent.error !== 0">
-        <span class="fluent-badge badge-warning" v-if="torrent.corruptEver > 0" :title="t('table.corruptTitle', { size: formatBytes(torrent.corruptEver) })">
-          <span class="material-icons badge-icon">warning</span>
-          {{ t('common.corrupt') }}: {{ formatBytes(torrent.corruptEver) }}
-        </span>
-        <span class="fluent-badge badge-danger" v-if="torrent.error !== 0">
-          <span class="material-icons badge-icon">error_outline</span>
-          {{ torrent.errorString || t('sidebar.errors') }}
-        </span>
+      <!-- 异常报警条 (仅存在错误时显示) -->
+      <div class="error-notice" v-if="torrent.error !== 0">
+        <span class="material-icons mini-icon">error_outline</span>
+        <span class="error-text">{{ torrent.errorString || t('sidebar.errors') }}</span>
       </div>
 
-      <!-- 4. 底部快捷操作栏 (适合手指触摸的热区) -->
+      <!-- 4. 底部快捷操作栏 (Fluent 2 现代微质感按钮) -->
       <div class="card-action-bar" @click.stop>
         <!-- 开始 / 暂停 -->
         <button
-          class="fluent-card-btn action-play"
+          class="fluent-pill-btn action-play"
           :class="{ 'btn-start': isPaused, 'btn-pause': !isPaused }"
           @click="togglePlay"
           :title="isPaused ? t('common.start') : t('common.pause')"
         >
           <span class="material-icons btn-icon">{{ isPaused ? 'play_arrow' : 'pause' }}</span>
-          <span class="btn-text">{{ isPaused ? t('common.start') : t('common.pause') }}</span>
+          <span>{{ isPaused ? t('common.start') : t('common.pause') }}</span>
         </button>
 
         <!-- 查看详情 (打开底栏 Bottom Sheet) -->
         <button
-          class="fluent-card-btn"
+          class="fluent-pill-btn"
           @click="openDetail"
           :title="t('common.details')"
         >
           <span class="material-icons btn-icon">info</span>
-          <span class="btn-text">{{ t('common.details') }}</span>
+          <span>{{ t('common.details') }}</span>
         </button>
 
         <!-- 任务属性 -->
         <button
-          class="fluent-card-btn"
+          class="fluent-pill-btn"
           @click="openProps"
           :title="t('ribbon.tabs.torrentProps')"
         >
           <span class="material-icons btn-icon">tune</span>
-          <span class="btn-text">{{ t('ribbon.tabs.torrentProps') }}</span>
+          <span>{{ t('common.properties') }}</span>
         </button>
 
-        <!-- 删除 -->
+        <!-- 删除按钮 -->
         <button
-          class="fluent-card-btn btn-danger"
+          class="fluent-pill-btn btn-danger"
           @click="removeTorrent"
           :title="t('common.delete')"
         >
-          <span class="material-icons btn-icon">delete</span>
+          <span class="material-icons btn-icon">delete_outline</span>
         </button>
       </div>
     </div>
@@ -240,11 +242,9 @@ const progressBarClass = computed(() => {
 });
 
 function handleCardClick() {
-  // 如果有多选状态，点击卡片直接作为切换多选
   if (state.selectedIds.length > 0) {
     selectTorrent(props.torrent.id, true);
   } else {
-    // 否则单选激活该卡片
     selectTorrent(props.torrent.id, false);
   }
 }
@@ -295,7 +295,7 @@ async function removeTorrent() {
   background-color: var(--fluent-bg-canvas);
   border: 1px solid var(--fluent-border-subtle);
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.02);
   transition: all 0.15s cubic-bezier(0.1, 0.9, 0.2, 1);
   user-select: none;
   overflow: hidden;
@@ -308,7 +308,7 @@ async function removeTorrent() {
 .fluent-torrent-card.selected {
   border-color: var(--fluent-accent);
   background-color: rgba(0, 120, 212, 0.04);
-  box-shadow: 0 0 0 1px var(--fluent-accent), 0 2px 8px rgba(0, 120, 212, 0.12);
+  box-shadow: 0 0 0 1px var(--fluent-accent), 0 2px 10px rgba(0, 120, 212, 0.15);
 }
 
 .card-inner {
@@ -319,7 +319,7 @@ async function removeTorrent() {
 .card-header {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
 }
 
 .checkbox-wrapper {
@@ -334,25 +334,29 @@ async function removeTorrent() {
   height: 18px;
   cursor: pointer;
   accent-color: var(--fluent-accent);
+  border-radius: 4px;
 }
 
-.title-block {
+.header-main {
   flex: 1;
   min-width: 0;
-}
-
-.title-row {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
+.pill-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
   gap: 4px;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 12px;
   font-size: 11px;
   font-weight: 600;
@@ -385,7 +389,7 @@ async function removeTorrent() {
 
 .pill-completed {
   background-color: rgba(100, 100, 100, 0.12);
-  color: #555;
+  color: var(--md-text-secondary);
 }
 
 .pill-stopped {
@@ -403,8 +407,21 @@ async function removeTorrent() {
   color: var(--md-text-secondary);
 }
 
+.corrupt-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background-color: rgba(255, 185, 0, 0.18);
+  color: #b26b00;
+  border: 1px solid rgba(255, 185, 0, 0.3);
+}
+
 .torrent-name {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--md-text-primary);
   line-height: 1.35;
@@ -417,15 +434,15 @@ async function removeTorrent() {
 
 /* 进度条 */
 .progress-container {
-  margin: 8px 0 6px;
+  margin: 8px 0 7px;
 }
 
 .fluent-progress-track {
   width: 100%;
-  height: 5px;
+  height: 4px;
   background-color: var(--fluent-bg-subtle);
   border: 1px solid var(--fluent-border-subtle);
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
@@ -451,46 +468,90 @@ async function removeTorrent() {
   background-color: #d13438;
 }
 
-/* 指标网格 */
-.meta-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px 8px;
-  font-size: 11.5px;
-  line-height: 1.3;
+/* 指标块 */
+.metrics-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
 }
 
-.meta-cell {
+.metric-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.metric-group-left {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.meta-cell.text-right {
-  justify-content: flex-end;
-}
-
-.meta-label {
-  color: var(--md-text-secondary);
-  font-size: 11px;
-}
-
-.meta-value {
+.metric-pct {
+  font-size: 13px;
+  font-weight: 700;
   color: var(--md-text-primary);
+}
+
+.metric-divider {
+  color: var(--fluent-border-divider);
+  font-weight: 600;
+}
+
+.metric-size {
+  color: var(--md-text-secondary);
   font-size: 11.5px;
 }
 
-.meta-sub {
+.metric-group-right {
+  display: flex;
+  align-items: center;
+  font-size: 11.5px;
   color: var(--md-text-secondary);
-  font-size: 10.5px;
-  font-weight: normal;
+  flex-shrink: 0;
 }
 
-.font-bold {
+.metric-eta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--fluent-accent);
   font-weight: 600;
+}
+
+.metric-ratio {
+  font-weight: 500;
+}
+
+.mini-icon {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* 第二行指标：速度与节点 */
+.secondary-row {
+  font-size: 11.5px;
+}
+
+.metric-speeds {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.speed-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+}
+
+.speed-arrow {
+  font-weight: 700;
 }
 
 .speed-down {
@@ -501,44 +562,51 @@ async function removeTorrent() {
   color: #0078d4;
 }
 
-.text-warning {
-  color: #b26b00;
+.speed-item.inactive {
+  color: var(--md-text-secondary);
+  font-weight: normal;
+  opacity: 0.75;
 }
 
-/* 警告徽标 */
-.badges-row {
-  margin-top: 6px;
+.metric-peers {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--md-text-secondary);
 }
 
-.fluent-badge {
+.peers-badge {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 4px;
+  gap: 2px;
 }
 
-.badge-icon {
-  font-size: 13px;
+.metric-ratio-downloading {
+  color: var(--md-text-secondary);
 }
 
-.badge-warning {
-  background-color: rgba(255, 185, 0, 0.15);
-  color: #b26b00;
-  border: 1px solid rgba(255, 185, 0, 0.3);
-}
-
-.badge-danger {
-  background-color: rgba(209, 52, 56, 0.12);
-  color: #d13438;
+/* 错误通知条 */
+.error-notice {
+  margin-top: 6px;
+  padding: 4px 8px;
+  background-color: rgba(209, 52, 56, 0.1);
   border: 1px solid rgba(209, 52, 56, 0.25);
+  border-radius: 4px;
+  color: #d13438;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-/* 底部操作条 */
+.error-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 底部操作栏 */
 .card-action-bar {
   margin-top: 8px;
   padding-top: 6px;
@@ -548,47 +616,52 @@ async function removeTorrent() {
   gap: 6px;
 }
 
-.fluent-card-btn {
-  height: 32px;
+.fluent-pill-btn {
+  height: 30px;
   padding: 0 10px;
   border: 1px solid var(--fluent-border-subtle);
   background-color: var(--fluent-bg-subtle);
   color: var(--md-text-primary);
-  border-radius: 4px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 11.5px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.fluent-card-btn:active {
+.fluent-pill-btn:active {
   background-color: var(--fluent-bg-hover);
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
-.fluent-card-btn .btn-icon {
-  font-size: 16px;
+.fluent-pill-btn .btn-icon {
+  font-size: 15px;
 }
 
 .action-play.btn-start {
   color: #107c41;
-  border-color: rgba(16, 124, 65, 0.3);
-  background-color: rgba(16, 124, 65, 0.05);
+  border-color: rgba(16, 124, 65, 0.25);
+  background-color: rgba(16, 124, 65, 0.08);
 }
 
 .action-play.btn-pause {
   color: #d83b01;
-  border-color: rgba(216, 59, 1, 0.3);
-  background-color: rgba(216, 59, 1, 0.05);
+  border-color: rgba(216, 59, 1, 0.25);
+  background-color: rgba(216, 59, 1, 0.08);
 }
 
-.fluent-card-btn.btn-danger {
+.fluent-pill-btn.btn-danger {
   margin-left: auto;
   color: #d13438;
-  border-color: rgba(209, 52, 56, 0.3);
-  background-color: rgba(209, 52, 56, 0.05);
+  border-color: rgba(209, 52, 56, 0.2);
+  background-color: rgba(209, 52, 56, 0.04);
   padding: 0 8px;
+}
+
+.fluent-pill-btn.btn-danger:active {
+  background-color: rgba(209, 52, 56, 0.12);
 }
 </style>

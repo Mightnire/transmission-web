@@ -38,6 +38,8 @@ export default {
     finished: '完成',
     queue: '队列序号',
     enabled: '启用',
+    details: '详情',
+    properties: '属性',
   },
   app: {
     title: 'Transmission Web',
@@ -174,6 +176,17 @@ export default {
   table: {
     empty: '没有找到符合条件的任务',
     corruptTitle: '坏块损耗: {size}',
+    name: '名称',
+    size: '大小',
+    percent: '进度',
+    status: '状态',
+    downSpeed: '下载速度',
+    upSpeed: '上传速度',
+    eta: '剩余时间',
+    peers: '节点',
+    ratio: '分享率',
+    queue: '队列序号',
+    addedDate: '添加时间',
   },
   menu: {
     start: '开始',

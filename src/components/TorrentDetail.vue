@@ -846,15 +846,9 @@ async function handleSetLocation() {
   opacity: 0.4;
 }
 
-/* 移动端底面板遮罩与 Bottom Sheet 样式 */
+/* 移动端底面板遮罩与 Bottom Sheet 样式 (桌面端严格隐藏，防止模糊遮挡) */
 .mobile-detail-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  z-index: 998;
-  animation: backdropFadeIn 0.2s ease-out;
+  display: none;
 }
 
 @keyframes backdropFadeIn {
@@ -880,6 +874,17 @@ async function handleSetLocation() {
 }
 
 @media (max-width: 768px) {
+  .mobile-detail-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 998;
+    animation: backdropFadeIn 0.2s ease-out;
+  }
+
   .desktop-detail-dock {
     position: fixed;
     left: 0;

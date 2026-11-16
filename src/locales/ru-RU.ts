@@ -38,6 +38,8 @@ export default {
     finished: 'Готово',
     queue: 'Очередь #',
     enabled: 'Включено',
+    details: 'Детали',
+    properties: 'Свойства',
   },
   app: {
     title: 'Transmission Web',
@@ -174,6 +176,17 @@ export default {
   table: {
     empty: 'Нет торрентов, соответствующих критериям',
     corruptTitle: 'Поврежденные данные: {size}',
+    name: 'Имя',
+    size: 'Размер',
+    percent: 'Прогресс',
+    status: 'Статус',
+    downSpeed: 'Скорость загрузки',
+    upSpeed: 'Скорость отдачи',
+    eta: 'Осталось',
+    peers: 'Пиры',
+    ratio: 'Рейтинг',
+    queue: 'Очередь #',
+    addedDate: 'Дата добавления',
   },
   menu: {
     start: 'Запустить',

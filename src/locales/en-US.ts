@@ -38,6 +38,8 @@ export default {
     finished: 'Done',
     queue: 'Queue #',
     enabled: 'Enabled',
+    details: 'Details',
+    properties: 'Properties',
   },
   app: {
     title: 'Transmission Web',
@@ -174,6 +176,17 @@ export default {
   table: {
     empty: 'No torrents match the criteria',
     corruptTitle: 'Corrupt Data: {size}',
+    name: 'Name',
+    size: 'Size',
+    percent: 'Progress',
+    status: 'Status',
+    downSpeed: 'Download Speed',
+    upSpeed: 'Upload Speed',
+    eta: 'ETA',
+    peers: 'Peers',
+    ratio: 'Ratio',
+    queue: 'Queue #',
+    addedDate: 'Date Added',
   },
   menu: {
     start: 'Start',
