@@ -45,7 +45,7 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
   - 「视图与首选项 → 界面 → 紧凑密度」会压缩 Ribbon 高度与表格行高，保留全部 Fluent 功能，适合 1080p/小屏提高信息密度。
 - **BiglyBT 风格区块映射**
   - 新增「区块映射」标签页：根据 `pieces` bitfield 绘制完成/缺失；Transmission 4.x 若返回 `availability`，额外绘制可用副本热力图。
-  - 3.07 的 `availability` 返回空数组，界面会明确提示“当前版本未提供”，不再显示误导性的 0。
+  - 3.07 的 `availability` 为空时，可用性图例静默隐藏，只保留完成/缺失位图，不显示误导性的 0。
   - 悬停显示区块编号、完成状态、可用副本、区块大小与所属文件；底部附颜色图例。
 - **更多 RPC 信息**
   - 统计页通过 `free-space` 显示下载目录可用空间（Transmission 4.x 还会显示总容量与使用进度条）。

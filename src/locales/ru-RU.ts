@@ -388,7 +388,6 @@ export default {
       availability: 'Копий: {count}',
       size: 'Размер блока: {size}',
       empty: 'Нет данных о блоках',
-      unavailable: 'Эта версия Transmission не передаёт доступность по блокам',
       legendDone: 'Готово',
       legendMissing: 'Отсутствует',
       legendAvail1: '1 копия',

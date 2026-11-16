@@ -42,7 +42,6 @@
       <span class="legend-entry" v-if="availabilitySupported"><i class="swatch avail1"></i>{{ t('detail.pieces.legendAvail1') }}</span>
       <span class="legend-entry" v-if="availabilitySupported"><i class="swatch avail2"></i>{{ t('detail.pieces.legendAvail2') }}</span>
       <span class="legend-entry" v-if="availabilitySupported"><i class="swatch avail3"></i>{{ t('detail.pieces.legendAvail3') }}</span>
-      <span class="legend-note" v-if="!availabilitySupported">{{ t('detail.pieces.unavailable') }}</span>
     </div>
   </div>
 </template>
@@ -388,11 +387,6 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-}
-
-.legend-note {
-  color: var(--md-text-secondary);
-  opacity: 0.85;
 }
 
 .swatch {

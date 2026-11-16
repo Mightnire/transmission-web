@@ -315,8 +315,8 @@
               <th>{{ t('detail.peers.colClient') }}</th>
               <th>{{ t('detail.peers.colDownSpeed') }}</th>
               <th>{{ t('detail.peers.colUpSpeed') }}</th>
-              <th>{{ t('detail.peers.colDownloaded') }}</th>
-              <th>{{ t('detail.peers.colUploaded') }}</th>
+              <th v-if="peerHasByteStats">{{ t('detail.peers.colDownloaded') }}</th>
+              <th v-if="peerHasByteStats">{{ t('detail.peers.colUploaded') }}</th>
               <th>{{ t('detail.peers.colEncrypted') }}</th>
               <th>{{ t('detail.peers.colDirection') }}</th>
               <th>{{ t('detail.peers.colProgress') }}</th>
@@ -330,8 +330,8 @@
               <td>{{ peer.clientName || t('detail.peers.unknownClient') }}</td>
               <td class="down-val">{{ peer.rateToClient > 0 ? formatSpeed(peer.rateToClient) : '—' }}</td>
               <td class="up-val">{{ peer.rateToPeer > 0 ? formatSpeed(peer.rateToPeer) : '—' }}</td>
-              <td>{{ peer.bytesToClient !== undefined ? formatBytes(peer.bytesToClient) : '—' }}</td>
-              <td>{{ peer.bytesToPeer !== undefined ? formatBytes(peer.bytesToPeer) : '—' }}</td>
+              <td v-if="peerHasByteStats">{{ peer.bytesToClient !== undefined ? formatBytes(peer.bytesToClient) : '—' }}</td>
+              <td v-if="peerHasByteStats">{{ peer.bytesToPeer !== undefined ? formatBytes(peer.bytesToPeer) : '—' }}</td>
               <td>{{ peer.isEncrypted ? t('detail.peers.encrypted') : '—' }}</td>
               <td>{{ peer.isIncoming ? t('detail.peers.incoming') : t('detail.peers.outgoing') }}</td>
               <td>{{ (peer.progress * 100).toFixed(1) }}%</td>
@@ -433,6 +433,12 @@ const activeTorrent = computed(() => {
     return state.activeTorrentDetail;
   }
   return state.torrents.find((t) => t.id === state.selectedId) || null;
+});
+
+const peerHasByteStats = computed(() => {
+  return (activeTorrent.value?.peers || []).some(
+    (peer) => peer.bytesToClient !== undefined || peer.bytesToPeer !== undefined
+  );
 });
 
 const peerSources = computed(() => {

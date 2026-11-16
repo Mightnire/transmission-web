@@ -22,7 +22,7 @@
 | 能力 | RPC 字段 / 方法 | 3.07 | 成本 | 建议 |
 |---|---|---|---|---|
 | 区块完成位图 | `pieces` | ✅ | 低 | 已有「区块映射」，3.07 可用 |
-| 区块可用副本 | `availability` | 🟡 | 低 | 4.x 可用；3.07 返回空数组，界面显示“未提供”而不是 0 |
+| 区块可用副本 | `availability` | 🟡 | 低 | 4.x 可用；3.07 返回空数组，界面静默隐藏可用性而不是显示 0 |
 | 逐文件优先级 | `priorities` / `fileStats.priority` | ✅ | 低 | 已用于文件树 |
 | 逐文件下载选择 | `wanted` / `fileStats.wanted` | ✅ | 低 | 已用于文件树勾选 |
 | Peer 字节数 | `peers[].bytesToClient` / `bytesToPeer` | ✅ | 低 | 已加列 |
