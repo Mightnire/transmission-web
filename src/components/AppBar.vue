@@ -386,7 +386,7 @@
               <button
                 class="fluent-btn-small"
                 :disabled="!hasSelection"
-                @click="verifySelected()"
+                @click="confirmVerifySelected()"
                 :title="t('toolbar.verify')"
               >
                 <FluentIcon name="check_circle" class="text-info" />
@@ -931,7 +931,7 @@ import {
   toggleTurtleMode,
   startSelected,
   stopSelected,
-  verifySelected,
+  confirmVerifySelected,
   removeSelected,
   openTorrentProps,
   fetchTorrents,

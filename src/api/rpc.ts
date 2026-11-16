@@ -191,7 +191,10 @@ export class TransmissionRPC {
       'queuePosition', 'bandwidthPriority', 'recheckProgress',
       'downloadLimit', 'downloadLimited', 'uploadLimit', 'uploadLimited',
       'honorsSessionLimits', 'peer-limit', 'seedRatioLimit', 'seedRatioMode',
-      'seedIdleLimit', 'seedIdleMode', 'magnetLink', 'trackers'
+      'seedIdleLimit', 'seedIdleMode', 'magnetLink', 'trackers',
+      'activityDate', 'comment', 'creator', 'haveValid',
+      'isPrivate', 'secondsDownloading', 'secondsSeeding',
+      'webseedsSendingToUs', 'hashString'
     ];
     const res = await this.torrentGet<Torrent>(fields, ids);
     return res.torrents;

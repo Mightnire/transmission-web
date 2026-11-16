@@ -6,7 +6,28 @@ import { t } from '../locales';
 export interface TorrentFilter {
   status: 'all' | 'active' | 'downloading' | 'seeding' | 'queued' | 'paused' | 'error' | 'finished';
   search: string;
-  sortBy: 'queuePosition' | 'name' | 'percentDone' | 'rateDownload' | 'rateUpload' | 'totalSize' | 'addedDate' | 'uploadRatio';
+  sortBy:
+    | 'queuePosition'
+    | 'name'
+    | 'percentDone'
+    | 'rateDownload'
+    | 'rateUpload'
+    | 'totalSize'
+    | 'addedDate'
+    | 'doneDate'
+    | 'activityDate'
+    | 'downloadedEver'
+    | 'uploadedEver'
+    | 'leftUntilDone'
+    | 'haveValid'
+    | 'sizeWhenDone'
+    | 'peersConnected'
+    | 'webseedsSendingToUs'
+    | 'secondsSeeding'
+    | 'secondsDownloading'
+    | 'bandwidthPriority'
+    | 'recheckProgress'
+    | 'uploadRatio';
   sortAsc: boolean;
 }
 
@@ -58,13 +79,36 @@ const DEFAULT_COLUMNS: TableColumnConfig[] = [
   { id: 'name', labelKey: 'common.name', visible: true, width: 300, minWidth: 160 },
   { id: 'size', labelKey: 'common.size', visible: true, width: 72, minWidth: 60 },
   { id: 'progress', labelKey: 'common.progress', visible: true, width: 120, minWidth: 90 },
-  { id: 'statustext', labelKey: 'common.status', visible: true, width: 100, minWidth: 70 },
+  { id: 'statustext', labelKey: 'tableCols.statusText', visible: true, width: 100, minWidth: 70 },
   { id: 'downSpeed', labelKey: 'common.downSpeed', visible: true, width: 76, minWidth: 60 },
   { id: 'upSpeed', labelKey: 'common.upSpeed', visible: true, width: 76, minWidth: 60 },
   { id: 'eta', labelKey: 'common.eta', visible: true, width: 76, minWidth: 60 },
   { id: 'ratio', labelKey: 'common.ratio', visible: true, width: 60, minWidth: 50 },
   { id: 'peers', labelKey: 'common.peers', visible: true, width: 64, minWidth: 50 },
   { id: 'corrupt', labelKey: 'common.corrupt', visible: false, width: 85, minWidth: 60 },
+  { id: 'downloaded', labelKey: 'tableCols.downloaded', visible: false, width: 88, minWidth: 70 },
+  { id: 'uploaded', labelKey: 'tableCols.uploaded', visible: false, width: 88, minWidth: 70 },
+  { id: 'remaining', labelKey: 'tableCols.remaining', visible: false, width: 88, minWidth: 70 },
+  { id: 'haveValid', labelKey: 'tableCols.haveValid', visible: false, width: 88, minWidth: 70 },
+  { id: 'sizeDone', labelKey: 'tableCols.sizeDone', visible: false, width: 88, minWidth: 70 },
+  { id: 'addedDate', labelKey: 'tableCols.addedDate', visible: false, width: 132, minWidth: 100 },
+  { id: 'doneDate', labelKey: 'tableCols.doneDate', visible: false, width: 132, minWidth: 100 },
+  { id: 'activityDate', labelKey: 'tableCols.activityDate', visible: false, width: 132, minWidth: 100 },
+  { id: 'seedingTime', labelKey: 'tableCols.seedingTime', visible: false, width: 92, minWidth: 70 },
+  { id: 'downloadingTime', labelKey: 'tableCols.downloadingTime', visible: false, width: 92, minWidth: 70 },
+  { id: 'peersDetail', labelKey: 'tableCols.peersDetail', visible: false, width: 92, minWidth: 70 },
+  { id: 'webSeeds', labelKey: 'tableCols.webSeeds', visible: false, width: 82, minWidth: 60 },
+  { id: 'priority', labelKey: 'tableCols.priority', visible: false, width: 72, minWidth: 60 },
+  { id: 'savePath', labelKey: 'tableCols.savePath', visible: false, width: 180, minWidth: 120 },
+  { id: 'labels', labelKey: 'tableCols.labels', visible: false, width: 110, minWidth: 70 },
+  { id: 'hash', labelKey: 'tableCols.hash', visible: false, width: 130, minWidth: 100 },
+  { id: 'private', labelKey: 'tableCols.private', visible: false, width: 64, minWidth: 50 },
+  { id: 'recheck', labelKey: 'tableCols.recheck', visible: false, width: 90, minWidth: 70 },
+  { id: 'downloadLimit', labelKey: 'tableCols.downloadLimit', visible: false, width: 82, minWidth: 60 },
+  { id: 'uploadLimit', labelKey: 'tableCols.uploadLimit', visible: false, width: 82, minWidth: 60 },
+  { id: 'error', labelKey: 'tableCols.error', visible: false, width: 180, minWidth: 120 },
+  { id: 'comment', labelKey: 'tableCols.comment', visible: false, width: 180, minWidth: 120 },
+  { id: 'creator', labelKey: 'tableCols.creator', visible: false, width: 120, minWidth: 80 },
 ];
 
 const COLUMNS_STORAGE_KEY = 'torrent_table_columns';
@@ -601,9 +645,9 @@ export async function stopSelected() {
   await stopTorrentsAction(selectionIds());
 }
 
-export async function verifySelected(idsArg?: number[]) {
+export async function verifySelected(idsArg?: number[]): Promise<boolean> {
   const ids = idsArg?.length ? idsArg : selectionIds();
-  if (ids.length === 0) return;
+  if (ids.length === 0) return false;
 
   const backups: { id: number; status: TorrentStatus }[] = [];
   for (const id of ids) {
@@ -621,13 +665,28 @@ export async function verifySelected(idsArg?: number[]) {
     setTimeout(() => {
       fetchTorrents();
     }, 1500);
+    return true;
   } catch (err: any) {
     for (const b of backups) {
       const t = state.torrents.find((x) => x.id === b.id);
       if (t) t.status = b.status;
     }
     showToast(t('common.failed', { error: describeError(err) }), 'error');
+    return false;
   }
+}
+
+/** 校验本地数据前先弹出 Fluent 确认框 */
+export function confirmVerifySelected(idsArg?: number[]) {
+  const ids = idsArg?.length ? idsArg : selectionIds();
+  if (ids.length === 0) return;
+
+  openConfirm({
+    title: t('dialog.verifyTitle'),
+    message: t('dialog.verifyPrompt', { count: ids.length }),
+    confirmText: t('dialog.verifyConfirm'),
+    onConfirm: async () => verifySelected(ids),
+  });
 }
 
 export async function removeSelected(deleteLocalData = false): Promise<boolean> {
@@ -957,20 +1016,14 @@ export const filteredTorrents = computed(() => {
     let cmp = 0;
     if (sortBy === 'queuePosition') {
       cmp = (a.queuePosition ?? 999999) - (b.queuePosition ?? 999999);
-    } else if (sortBy === 'name') {
-      cmp = a.name.localeCompare(b.name);
-    } else if (sortBy === 'percentDone') {
-      cmp = a.percentDone - b.percentDone;
-    } else if (sortBy === 'rateDownload') {
-      cmp = a.rateDownload - b.rateDownload;
-    } else if (sortBy === 'rateUpload') {
-      cmp = a.rateUpload - b.rateUpload;
-    } else if (sortBy === 'totalSize') {
-      cmp = a.totalSize - b.totalSize;
-    } else if (sortBy === 'uploadRatio') {
-      cmp = a.uploadRatio - b.uploadRatio;
-    } else if (sortBy === 'addedDate') {
-      cmp = a.addedDate - b.addedDate;
+    } else {
+      const aValue = (a as unknown as Record<string, unknown>)[sortBy];
+      const bValue = (b as unknown as Record<string, unknown>)[sortBy];
+      if (typeof aValue === 'string' || typeof bValue === 'string') {
+        cmp = String(aValue ?? '').localeCompare(String(bValue ?? ''));
+      } else {
+        cmp = (Number(aValue) || 0) - (Number(bValue) || 0);
+      }
     }
     return sortAsc ? cmp : -cmp;
   });

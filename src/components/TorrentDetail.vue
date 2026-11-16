@@ -308,8 +308,13 @@
               <td>{{ t('detail.trackers.tier', { tier: tr.tier }) }}</td>
               <td class="selectable font-sm">{{ tr.announce }}</td>
               <td>
-                <span class="tracker-res-badge" :class="tr.hasAnnounced ? 'ok' : 'wait'">
-                  {{ tr.lastAnnounceResult || t('detail.trackers.waiting') }}
+                <span
+                  class="tracker-res-badge"
+                  :class="trackerStatusClass(tr.lastAnnounceResult, tr.hasAnnounced)"
+                  :title="tr.lastAnnounceResult || ''"
+                >
+                  <i class="tracker-status-dot"></i>
+                  {{ trackerStatusLabel(tr.lastAnnounceResult) }}
                 </span>
               </td>
               <td>{{ tr.seederCount >= 0 ? tr.seederCount : '—' }}</td>
@@ -465,6 +470,52 @@ async function askMorePeers() {
   }
 }
 
+function trackerStatusClass(result?: string, announced = false): string {
+  const text = (result || '').toLowerCase();
+  if (!text) return announced ? 'wait' : 'wait';
+  if (text.includes('success')) return 'ok';
+
+  const httpMatch = text.match(/http response code (\d+)/i);
+  if (httpMatch) {
+    const code = Number(httpMatch[1]);
+    if (!code) return 'error';
+    if (code === 429) return 'warn';
+    return code >= 500 ? 'error' : 'warn';
+  }
+
+  if (text.includes('429') || text.includes('too many requests') || text.includes('temporarily')) return 'warn';
+  if (text.includes('access denied') || text.includes('unauthorized') || text.includes('forbidden') || /\b(401|403)\b/.test(text)) return 'error';
+  if (
+    text.includes('could not connect') ||
+    text.includes('connection failed') ||
+    text.includes('timeout') ||
+    text.includes('timed out') ||
+    text.includes('dns') ||
+    /\b(4\d\d|5\d\d)\b/.test(text)
+  ) {
+    return 'error';
+  }
+  return 'warn';
+}
+
+function trackerStatusLabel(result?: string): string {
+  const text = (result || '').trim();
+  if (!text) return t('detail.trackers.waiting');
+  const lower = text.toLowerCase();
+  if (lower === 'success') return t('trackerStatus.success');
+  const httpCode = text.match(/HTTP response code (\d+)/i);
+  if (httpCode) {
+    const code = Number(httpCode[1]);
+    if (!code) return t('trackerStatus.connectionFailed');
+    return t('trackerStatus.httpError', { code });
+  }
+  if (lower.includes('access denied') || lower.includes('forbidden')) return t('trackerStatus.accessDenied');
+  if (lower.includes('could not connect')) return t('trackerStatus.couldNotConnect');
+  if (lower.includes('connection failed')) return t('trackerStatus.connectionFailed');
+  if (lower.includes('timeout') || lower.includes('timed out')) return t('trackerStatus.timeout');
+  return text;
+}
+
 function formatDate(ts?: number): string {
   if (!ts || ts === 0) return '—';
   const d = new Date(ts * 1000);
@@ -484,18 +535,22 @@ function getErrorCategoryTitle(error?: number): string {
   return t('detail.errorAlert.categoryUnknown');
 }
 
-async function handleVerifyTorrent() {
+function handleVerifyTorrent() {
   if (!activeTorrent.value) return;
-  try {
-    await rpc.torrentVerify([activeTorrent.value.id]);
-    showToast(t('toast.verifyStarted'), 'success');
-    const refreshed = await rpc.getTorrentDetail(activeTorrent.value.id);
-    if (refreshed) {
-      state.activeTorrentDetail = { ...activeTorrent.value, ...refreshed };
-    }
-  } catch (err: any) {
-    showToast(t('common.failed', { error: describeError(err) }), 'error');
-  }
+  const torrentId = activeTorrent.value.id;
+  openConfirm({
+    title: t('dialog.verifyTitle'),
+    message: t('dialog.verifyPrompt', { count: 1 }),
+    confirmText: t('dialog.verifyConfirm'),
+    onConfirm: async () => {
+      await rpc.torrentVerify([torrentId]);
+      showToast(t('toast.verifyStarted'), 'success');
+      const refreshed = await rpc.getTorrentDetail(torrentId);
+      if (refreshed) {
+        state.activeTorrentDetail = { ...(activeTorrent.value || {}), ...refreshed };
+      }
+    },
+  });
 }
 
 function handleSetLocation() {
@@ -518,15 +573,17 @@ function handleSetLocation() {
   flex-shrink: 0;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   z-index: 50;
+  position: relative;
 }
 
 .dock-resize-handle {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
   height: 6px;
-  margin-top: -3px;
   cursor: ns-resize;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 2;
+  z-index: 3;
   background: transparent;
 }
 
@@ -785,6 +842,19 @@ function handleSetLocation() {
   box-sizing: border-box;
 }
 
+/* 文件树与 Tracker 表格铺满详情面板两端 */
+.files-pane,
+.trackers-pane {
+  padding: 0;
+}
+
+.trackers-pane .tracker-actions-bar {
+  padding: 10px 14px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  background: var(--fluent-bg-canvas);
+}
+
 /* 常规面板网格 */
 .general-grid {
   display: grid;
@@ -909,11 +979,37 @@ function handleSetLocation() {
 .up-val { color: #ef6c00; font-family: monospace; }
 
 .tracker-res-badge {
-  font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background-color: rgba(76, 175, 80, 0.12);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.tracker-status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.tracker-res-badge.ok {
+  background-color: rgba(46, 125, 50, 0.12);
   color: #2e7d32;
+}
+
+.tracker-res-badge.error {
+  background-color: rgba(211, 47, 47, 0.12);
+  color: #c62828;
+}
+
+.tracker-res-badge.warn {
+  background-color: rgba(255, 152, 0, 0.16);
+  color: #b26a00;
 }
 
 .tracker-res-badge.wait {
@@ -925,6 +1021,46 @@ function handleSetLocation() {
   margin-bottom: 8px;
   display: flex;
   gap: 6px;
+}
+
+.tracker-actions-bar .md-btn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 4px;
+  background-color: var(--fluent-bg-subtle);
+  color: var(--md-text-primary);
+  font-size: 11px;
+  gap: 5px;
+}
+
+.tracker-actions-bar .md-btn:hover {
+  border-color: var(--fluent-accent);
+  color: var(--fluent-accent);
+}
+
+.detail-table th {
+  font-size: 10.5px;
+  padding: 7px 10px;
+  letter-spacing: 0.01em;
+}
+
+.detail-table td {
+  height: 32px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+}
+
+.trackers-pane .detail-table tbody tr:hover {
+  background-color: rgba(0, 120, 212, 0.06);
+}
+
+.remove-tr-btn {
+  opacity: 0.55;
+}
+
+.trackers-pane .detail-table tbody tr:hover .remove-tr-btn {
+  opacity: 1;
 }
 
 .empty-hint {

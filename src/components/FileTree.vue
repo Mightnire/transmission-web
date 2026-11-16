@@ -11,6 +11,23 @@
       </span>
 
       <div class="file-tree-actions">
+        <label class="batch-priority" :title="t('fileTree.batchPriorityHint')">
+          <span>{{ t('fileTree.batchPriority') }}</span>
+          <select v-model.number="batchPriority" class="priority-select batch-priority-select" :class="priorityClass(batchPriority)">
+            <option :value="1">{{ t('fileTree.priorityHigh') }}</option>
+            <option :value="0">{{ t('fileTree.priorityNormal') }}</option>
+            <option :value="-1">{{ t('fileTree.priorityLow') }}</option>
+          </select>
+        </label>
+        <button
+          class="batch-apply-btn"
+          @click="applyBatchPriority"
+          :disabled="selectedCount === 0"
+          :title="t('fileTree.batchPriorityHint')"
+        >
+          {{ t('fileTree.applyPriority') }}
+        </button>
+        <span class="file-tree-divider"></span>
         <button class="md-btn md-btn-flat" @click="toggleSelectAll" style="height: 28px; font-size: 11px;">
           {{ isAllSelected ? t('fileTree.deselectAll') : t('fileTree.selectAll') }}
         </button>
@@ -22,18 +39,24 @@
       <template v-for="node in treeRoot" :key="node.path">
         <div
           class="tree-row"
-          :style="{ paddingLeft: `${node.depth * 20 + 8}px` }"
-          :class="{ 'is-dir': node.isDir }"
+          :style="{ paddingLeft: `${node.depth * 20 + 16}px` }"
+          :class="{
+            'is-dir': node.isDir,
+            'is-wanted': isNodeWanted(node),
+            'prio-high': !node.isDir && nodePriority(node) === 1,
+            'prio-low': !node.isDir && nodePriority(node) === -1,
+          }"
         >
           <!-- 折叠展开图标 (目录专用) -->
           <FluentIcon :name="isCollapsed(node.path) ? 'chevron_right' : 'expand_more'" class="expand-icon" v-if="node.isDir" @click="toggleCollapse(node.path)" />
           <span class="expand-placeholder" v-else></span>
 
-          <!-- 勾选框 -->
+          <!-- 勾选框（勾选 = 下载此文件） -->
           <input
             type="checkbox"
             class="tree-checkbox"
-            :checked="node.isDir ? node.wanted : fileStats[node.fileIndex!]?.wanted"
+            :checked="isNodeWanted(node)"
+            :title="t('fileTree.wantedHint')"
             @change="onCheckChange(node, $event)"
           />
 
@@ -63,6 +86,7 @@
             <select
               v-if="!node.isDir"
               class="priority-select"
+              :class="priorityClass(nodePriority(node))"
               :value="fileStats[node.fileIndex!]?.priority ?? 0"
               @change="changePriority(node.fileIndex!, $event)"
             >
@@ -79,7 +103,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { TorrentFile, TorrentFileStat } from '../api/types';
+import { TorrentFile, TorrentFileStat, Priority } from '../api/types';
 import { state, fetchTorrents, formatBytes, openPrompt, showToast } from '../stores/transmission';
 import { t } from '../locales';
 import { rpc } from '../api/rpc';
@@ -103,6 +127,43 @@ try {
 const collapsedSet = ref<Set<string>>(
   sessionCollapsedCache.get(props.torrentId) || new Set()
 );
+
+const batchPriority = ref<Priority>(Priority.NORMAL);
+
+function nodePriority(node: TreeNode): Priority {
+  if (node.isDir || node.fileIndex === undefined) return Priority.NORMAL;
+  return (props.fileStats[node.fileIndex]?.priority ?? Priority.NORMAL) as Priority;
+}
+
+function priorityClass(priority: number): string {
+  if (priority === Priority.HIGH) return 'prio-high';
+  if (priority === Priority.LOW) return 'prio-low';
+  return 'prio-normal';
+}
+
+function isNodeWanted(node: TreeNode): boolean {
+  if (node.isDir) return node.wanted;
+  return !!props.fileStats[node.fileIndex!]?.wanted;
+}
+
+async function refreshDetail() {
+  const detail = await rpc.getTorrentDetail(props.torrentId);
+  if (detail) {
+    state.activeTorrentDetail = { ...(state.activeTorrentDetail || {}), ...detail };
+  }
+}
+
+async function applyBatchPriority() {
+  const indices = props.fileStats
+    .map((stat, index) => (stat.wanted ? index : -1))
+    .filter((index) => index >= 0);
+
+  if (indices.length === 0) return;
+
+  await rpc.setFilePriority(props.torrentId, batchPriority.value, indices);
+  showToast(t('fileTree.priorityApplied'), 'success');
+  await refreshDetail();
+}
 
 watch(
   () => props.torrentId,
@@ -273,6 +334,7 @@ async function toggleSelectAll() {
   });
 
   await rpc.setFileWanted(props.torrentId, wantedIndices, unwantedIndices);
+  await refreshDetail();
 }
 
 async function onCheckChange(node: TreeNode, e: Event) {
@@ -299,12 +361,14 @@ async function onCheckChange(node: TreeNode, e: Event) {
       await rpc.setFileWanted(props.torrentId, [], [node.fileIndex]);
     }
   }
+  await refreshDetail();
 }
 
 async function changePriority(index: number, e: Event) {
   const target = e.target as HTMLSelectElement;
   const prio = parseInt(target.value) as -1 | 0 | 1;
   await rpc.setFilePriority(props.torrentId, prio, [index]);
+  await refreshDetail();
 }
 </script>
 
@@ -318,15 +382,17 @@ async function changePriority(index: number, e: Event) {
 }
 
 .file-tree-header {
-  margin: 0 0 8px;
-  padding: 7px 12px;
+  margin: 0;
+  padding: 8px 16px;
   background-color: var(--fluent-bg-subtle);
-  border: 1px solid var(--fluent-border-subtle);
-  border-left: 3px solid var(--fluent-accent);
-  border-radius: 4px;
+  border: none;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   font-size: 12px;
   color: var(--md-text-secondary);
 }
@@ -336,28 +402,99 @@ async function changePriority(index: number, e: Event) {
   letter-spacing: 0.01em;
 }
 
+.file-tree-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.batch-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--md-text-secondary);
+}
+
+.batch-priority-select {
+  width: 84px;
+}
+
+.batch-apply-btn {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid rgba(0, 120, 212, 0.45);
+  border-radius: 4px;
+  background: rgba(0, 120, 212, 0.06);
+  color: var(--fluent-accent);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.batch-apply-btn:hover:not(:disabled) {
+  background: rgba(0, 120, 212, 0.12);
+  border-color: var(--fluent-accent);
+}
+
+.batch-apply-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.file-tree-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--fluent-border-subtle);
+}
+
 .file-nodes-list {
   flex: 1;
   overflow-y: auto;
-  padding: 2px 0 8px;
+  padding: 0;
 }
 
 .tree-row {
   display: flex;
   align-items: center;
-  height: 36px;
+  height: 34px;
   padding-right: 16px;
-  font-size: 13px;
+  font-size: 12px;
   border-bottom: 1px solid var(--fluent-border-subtle);
+  transition: background-color 0.1s ease;
 }
 
 .tree-row:hover {
   background-color: var(--fluent-bg-hover);
 }
 
+.tree-row.is-wanted {
+  background-color: rgba(0, 120, 212, 0.055);
+}
+
+.tree-row.is-wanted:hover {
+  background-color: rgba(0, 120, 212, 0.1);
+}
+
+[data-theme="dark"] .tree-row.is-wanted {
+  background-color: rgba(40, 134, 222, 0.16);
+}
+
+[data-theme="dark"] .tree-row.is-wanted:hover {
+  background-color: rgba(40, 134, 222, 0.24);
+}
+
 .tree-row.is-dir {
-  background-color: rgba(0, 120, 212, 0.025);
   font-weight: 500;
+}
+
+.tree-row.prio-high {
+  box-shadow: inset 3px 0 0 #c62828;
+}
+
+.tree-row.prio-low {
+  box-shadow: inset 3px 0 0 #0078d4;
 }
 
 .expand-icon {
@@ -394,13 +531,14 @@ async function changePriority(index: number, e: Event) {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--md-text-secondary);
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .mini-progress-track {
-  width: 70px;
+  width: 90px;
   height: 5px;
   background: var(--fluent-border-subtle);
   border-radius: 3px;
@@ -427,6 +565,18 @@ async function changePriority(index: number, e: Event) {
 
 .priority-select:focus {
   border-color: var(--fluent-accent);
+}
+
+.priority-select.prio-high {
+  color: #c62828;
+  border-color: rgba(198, 40, 40, 0.35);
+  background: rgba(198, 40, 40, 0.08);
+}
+
+.priority-select.prio-low {
+  color: #0078d4;
+  border-color: rgba(0, 120, 212, 0.3);
+  background: rgba(0, 120, 212, 0.07);
 }
 
 .rename-file-btn {
