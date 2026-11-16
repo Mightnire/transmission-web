@@ -2298,4 +2298,132 @@ function toggleTheme() {
     display: none !important;
   }
 }
+
+/* OneNote 风格单行 Ribbon：标签栏 + 一行紧凑命令区
+   宽屏保留文字，宽度不足时逐级折叠为纯图标（按钮 title 仍可提示）。 */
+.fluent-ribbon-root .ribbon-body {
+  height: 46px;
+  min-height: 46px;
+  align-items: center;
+  padding: 2px 8px;
+  gap: 2px;
+}
+
+.fluent-ribbon-root .ribbon-group {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  height: 100%;
+  padding: 0 8px 0 0;
+}
+
+.fluent-ribbon-root .ribbon-controls {
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  flex: 0 1 auto;
+}
+
+.fluent-ribbon-root .group-footer {
+  display: none;
+}
+
+.fluent-ribbon-root .fluent-btn-large {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 30px;
+  padding: 0 7px;
+  gap: 6px;
+}
+
+.fluent-ribbon-root .fluent-btn-large .large-icon {
+  font-size: 18px;
+  margin-bottom: 0;
+}
+
+.fluent-ribbon-root .fluent-btn-large .btn-caption {
+  font-size: 11px;
+  line-height: 1;
+  max-width: none;
+  white-space: nowrap;
+  word-break: normal;
+}
+
+.fluent-ribbon-root .btn-stack-2row,
+.fluent-ribbon-root .btn-matrix-2x2 {
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+}
+
+.fluent-ribbon-root .btn-stack-2row .fluent-btn-small {
+  height: 28px;
+}
+
+.fluent-ribbon-root .view-prefs-col,
+.fluent-ribbon-root .limits-col,
+.fluent-ribbon-root .seed-rules-col {
+  flex-direction: row;
+  gap: 6px;
+}
+
+.fluent-ribbon-root .office-select-row {
+  width: auto;
+  height: 28px;
+  gap: 4px;
+}
+
+.fluent-ribbon-root .office-select-row .fluent-select,
+.fluent-ribbon-root .ribbon-body .fluent-select {
+  height: 24px;
+}
+
+.fluent-ribbon-root .ribbon-body .fluent-btn-small {
+  height: 28px;
+}
+
+.fluent-ribbon-root .dialog-launcher-btn {
+  display: none;
+}
+
+.fluent-ribbon-root.compact-density .ribbon-body {
+  height: 42px;
+  min-height: 42px;
+}
+
+@media (max-width: 1500px) {
+  .fluent-ribbon-root .ribbon-body .btn-caption {
+    display: none;
+  }
+
+  .fluent-ribbon-root .fluent-btn-large {
+    padding: 0 6px;
+  }
+}
+
+@media (max-width: 1380px) {
+  .fluent-ribbon-root .ribbon-body .fluent-btn-small span,
+  .fluent-ribbon-root .ribbon-body .btn-stack-2row span,
+  .fluent-ribbon-root .ribbon-body .ribbon-toggle-btn span {
+    display: none;
+  }
+
+  .fluent-ribbon-root .ribbon-body .fluent-btn-small {
+    padding: 0 6px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .fluent-ribbon-root .ribbon-body .input-prefix-label {
+    display: none;
+  }
+
+  .fluent-ribbon-root .ribbon-body .office-select-row {
+    gap: 2px;
+  }
+}
 </style>

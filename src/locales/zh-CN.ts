@@ -388,6 +388,7 @@ export default {
       availability: '可用副本: {count}',
       size: '区块大小: {size}',
       empty: '暂无区块数据',
+      unavailable: '当前 Transmission 版本未提供逐块可用性数据',
       legendDone: '已完成',
       legendMissing: '缺失',
       legendAvail1: '仅 1 份',

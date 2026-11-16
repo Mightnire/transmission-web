@@ -38,10 +38,14 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
   - 高/低优先级文件会同时改变左侧色条、优先级下拉框和文件名颜色。
   - 支持对**当前选中**的文件批量设置优先级（点击行选择，Ctrl 可多选）。
   - 详情页「扩展信息」展示元数据完成度、私有种子、传输停滞、文件数量与连接上限。
+- **OneNote 风格单行 Ribbon**
+  - 选项卡下方只保留一行命令，去掉了大按钮与分组标题，垂直空间更省。
+  - 宽屏显示按钮文字；宽度不足时按断点逐级折叠为纯图标，`title` 提示保留。
 - **可选紧凑密度**
   - 「视图与首选项 → 界面 → 紧凑密度」会压缩 Ribbon 高度与表格行高，保留全部 Fluent 功能，适合 1080p/小屏提高信息密度。
 - **BiglyBT 风格区块映射**
-  - 新增「区块映射」标签页：根据 `pieces` bitfield 与 `availability` 数组绘制每个 piece 的完成/缺失/可用副本热力图。
+  - 新增「区块映射」标签页：根据 `pieces` bitfield 绘制完成/缺失；Transmission 4.x 若返回 `availability`，额外绘制可用副本热力图。
+  - 3.07 的 `availability` 返回空数组，界面会明确提示“当前版本未提供”，不再显示误导性的 0。
   - 悬停显示区块编号、完成状态、可用副本、区块大小与所属文件；底部附颜色图例。
 - **更多 RPC 信息**
   - 统计页通过 `free-space` 显示下载目录可用空间（Transmission 4.x 还会显示总容量与使用进度条）。
@@ -106,8 +110,8 @@ npm run build
 | 文件 | 原始 | gzip |
 | --- | --- | --- |
 | `index.html` | 1.1 kB | 0.6 kB |
-| `assets/index-*.css` | 105 kB | 15.9 kB |
-| `assets/index-*.js` | 377 kB | 113 kB |
+| `assets/index-*.css` | 108 kB | 16.3 kB |
+| `assets/index-*.js` | 378 kB | 114 kB |
 
 `base: './'` 使产物可以部署在任意子路径（如 `/transmission/web/`）下。
 
@@ -179,6 +183,7 @@ transmission-web-md1/
 ## 🔌 Transmission RPC 兼容性
 
 - 支持 Transmission 3.x / 4.x 的 JSON-RPC（RPC 版本 16）。
+- 3.07 不提供逐 piece 的 `availability`（返回空数组）、`fileCount`、`group`、`primary-mime-type`、`sequentialDownload`，这些字段不会显示为 0。
 - 首次请求会收到 `409 Conflict`，客户端自动读取 `X-Transmission-Session-Id` 并重试。
 - 长任务（校验、移动目录）通过轮询同步；短任务使用乐观更新 + 服务端确认保护。
 

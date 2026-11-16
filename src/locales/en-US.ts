@@ -388,6 +388,7 @@ export default {
       availability: 'Available copies: {count}',
       size: 'Piece size: {size}',
       empty: 'No piece data',
+      unavailable: 'This Transmission version does not expose per-piece availability',
       legendDone: 'Complete',
       legendMissing: 'Missing',
       legendAvail1: '1 copy',

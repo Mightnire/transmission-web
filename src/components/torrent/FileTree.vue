@@ -135,12 +135,12 @@
         <span>{{ t('fileTree.menuRename') }}</span>
       </button>
       <button class="context-menu-item" @click="contextToggleWanted">
-        <FluentIcon :name="isNodeWanted(contextNode) ? 'remove' : 'check_circle'" />
+        <FluentIcon :name="isNodeWanted(contextNode) ? 'close' : 'check_circle'" />
         <span>{{ isNodeWanted(contextNode) ? t('fileTree.menuUnwanted') : t('fileTree.menuWanted') }}</span>
       </button>
       <div class="context-menu-divider"></div>
       <button class="context-menu-item" @click="contextSetPriority(Priority.HIGH)">
-        <FluentIcon name="priority_high" class="name-prio-high" />
+        <FluentIcon name="arrow_upward" class="name-prio-high" />
         <span>{{ t('fileTree.menuHigh') }}</span>
       </button>
       <button class="context-menu-item" @click="contextSetPriority(Priority.NORMAL)">

@@ -7,7 +7,7 @@
       </div>
       <div class="piece-map-scale">
         <span>{{ t('detail.pieces.pieceSize', { size: formatBytes(pieceSize) }) }}</span>
-        <span>{{ t('detail.pieces.legendTitle') }}</span>
+        <span v-if="availabilitySupported">{{ t('detail.pieces.legendTitle') }}</span>
       </div>
     </div>
 
@@ -26,7 +26,7 @@
       >
         <strong>{{ t('detail.pieces.pieceNumber', { number: hover.index + 1 }) }}</strong>
         <span>{{ hover.completed ? t('detail.pieces.done') : t('detail.pieces.missing') }}</span>
-        <span>{{ t('detail.pieces.availability', { count: hover.availability }) }}</span>
+        <span v-if="hover.availability !== null">{{ t('detail.pieces.availability', { count: hover.availability }) }}</span>
         <span>{{ t('detail.pieces.size', { size: formatBytes(pieceSize) }) }}</span>
         <span v-if="hover.files.length" class="tooltip-files">{{ hover.files.join(' · ') }}</span>
       </div>
@@ -39,9 +39,10 @@
     <div class="piece-map-legend">
       <span class="legend-entry"><i class="swatch done"></i>{{ t('detail.pieces.legendDone') }}</span>
       <span class="legend-entry"><i class="swatch missing"></i>{{ t('detail.pieces.legendMissing') }}</span>
-      <span class="legend-entry"><i class="swatch avail1"></i>{{ t('detail.pieces.legendAvail1') }}</span>
-      <span class="legend-entry"><i class="swatch avail2"></i>{{ t('detail.pieces.legendAvail2') }}</span>
-      <span class="legend-entry"><i class="swatch avail3"></i>{{ t('detail.pieces.legendAvail3') }}</span>
+      <span class="legend-entry" v-if="availabilitySupported"><i class="swatch avail1"></i>{{ t('detail.pieces.legendAvail1') }}</span>
+      <span class="legend-entry" v-if="availabilitySupported"><i class="swatch avail2"></i>{{ t('detail.pieces.legendAvail2') }}</span>
+      <span class="legend-entry" v-if="availabilitySupported"><i class="swatch avail3"></i>{{ t('detail.pieces.legendAvail3') }}</span>
+      <span class="legend-note" v-if="!availabilitySupported">{{ t('detail.pieces.unavailable') }}</span>
     </div>
   </div>
 </template>
@@ -67,14 +68,22 @@ const hover = ref<{
   left: number;
   top: number;
   completed: boolean;
-  availability: number;
+  availability: number | null;
   files: string[];
 } | null>(null);
 
 const completedBits = computed(() => parsePieces(props.pieces, props.pieceCount));
 const completedCount = computed(() => completedBits.value.filter(Boolean).length);
 
+// Transmission 3.07 对 availability 返回空数组；只有真正拿到逐块数据时才展示可用性。
+const availabilitySupported = computed(() => {
+  return props.pieceCount > 0 &&
+    Array.isArray(props.availability) &&
+    props.availability.length >= props.pieceCount;
+});
+
 const availabilityStats = computed(() => {
+  if (!availabilitySupported.value) return { avg: '—', min: '—', hasData: false };
   const values: number[] = [];
   for (let index = 0; index < props.pieceCount; index++) {
     if (completedBits.value[index]) continue;
@@ -96,7 +105,7 @@ const availabilityStats = computed(() => {
 
 const availabilityAverage = computed(() => availabilityStats.value.avg);
 const availabilityMin = computed(() => availabilityStats.value.min);
-const hasAvailability = computed(() => availabilityStats.value.hasData);
+const hasAvailability = computed(() => availabilitySupported.value && availabilityStats.value.hasData);
 
 let resizeObserver: ResizeObserver | null = null;
 let drawQueued = false;
@@ -119,6 +128,7 @@ function parsePieces(base64?: string, count = 0): boolean[] {
 
 function pieceColor(index: number): string {
   if (completedBits.value[index]) return '#1565c0';
+  if (!availabilitySupported.value) return '#f3f3f3';
   const availability = props.availability?.[index] ?? 0;
   if (availability <= 0) return '#f3f3f3';
   if (availability === 1) return '#ef9a9a';
@@ -242,7 +252,7 @@ function onMouseMove(event: MouseEvent) {
     left,
     top,
     completed: completedBits.value[index],
-    availability: props.availability?.[index] ?? 0,
+    availability: availabilitySupported.value ? (props.availability?.[index] ?? 0) : null,
     files: piecesForFiles(index),
   };
   scheduleDraw();
@@ -378,6 +388,11 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+}
+
+.legend-note {
+  color: var(--md-text-secondary);
+  opacity: 0.85;
 }
 
 .swatch {
