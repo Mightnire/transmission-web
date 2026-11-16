@@ -24,6 +24,10 @@ function getDefaultLocale(): LocaleKey {
 
 export const currentLocale = ref<LocaleKey>(getDefaultLocale());
 
+if (typeof document !== 'undefined') {
+  document.documentElement.lang = currentLocale.value;
+}
+
 export function setLocale(locale: LocaleKey) {
   if (messages[locale]) {
     currentLocale.value = locale;
