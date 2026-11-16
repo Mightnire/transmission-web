@@ -354,7 +354,7 @@ export const filteredTorrents = computed(() => {
     list = list.filter((t) => {
       switch (state.filter.status) {
         case 'active':
-          return (t.rateDownload > 0 || t.rateUpload > 0) || (t.status === TorrentStatus.DOWNLOAD || t.status === TorrentStatus.SEED);
+          return t.rateDownload > 0 || t.rateUpload > 0;
         case 'downloading':
           return t.status === TorrentStatus.DOWNLOAD || t.status === TorrentStatus.DOWNLOAD_WAIT;
         case 'seeding':
