@@ -47,6 +47,12 @@ export interface ConfirmDialogOptions {
   onConfirm: () => Promise<boolean | void> | boolean | void;
 }
 
+export interface SpeedSample {
+  time: number;
+  down: number;
+  up: number;
+}
+
 const DEFAULT_COLUMNS: TableColumnConfig[] = [
   { id: 'status', labelKey: 'common.status', visible: true, width: 38, minWidth: 30 },
   { id: 'name', labelKey: 'common.name', visible: true, width: 300, minWidth: 160 },
@@ -115,6 +121,12 @@ function loadSavedUIPreferences(): UIPreferences {
   return { ...DEFAULT_UI_PREFS };
 }
 
+function loadDetailHeight(): number {
+  const saved = Number(localStorage.getItem('detail_panel_height'));
+  if (Number.isFinite(saved) && saved >= 180) return Math.min(saved, 900);
+  return 380;
+}
+
 export const state = reactive<{
   torrents: Torrent[];
   session: SessionInfo | null;
@@ -147,6 +159,9 @@ export const state = reactive<{
   toastType: ToastType;
   promptDialog: PromptDialogOptions | null;
   confirmDialog: ConfirmDialogOptions | null;
+  fileMenuOpen: boolean;
+  detailHeight: number;
+  speedHistory: SpeedSample[];
   isPolling: boolean;
   viewMode: 'table' | 'cards';
 }>({
@@ -186,6 +201,9 @@ export const state = reactive<{
   toastType: 'info',
   promptDialog: null,
   confirmDialog: null,
+  fileMenuOpen: false,
+  detailHeight: loadDetailHeight(),
+  speedHistory: [],
   isPolling: false,
   viewMode: (typeof window !== 'undefined' && (localStorage.getItem('view_mode') as ('table' | 'cards'))) ||
     (typeof window !== 'undefined' && window.innerWidth < 768 ? 'cards' : 'table'),
@@ -296,8 +314,57 @@ export async function fetchSession() {
     const [sess, stats] = await Promise.all([rpc.getSession(), rpc.getSessionStats()]);
     state.session = sess;
     state.stats = stats;
+    recordSpeedSample(stats);
   } catch (e) {
     console.warn('Failed to fetch session:', e);
+  }
+}
+
+const SPEED_HISTORY_LIMIT = 120;
+
+function recordSpeedSample(stats: SessionStats) {
+  const now = Date.now();
+  const down = stats.downloadSpeed || 0;
+  const up = stats.uploadSpeed || 0;
+  const last = state.speedHistory[state.speedHistory.length - 1];
+
+  // 轮询/手动刷新可能同时到达，1.5s 内只保留一个采样点
+  if (last && now - last.time < 1500) {
+    last.down = down;
+    last.up = up;
+    return;
+  }
+
+  state.speedHistory.push({ time: now, down, up });
+  if (state.speedHistory.length > SPEED_HISTORY_LIMIT) {
+    state.speedHistory.splice(0, state.speedHistory.length - SPEED_HISTORY_LIMIT);
+  }
+}
+
+export function openFileMenu() {
+  state.fileMenuOpen = true;
+}
+
+export function closeFileMenu() {
+  state.fileMenuOpen = false;
+}
+
+export function saveDetailHeight() {
+  localStorage.setItem('detail_panel_height', String(Math.round(state.detailHeight)));
+}
+
+export function setDetailHeight(height: number) {
+  const max = Math.max(360, Math.round(window.innerHeight * 0.75));
+  state.detailHeight = Math.min(max, Math.max(180, Math.round(height)));
+  saveDetailHeight();
+}
+
+export function toggleDetailHeight() {
+  const expanded = Math.min(620, Math.round(window.innerHeight * 0.65));
+  if (state.detailHeight < expanded - 40) {
+    setDetailHeight(expanded);
+  } else {
+    setDetailHeight(380);
   }
 }
 

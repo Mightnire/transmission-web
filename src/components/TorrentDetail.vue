@@ -8,7 +8,15 @@
     ></div>
   </Teleport>
 
-  <div class="desktop-detail-dock" v-if="state.detailOpen && activeTorrent">
+  <div
+    class="desktop-detail-dock"
+    :class="{ 'detail-expanded': isDetailExpanded }"
+    :style="{ '--detail-height': `${state.detailHeight}px` }"
+    v-if="state.detailOpen && activeTorrent"
+  >
+    <!-- 桌面端拖拽调整高度手柄 -->
+    <div class="dock-resize-handle" @mousedown.prevent="startResize" :title="t('detail.resizeHint')"></div>
+
     <!-- 移动端顶部滑动手柄条 -->
     <div class="sheet-drag-handle-bar mobile-only">
       <div class="sheet-drag-handle"></div>
@@ -39,9 +47,13 @@
       </div>
 
       <div class="dock-actions">
-        <!-- 最小化 / 关闭 -->
-        <button class="dock-btn" @click="state.detailOpen = false" :title="t('detail.minimize')">
-          <FluentIcon name="expand_more" />
+        <!-- 展开 / 收起高度 -->
+        <button
+          class="dock-btn"
+          @click="toggleDetailHeight"
+          :title="isDetailExpanded ? t('detail.collapsePanel') : t('detail.expandPanel')"
+        >
+          <FluentIcon :name="isDetailExpanded ? 'expand_more' : 'expand_less'" />
         </button>
         <button class="dock-btn" @click="closeDetail" :title="t('detail.close')">
           <FluentIcon name="close" />
@@ -321,8 +333,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { state, formatBytes, formatSpeed, openLocationDialog, openPrompt, openConfirm, showToast, describeError, copyTorrentMagnet } from '../stores/transmission';
+import { ref, computed, onUnmounted } from 'vue';
+import {
+  state,
+  formatBytes,
+  formatSpeed,
+  openLocationDialog,
+  openPrompt,
+  openConfirm,
+  showToast,
+  describeError,
+  copyTorrentMagnet,
+  toggleDetailHeight,
+  saveDetailHeight,
+} from '../stores/transmission';
 import { Priority } from '../api/types';
 import { t } from '../locales';
 import { rpc } from '../api/rpc';
@@ -336,6 +360,42 @@ const activeTorrent = computed(() => {
   }
   return state.torrents.find((t) => t.id === state.selectedId) || null;
 });
+
+const isDetailExpanded = computed(() => state.detailHeight > 420);
+
+let resizeStartY = 0;
+let resizeStartHeight = 0;
+let resizing = false;
+
+function applyDetailHeight(height: number) {
+  const max = Math.max(360, Math.round(window.innerHeight * 0.75));
+  state.detailHeight = Math.min(max, Math.max(180, Math.round(height)));
+}
+
+function onResizeMove(event: MouseEvent) {
+  if (!resizing) return;
+  applyDetailHeight(resizeStartHeight + (resizeStartY - event.clientY));
+}
+
+function stopResize() {
+  if (!resizing) return;
+  resizing = false;
+  window.removeEventListener('mousemove', onResizeMove);
+  window.removeEventListener('mouseup', stopResize);
+  document.body.style.cursor = '';
+  saveDetailHeight();
+}
+
+function startResize(event: MouseEvent) {
+  resizing = true;
+  resizeStartY = event.clientY;
+  resizeStartHeight = state.detailHeight;
+  window.addEventListener('mousemove', onResizeMove);
+  window.addEventListener('mouseup', stopResize);
+  document.body.style.cursor = 'ns-resize';
+}
+
+onUnmounted(stopResize);
 
 function closeDetail() {
   state.detailOpen = false;
@@ -448,7 +508,8 @@ function handleSetLocation() {
 
 <style scoped>
 .desktop-detail-dock {
-  height: 280px;
+  height: var(--detail-height, 340px);
+  max-height: calc(100vh - 120px);
   background-color: var(--fluent-bg-canvas);
   border-top: 1px solid var(--fluent-border-divider);
   display: flex;
@@ -457,6 +518,34 @@ function handleSetLocation() {
   flex-shrink: 0;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   z-index: 50;
+}
+
+.dock-resize-handle {
+  height: 6px;
+  margin-top: -3px;
+  cursor: ns-resize;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+.dock-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 38px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--fluent-border-divider);
+  transition: background-color 0.15s ease, width 0.15s ease;
+}
+
+.dock-resize-handle:hover::after {
+  width: 54px;
+  background-color: var(--fluent-accent);
 }
 
 .dock-header {
@@ -904,6 +993,16 @@ function handleSetLocation() {
     z-index: 999;
     box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.35);
     animation: sheetSlideUp 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+    transition: height 0.2s ease;
+  }
+
+  .desktop-detail-dock.detail-expanded {
+    height: 92vh;
+    max-height: 92vh;
+  }
+
+  .dock-resize-handle {
+    display: none;
   }
 
   @keyframes sheetSlideUp {

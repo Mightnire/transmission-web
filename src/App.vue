@@ -15,6 +15,9 @@
       </main>
     </div>
 
+    <!-- Office 2016 全屏文件菜单 (Backstage) -->
+    <FileBackstage />
+
     <!-- 添加任务弹窗 (支持磁链、HTTP、文件拖拽、设置保存目录) -->
     <AddDialog />
 
@@ -45,6 +48,7 @@ import SessionDialog from './components/SessionDialog.vue';
 import TorrentPropsDialog from './components/TorrentPropsDialog.vue';
 import BatchTagsDialog from './components/BatchTagsDialog.vue';
 import FluentActionDialogs from './components/FluentActionDialogs.vue';
+import FileBackstage from './components/FileBackstage.vue';
 
 onMounted(() => {
   // 恢复保存的主题

@@ -17,36 +17,15 @@
         <span class="brand-text">Transmission</span>
       </div>
 
-      <!-- 正统 Office 风格“文件 (File)”主菜单 -->
+      <!-- Office 2016 全屏“文件”菜单入口 -->
       <div class="file-menu-wrapper">
         <button
           class="ribbon-file-btn"
-          :class="{ active: fileMenuOpen }"
-          @click.stop="toggleFileMenu"
+          :class="{ active: state.fileMenuOpen }"
+          @click.stop="openFileMenu"
         >
           <span>{{ t('ribbon.file') }}</span>
         </button>
-
-        <div class="fluent-dropdown-menu file-dropdown-panel" v-if="fileMenuOpen" @click.stop>
-          <button class="fluent-menu-item" @click="handleFileAction('add')">
-            <FluentIcon name="add" />
-            <span>{{ t('toolbar.add') }}</span>
-          </button>
-          <div class="menu-divider"></div>
-          <button class="fluent-menu-item" @click="handleFileAction('settings')">
-            <FluentIcon name="settings" />
-            <span>{{ t('toolbar.settings') }}</span>
-          </button>
-          <button class="fluent-menu-item" @click="handleFileAction('stats')">
-            <FluentIcon name="insights" />
-            <span>{{ t('sidebar.stats') }}</span>
-          </button>
-          <div class="menu-divider"></div>
-          <button class="fluent-menu-item" @click="handleFileAction('checkUpdate')">
-            <FluentIcon name="info" />
-            <span>{{ t('ribbon.about') }}</span>
-          </button>
-        </div>
       </div>
 
       <!-- Ribbon 选项卡列表 (桌面端展示，纯正 Office 2016 纯文字高效规范) -->
@@ -974,6 +953,7 @@ import {
   stopTorrentsAction,
   startNowTorrentsAction,
   reannounceSelected,
+  openFileMenu,
 } from '../stores/transmission';
 import { rpc } from '../api/rpc';
 import { t, currentLocale, setLocale, LocaleKey } from '../locales';
@@ -981,7 +961,6 @@ import { t, currentLocale, setLocale, LocaleKey } from '../locales';
 const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
 const currentTab = ref<'tasks' | 'transfer' | 'tools' | 'view' | 'torrentProps'>('tasks');
 const isRibbonCollapsed = ref(localStorage.getItem('ribbon_collapsed') === 'true');
-const fileMenuOpen = ref(false);
 
 // 下拉菜单浮层状态
 const menus = reactive({
@@ -995,31 +974,11 @@ const menus = reactive({
 const menuPos = reactive({ top: 0, left: 0 });
 
 function closeAllMenus() {
-  fileMenuOpen.value = false;
   menus.start = false;
   menus.stop = false;
   menus.delete = false;
   menus.lang = false;
   menus.columns = false;
-}
-
-function toggleFileMenu() {
-  const willOpen = !fileMenuOpen.value;
-  closeAllMenus();
-  fileMenuOpen.value = willOpen;
-}
-
-function handleFileAction(action: 'add' | 'settings' | 'stats' | 'checkUpdate') {
-  closeAllMenus();
-  if (action === 'add') {
-    state.addDialogOpen = true;
-  } else if (action === 'settings') {
-    state.sessionDialogOpen = true;
-  } else if (action === 'stats') {
-    openStatsDialog();
-  } else if (action === 'checkUpdate') {
-    openAboutDialog();
-  }
 }
 
 function toggleMenu(type: 'start' | 'stop' | 'delete' | 'lang' | 'columns', event?: MouseEvent) {
@@ -1211,16 +1170,15 @@ function toggleRibbonCollapse() {
 
 // 快捷键 Ctrl+F1 折叠/展开
 function onGlobalClick(e: MouseEvent) {
-  if (!fileMenuOpen.value && !menus.start && !menus.stop && !menus.delete && !menus.lang && !menus.columns) {
+  if (!menus.start && !menus.stop && !menus.delete && !menus.lang && !menus.columns) {
     return;
   }
   const target = e.target as HTMLElement | null;
   if (!target) return;
-  if (target.closest('.fluent-dropdown-menu, .file-dropdown-panel')) {
+  if (target.closest('.fluent-dropdown-menu')) {
     return;
   }
   if (
-    target.closest('.ribbon-file-btn') ||
     target.closest('.split-arrow-btn') ||
     target.closest('.lang-dropdown-wrapper') ||
     target.closest('.fluent-btn-small')
@@ -1425,47 +1383,6 @@ function toggleTheme() {
 .ribbon-file-btn:hover,
 .ribbon-file-btn.active {
   background-color: var(--ribbon-file-btn-hover);
-}
-
-.file-dropdown-panel {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 190px;
-  background: var(--fluent-bg-canvas);
-  border: 1px solid var(--fluent-border-divider);
-  border-radius: 0 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 10000;
-}
-
-.fluent-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  background: transparent;
-  border: none;
-  border-radius: 0 !important;
-  color: var(--md-text-primary);
-  font-size: 12px;
-  cursor: pointer;
-  text-align: left;
-}
-
-.fluent-menu-item:hover {
-  background-color: var(--fluent-bg-hover);
-  color: var(--fluent-accent);
-}
-
-.menu-divider {
-  height: 1px;
-  background-color: var(--fluent-border-subtle);
-  margin: 4px 0;
 }
 
 /* Fluent 选项卡导航 (Office 2016 零缝隙纯文字与纯平直角) */

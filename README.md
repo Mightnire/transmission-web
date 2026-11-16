@@ -20,11 +20,19 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
   - 顶层 `文件` 菜单 + `任务` / `传输与网络` / `维护工具` / `视图与首选项` 四个选项卡。
   - 选中种子后动态出现 `种子设置` 上下文选项卡（琥珀色顶栏标识），集中放置优先级、独立限速、做种停止规则、重命名/移动目录等属性。
   - 所有下拉菜单通过 `Teleport` 挂载到 `body`，不被 Ribbon 的 `overflow` 裁剪；支持点击空白处、按 `Esc` 关闭。
+- **Office 2016 全屏「文件」菜单（Backstage）**
+  - 点击 `文件` 不再是窄下拉菜单，而是打开 Office 2016 风格的全屏 Backstage：左侧深红导航，右侧信息面板。
+  - `信息`：连接状态、实时上下行速度、活动/完成任务数、实时速度曲线、任务状态分布、存储位置与快捷操作。
+  - `统计`：类似 BiglyBT 的实时下载/上传速度面积图（最近 6 分钟），以及本次会话 / 历史累计统计和任务构成。
+  - `关于`：Web UI / Transmission 核心 / RPC 版本、离线状态、MIT 协议与仓库入口。
 - **批量标签（Batch Labels）**
   - 多选种子后一次性追加 / 覆盖 / 清空标签；相同标签集合自动合并为单次 `torrent-set`，结束后只刷新一次列表。
 - **真正的即时反馈（Optimistic Update + Confirm）**
   - 暂停 / 开始 / 立即开始 / 校验 / 删除会在本地立即改变状态。
   - 新增「服务端确认保护层」：RPC 返回后若快照仍是旧状态，不会把刚点下的暂停冲回「正在做种」，消除数秒抖动。
+- **可调节的详情面板**
+  - 详情面板默认高度更宽裕，可拖拽顶部手柄自由调整；标题栏左侧箭头在「紧凑 / 展开」之间切换，右侧 X 才真正关闭。
+  - 文件树目录行的大小与进度由子文件聚合得出，不再显示无意义的 `0 B / 0%`。
 - **完整 Fluent 对话框，零原生弹窗**
   - 添加、属性、首选项、重命名、移动目录、删除确认、统计、关于、批量标签、Tracker 增删全部为应用内对话框。
   - 支持 `Esc` 关闭、自动聚焦输入框、危险操作二次确认、成功/失败 Toast（不同图标与颜色）。
@@ -79,8 +87,8 @@ npm run build
 | 文件 | 原始 | gzip |
 | --- | --- | --- |
 | `index.html` | 1.1 kB | 0.6 kB |
-| `assets/index-*.css` | 84 kB | 12.6 kB |
-| `assets/index-*.js` | 316 kB | 97 kB |
+| `assets/index-*.css` | 96 kB | 14.5 kB |
+| `assets/index-*.js` | 337 kB | 103 kB |
 
 `base: './'` 使产物可以部署在任意子路径（如 `/transmission/web/`）下。
 
@@ -112,18 +120,23 @@ transmission-web-md1/
 │   ├── stores/
 │   │   └── transmission.ts        # 全局状态、轮询、过滤排序、乐观更新、对话框/Toast 控制
 │   ├── components/
-│   │   ├── AppBar.vue             # Office 2016 Ribbon、上下文选项卡、文件菜单、移动端工具条
+│   │   ├── AppBar.vue             # Office 2016 Ribbon、上下文选项卡、文件菜单入口、移动端工具条
+│   │   ├── FileBackstage.vue      # Office 2016 全屏「文件」菜单：信息 / 统计 / 关于 / 快捷操作
+│   │   ├── SpeedChart.vue         # BiglyBT 风格实时上下行速度面积图（SVG）
 │   │   ├── Drawer.vue             # 状态过滤、标签/Tracker 分组、会话统计
 │   │   ├── TorrentTable.vue       # 桌面端表格：排序、列宽拖拽、列显隐、右键菜单
 │   │   ├── TorrentCard.vue        # 移动端卡片视图
-│   │   ├── TorrentDetail.vue      # 详情抽屉：概览、文件树、Peers、Trackers
+│   │   ├── TorrentDetail.vue      # 可调高度的详情抽屉：概览、文件树、Peers、Trackers
+│   │   ├── FileTree.vue           # 可折叠文件树，目录大小/进度由子文件聚合
 │   │   ├── BatchTagsDialog.vue    # 批量标签对话框
-│   │   ├── FluentActionDialogs.vue# 重命名/移动目录/删除确认/统计/关于/通用 Prompt+Confirm/Toast
+│   │   ├── FluentActionDialogs.vue# 重命名/移动目录/删除确认/通用 Prompt+Confirm/Toast
 │   │   ├── AddDialog.vue          # 添加种子
 │   │   ├── SessionDialog.vue      # Transmission 全局首选项
 │   │   ├── TorrentPropsDialog.vue # 单任务属性
 │   │   ├── FluentIcon.vue         # Fluent System Icons 24 Regular 矢量字典
 │   │   └── TransmissionLogo.vue   # Transmission 官方变速杆 Logo（纯 SVG）
+│   ├── composables/
+│   │   └── useEscapeKey.ts        # 统一 Esc 关闭行为
 │   ├── locales/                   # zh-CN / en-US / ru-RU
 │   └── styles/
 │       ├── md1.css                # 设计令牌（Fluent + Office 2016 色板）

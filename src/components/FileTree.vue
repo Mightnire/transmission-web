@@ -152,6 +152,7 @@ interface TreeNode {
   path: string;
   isDir: boolean;
   size: number;
+  completedBytes: number;
   progress: number;
   wanted: boolean;
   depth: number;
@@ -188,6 +189,7 @@ const treeRoot = computed(() => {
             path: currentPath,
             isDir: !isFile,
             size: isFile ? f.length : 0,
+            completedBytes: isFile ? f.bytesCompleted : 0,
             progress: isFile && f.length > 0 ? f.bytesCompleted / f.length : 0,
             wanted: isFile ? (props.fileStats[idx]?.wanted ?? true) : true,
             depth: i,
@@ -200,6 +202,27 @@ const treeRoot = computed(() => {
       current = current[part].children;
     });
   });
+
+  // 目录本身没有 RPC 进度字段，但可以由子文件聚合出真实的大小与完成度
+  function aggregateDirs(dir: DirMap) {
+    for (const key of Object.keys(dir)) {
+      const item = dir[key];
+      if (!item.node.isDir) continue;
+      aggregateDirs(item.children);
+
+      let size = 0;
+      let completed = 0;
+      for (const child of Object.values(item.children)) {
+        size += child.node.size;
+        completed += child.node.completedBytes;
+      }
+      item.node.size = size;
+      item.node.completedBytes = completed;
+      item.node.progress = size > 0 ? completed / size : 0;
+    }
+  }
+
+  aggregateDirs(root);
 
   // 递归展平列表并应用折叠过滤
   const flatList: TreeNode[] = [];
@@ -290,14 +313,17 @@ async function changePriority(index: number, e: Event) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--md-surface);
-  border-radius: 2px;
+  background-color: var(--fluent-bg-canvas);
+  border-radius: 4px;
 }
 
 .file-tree-header {
-  padding: 8px 16px;
-  background-color: rgba(0, 0, 0, 0.03);
-  border-bottom: 1px solid var(--md-divider);
+  margin: 0 0 8px;
+  padding: 7px 12px;
+  background-color: var(--fluent-bg-subtle);
+  border: 1px solid var(--fluent-border-subtle);
+  border-left: 3px solid var(--fluent-accent);
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -305,10 +331,15 @@ async function changePriority(index: number, e: Event) {
   color: var(--md-text-secondary);
 }
 
+.file-tree-summary {
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
 .file-nodes-list {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 2px 0 8px;
 }
 
 .tree-row {
@@ -317,11 +348,16 @@ async function changePriority(index: number, e: Event) {
   height: 36px;
   padding-right: 16px;
   font-size: 13px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid var(--fluent-border-subtle);
 }
 
 .tree-row:hover {
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: var(--fluent-bg-hover);
+}
+
+.tree-row.is-dir {
+  background-color: rgba(0, 120, 212, 0.025);
+  font-weight: 500;
 }
 
 .expand-icon {
@@ -364,26 +400,33 @@ async function changePriority(index: number, e: Event) {
 }
 
 .mini-progress-track {
-  width: 60px;
-  height: 4px;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 2px;
+  width: 70px;
+  height: 5px;
+  background: var(--fluent-border-subtle);
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .mini-progress-bar {
   height: 100%;
-  background: var(--md-primary);
+  background: var(--fluent-accent);
+  border-radius: 3px;
+  transition: width 0.25s ease;
 }
 
 .priority-select {
+  height: 22px;
   font-size: 11px;
-  padding: 2px 4px;
-  border: 1px solid var(--md-divider);
-  border-radius: 2px;
-  background: var(--md-surface);
+  padding: 0 4px;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 4px;
+  background: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   outline: none;
+}
+
+.priority-select:focus {
+  border-color: var(--fluent-accent);
 }
 
 .rename-file-btn {
@@ -395,12 +438,12 @@ async function changePriority(index: number, e: Event) {
   align-items: center;
   justify-content: center;
   padding: 2px;
-  border-radius: 2px;
+  border-radius: 4px;
   transition: all 0.15s;
 }
 
 .rename-file-btn:hover {
-  color: var(--md-primary);
-  background: rgba(0, 0, 0, 0.06);
+  color: var(--fluent-accent);
+  background: var(--fluent-bg-hover);
 }
 </style>
