@@ -3,11 +3,11 @@
     <div class="md-dialog add-dialog">
       <div class="dialog-header">
         <div class="header-title-row">
-          <span class="material-icons header-icon">add_circle_outline</span>
+          <FluentIcon name="add_circle_outline" class="header-icon" />
           <h2 class="md-dialog-title">{{ t('addDialog.title') }}</h2>
         </div>
         <button class="dialog-close-btn" @click="state.addDialogOpen = false" :title="t('common.close')">
-          <span class="material-icons">close</span>
+          <FluentIcon name="close" />
         </button>
       </div>
 
@@ -43,9 +43,7 @@
               accept=".torrent"
               @change="handleFileChange"
             />
-            <span class="material-icons upload-icon">
-              {{ torrentBase64 ? 'check_circle' : 'cloud_upload' }}
-            </span>
+            <FluentIcon :name="torrentBase64 ? 'check_circle' : 'cloud_upload'" class="upload-icon" />
             <span class="upload-tip">
               {{ selectedFileName || t('addDialog.dragTip') }}
             </span>

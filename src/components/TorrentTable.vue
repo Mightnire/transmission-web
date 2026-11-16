@@ -34,7 +34,7 @@
             @click="handleSort('status')"
           >
             <div class="th-content">
-              <span class="material-icons sort-icon">swap_vert</span>
+              <FluentIcon name="swap_vert" class="sort-icon" />
             </div>
             <div class="col-resizer" @mousedown.stop="startResize('status', $event)"></div>
           </th>
@@ -220,16 +220,14 @@
 
           <!-- 状态图标 -->
           <td class="col-status" v-if="isColVisible('status')">
-            <span class="material-icons status-ico" :class="getStatusIconClass(torrent)">
-              {{ getStatusIcon(torrent) }}
-            </span>
+            <FluentIcon :name="getStatusIcon(torrent)" class="status-ico" :class="getStatusIconClass(torrent)" />
           </td>
 
           <!-- 种子名称 -->
           <td class="col-name" v-if="isColVisible('name')" :title="torrent.errorString ? `${torrent.name}\n\n[${t('status.error')}] ${torrent.errorString}` : torrent.name">
             <div class="name-text">{{ torrent.name }}</div>
             <div class="fluent-error-pill" v-if="torrent.error !== 0 || torrent.errorString" :title="torrent.errorString">
-              <span class="material-icons pill-icon">error_outline</span>
+              <FluentIcon name="error_outline" class="pill-icon" />
               <span class="pill-text">{{ torrent.errorString || t('status.error') }}</span>
             </div>
           </td>
@@ -293,7 +291,7 @@
         <!-- 空数据提示 -->
         <tr v-if="filteredTorrents.length === 0">
           <td :colspan="visibleColumnCount" class="empty-table-cell">
-            <span class="material-icons empty-icon">inbox</span>
+            <FluentIcon name="inbox" class="empty-icon" />
             <p>{{ t('table.empty') }}</p>
           </td>
         </tr>
@@ -308,76 +306,76 @@
       @click.stop
     >
       <div class="menu-item" @click="handleAction('start')">
-        <span class="material-icons">play_arrow</span>
+        <FluentIcon name="play_arrow" />
         <span>{{ t('menu.start') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('start-now')">
-        <span class="material-icons text-warning">bolt</span>
+        <FluentIcon name="bolt" class="text-warning" />
         <span>{{ t('menu.startNow') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('stop')">
-        <span class="material-icons">pause</span>
+        <FluentIcon name="pause" />
         <span>{{ t('menu.pause') }}</span>
       </div>
       <div class="menu-divider"></div>
 
       <!-- 队列调度快捷 -->
       <div class="menu-item" @click="handleAction('move-top')">
-        <span class="material-icons">vertical_align_top</span>
+        <FluentIcon name="vertical_align_top" />
         <span>{{ t('menu.moveTop') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('move-up')">
-        <span class="material-icons">arrow_upward</span>
+        <FluentIcon name="arrow_upward" />
         <span>{{ t('menu.moveUp') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('move-down')">
-        <span class="material-icons">arrow_downward</span>
+        <FluentIcon name="arrow_downward" />
         <span>{{ t('menu.moveDown') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('move-bottom')">
-        <span class="material-icons">vertical_align_bottom</span>
+        <FluentIcon name="vertical_align_bottom" />
         <span>{{ t('menu.moveBottom') }}</span>
       </div>
       <div class="menu-divider"></div>
 
       <div class="menu-item" @click="handleAction('verify')">
-        <span class="material-icons">check_circle_outline</span>
+        <FluentIcon name="check_circle_outline" />
         <span>{{ t('menu.verify') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('reannounce')">
-        <span class="material-icons">sync</span>
+        <FluentIcon name="sync" />
         <span>{{ t('menu.reannounce') }}</span>
       </div>
       <div class="menu-divider"></div>
 
       <div class="menu-item" @click="handleAction('copy-magnet')">
-        <span class="material-icons">link</span>
+        <FluentIcon name="link" />
         <span>{{ t('menu.copyMagnet') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('set-location')">
-        <span class="material-icons">folder_open</span>
+        <FluentIcon name="folder_open" />
         <span>{{ t('menu.setLocation') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('rename')">
-        <span class="material-icons">edit</span>
+        <FluentIcon name="edit" />
         <span>{{ t('menu.rename') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('props')">
-        <span class="material-icons">tune</span>
+        <FluentIcon name="tune" />
         <span>{{ t('menu.props') }}</span>
       </div>
       <div class="menu-item" @click="handleAction('detail')">
-        <span class="material-icons">vertical_split</span>
+        <FluentIcon name="vertical_split" />
         <span>{{ t('menu.detail') }}</span>
       </div>
       <div class="menu-divider"></div>
 
       <div class="menu-item text-danger" @click="handleAction('remove')">
-        <span class="material-icons">delete_outline</span>
+        <FluentIcon name="delete_outline" />
         <span>{{ t('menu.remove') }}</span>
       </div>
       <div class="menu-item text-danger" @click="handleAction('remove-data')">
-        <span class="material-icons">delete_forever</span>
+        <FluentIcon name="delete_forever" />
         <span>{{ t('menu.removeData') }}</span>
       </div>
     </div>
@@ -399,7 +397,7 @@
         </div>
         <div class="menu-divider"></div>
         <div class="menu-item" @click="handleResetColumns">
-          <span class="material-icons">restart_alt</span>
+          <FluentIcon name="restart_alt" />
           <span>{{ t('ribbon.resetCols') }}</span>
         </div>
       </div>

@@ -17,9 +17,7 @@
     <!-- 面板顶部控制与标题 -->
     <div class="dock-header">
       <div class="dock-title-block">
-        <span class="material-icons info-icon" :class="{ 'error-icon-red': activeTorrent.error !== 0 }">
-          {{ activeTorrent.error !== 0 ? 'error' : 'info' }}
-        </span>
+        <FluentIcon :name="activeTorrent.error !== 0 ? 'error' : 'info'" class="info-icon" :class="{ 'error-icon-red': activeTorrent.error !== 0 }" />
         <span class="dock-name" :title="activeTorrent.name">{{ activeTorrent.name }}</span>
         <span class="dock-error-badge" v-if="activeTorrent.error !== 0">
           {{ getErrorCategoryTitle(activeTorrent.error) }}
@@ -43,10 +41,10 @@
       <div class="dock-actions">
         <!-- 最小化 / 关闭 -->
         <button class="dock-btn" @click="state.detailOpen = false" :title="t('detail.minimize')">
-          <span class="material-icons">expand_more</span>
+          <FluentIcon name="expand_more" />
         </button>
         <button class="dock-btn" @click="closeDetail" :title="t('detail.close')">
-          <span class="material-icons">close</span>
+          <FluentIcon name="close" />
         </button>
       </div>
     </div>
@@ -58,7 +56,7 @@
         :class="{ active: currentTab === 'general' }"
         @click="currentTab = 'general'"
       >
-        <span class="material-icons tab-icon">dashboard</span>
+        <FluentIcon name="dashboard" class="tab-icon" />
         <span>{{ t('detail.tabs.general') }}</span>
       </button>
 
@@ -67,7 +65,7 @@
         :class="{ active: currentTab === 'files' }"
         @click="currentTab = 'files'"
       >
-        <span class="material-icons tab-icon">folder</span>
+        <FluentIcon name="folder" class="tab-icon" />
         <span>{{ t('detail.tabs.files') }}</span>
         <span class="tab-badge" v-if="activeTorrent.files">({{ activeTorrent.files.length }})</span>
       </button>
@@ -77,7 +75,7 @@
         :class="{ active: currentTab === 'peers' }"
         @click="currentTab = 'peers'"
       >
-        <span class="material-icons tab-icon">people</span>
+        <FluentIcon name="people" class="tab-icon" />
         <span>{{ t('detail.tabs.peers') }}</span>
         <span class="tab-badge" v-if="activeTorrent.peers">({{ activeTorrent.peers.length }})</span>
       </button>
@@ -87,7 +85,7 @@
         :class="{ active: currentTab === 'trackers' }"
         @click="currentTab = 'trackers'"
       >
-        <span class="material-icons tab-icon">alt_route</span>
+        <FluentIcon name="alt_route" class="tab-icon" />
         <span>{{ t('detail.tabs.trackers') }}</span>
         <span class="tab-badge" v-if="activeTorrent.trackerStats">({{ activeTorrent.trackerStats.length }})</span>
       </button>
@@ -96,7 +94,7 @@
     <!-- 任务异常与错误报警横幅 (若任务报错) -->
     <div class="torrent-error-banner" v-if="activeTorrent.error !== 0 || activeTorrent.errorString">
       <div class="banner-main">
-        <span class="material-icons banner-icon">error</span>
+        <FluentIcon name="error" class="banner-icon" />
         <div class="banner-text">
           <div class="banner-title-line">
             <span class="banner-title">{{ getErrorCategoryTitle(activeTorrent.error) }}</span>
@@ -113,11 +111,11 @@
       </div>
       <div class="banner-actions">
         <button class="banner-action-btn" @click="handleVerifyTorrent" :title="t('detail.errorAlert.verifyBtn')">
-          <span class="material-icons">refresh</span>
+          <FluentIcon name="refresh" />
           <span>{{ t('detail.errorAlert.verifyBtn') }}</span>
         </button>
         <button class="banner-action-btn" @click="handleSetLocation" :title="t('detail.errorAlert.setLocationBtn')">
-          <span class="material-icons">folder_open</span>
+          <FluentIcon name="folder_open" />
           <span>{{ t('detail.errorAlert.setLocationBtn') }}</span>
         </button>
       </div>
@@ -177,7 +175,7 @@
             <div class="info-row" style="margin-top: 6px;">
               <span class="label">{{ t('detail.general.magnet') }}</span>
               <button class="copy-magnet-btn" @click="copyMagnet">
-                <span class="material-icons" style="font-size: 14px;">link</span>
+                <FluentIcon name="link" style="font-size: 14px;" />
                 {{ t('detail.general.copyMagnet') }}
               </button>
             </div>
@@ -231,7 +229,7 @@
           :fileStats="activeTorrent.fileStats"
         />
         <div class="empty-hint" v-else>
-          <span class="material-icons">hourglass_empty</span>
+          <FluentIcon name="hourglass_empty" />
           <p>{{ t('detail.files.loading') }}</p>
         </div>
       </div>
@@ -263,7 +261,7 @@
           </tbody>
         </table>
         <div class="empty-hint" v-else>
-          <span class="material-icons">cloud_off</span>
+          <FluentIcon name="cloud_off" />
           <p>{{ t('detail.peers.empty') }}</p>
         </div>
       </div>
@@ -272,11 +270,11 @@
       <div v-else-if="currentTab === 'trackers'" class="tab-pane trackers-pane">
         <div class="tracker-actions-bar">
           <button class="md-btn md-btn-flat" @click="askMorePeers">
-            <span class="material-icons">sync</span>
+            <FluentIcon name="sync" />
             {{ t('detail.trackers.announceNow') }}
           </button>
           <button class="md-btn md-btn-flat" @click="addTrackersPrompt">
-            <span class="material-icons">add</span>
+            <FluentIcon name="add" />
             {{ t('detail.trackers.addTrackers') }}
           </button>
         </div>
@@ -307,14 +305,14 @@
               <td>{{ tr.lastAnnouncePeerCount }}</td>
               <td>
                 <button class="remove-tr-btn" @click="removeTracker(tr.id)" :title="t('detail.trackers.removeTitle')">
-                  <span class="material-icons" style="font-size: 14px;">delete_outline</span>
+                  <FluentIcon name="delete_outline" style="font-size: 14px;" />
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
         <div class="empty-hint" v-else>
-          <span class="material-icons">alt_route</span>
+          <FluentIcon name="alt_route" />
           <p>{{ t('detail.trackers.empty') }}</p>
         </div>
       </div>

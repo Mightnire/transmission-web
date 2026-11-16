@@ -14,7 +14,7 @@
       </div>
 
       <div class="empty-state" v-else>
-        <span class="material-icons empty-icon">inbox</span>
+        <FluentIcon name="inbox" class="empty-icon" />
         <p class="empty-text">{{ t('table.empty') }}</p>
       </div>
     </div>

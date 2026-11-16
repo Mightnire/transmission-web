@@ -26,13 +26,7 @@
           :class="{ 'is-dir': node.isDir }"
         >
           <!-- 折叠展开图标 (目录专用) -->
-          <span
-            class="material-icons expand-icon"
-            v-if="node.isDir"
-            @click="toggleCollapse(node.path)"
-          >
-            {{ isCollapsed(node.path) ? 'chevron_right' : 'expand_more' }}
-          </span>
+          <FluentIcon :name="isCollapsed(node.path) ? 'chevron_right' : 'expand_more'" class="expand-icon" v-if="node.isDir" @click="toggleCollapse(node.path)" />
           <span class="expand-placeholder" v-else></span>
 
           <!-- 勾选框 -->
@@ -44,9 +38,7 @@
           />
 
           <!-- 目录/文件图标 -->
-          <span class="material-icons node-type-icon">
-            {{ node.isDir ? (isCollapsed(node.path) ? 'folder' : 'folder_open') : 'insert_drive_file' }}
-          </span>
+          <FluentIcon :name="node.isDir ? (isCollapsed(node.path) ? 'folder' : 'folder_open') : 'insert_drive_file'" class="node-type-icon" />
 
           <!-- 名称 -->
           <span class="node-name" :title="node.name">{{ node.name }}</span>
@@ -64,7 +56,7 @@
 
             <!-- 重命名按钮 -->
             <button class="rename-file-btn" @click.stop="renamePath(node)" :title="t('fileTree.renameTitle')">
-              <span class="material-icons" style="font-size: 14px;">edit</span>
+              <FluentIcon name="edit" style="font-size: 14px;" />
             </button>
 
             <!-- 优先级调整 (仅文件) -->

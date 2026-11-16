@@ -3,11 +3,11 @@
     <div class="md-dialog props-dialog">
       <div class="dialog-header">
         <div class="header-title-row">
-          <span class="material-icons header-icon">tune</span>
+          <FluentIcon name="tune" class="header-icon" />
           <h2 class="md-dialog-title">{{ t('props.title', { name: torrent.name }) }}</h2>
         </div>
         <button class="md-icon-button" @click="close" :title="t('common.close')">
-          <span class="material-icons">close</span>
+          <FluentIcon name="close" />
         </button>
       </div>
 

@@ -15,11 +15,11 @@
     <!-- 移动端专属侧边栏头部 (带品牌与关闭按钮) -->
     <div class="mobile-drawer-header mobile-only">
       <div class="drawer-brand">
-        <span class="material-icons brand-icon">cloud_download</span>
+        <FluentIcon name="cloud_download" class="brand-icon" />
         <span class="brand-title">Transmission</span>
       </div>
       <button class="drawer-close-btn" @click="state.sidebarOpen = false" :title="t('common.close')">
-        <span class="material-icons">close</span>
+        <FluentIcon name="close" />
       </button>
     </div>
 
@@ -29,7 +29,7 @@
         <div class="section-header-flex clickable" @click="filterCollapsed = !filterCollapsed">
           <span class="section-label">{{ t('sidebar.filters') }}</span>
           <button class="section-collapse-btn" @click.stop="filterCollapsed = !filterCollapsed">
-            <span class="material-icons">{{ filterCollapsed ? 'chevron_right' : 'expand_more' }}</span>
+            <FluentIcon :name="filterCollapsed ? 'chevron_right' : 'expand_more'" />
           </button>
         </div>
 
@@ -42,7 +42,7 @@
             :title="t('sidebar.all')"
           >
             <div class="active-indicator"></div>
-            <span class="material-icons nav-icon">all_inclusive</span>
+            <FluentIcon name="all_inclusive" class="nav-icon" />
             <span class="nav-label">{{ t('sidebar.all') }}</span>
             <span class="nav-badge">{{ state.torrents.length }}</span>
           </div>
@@ -55,7 +55,7 @@
             :title="t('sidebar.active')"
           >
             <div class="active-indicator"></div>
-            <span class="material-icons nav-icon text-info">sync_alt</span>
+            <FluentIcon name="sync_alt" class="nav-icon text-info" />
             <span class="nav-label">{{ t('sidebar.active') }}</span>
             <span class="nav-badge badge-active" v-if="counts.active > 0">{{ counts.active }}</span>
           </div>
@@ -68,7 +68,7 @@
             :title="t('sidebar.downloading')"
           >
             <div class="active-indicator"></div>
-            <span class="material-icons nav-icon text-info">arrow_downward</span>
+            <FluentIcon name="arrow_downward" class="nav-icon text-info" />
             <span class="nav-label">{{ t('sidebar.downloading') }}</span>
             <span class="nav-badge" v-if="counts.downloading > 0">{{ counts.downloading }}</span>
           </div>
@@ -81,7 +81,7 @@
             :title="t('sidebar.seeding')"
           >
             <div class="active-indicator"></div>
-            <span class="material-icons nav-icon text-success">arrow_upward</span>
+            <FluentIcon name="arrow_upward" class="nav-icon text-success" />
             <span class="nav-label">{{ t('sidebar.seeding') }}</span>
             <span class="nav-badge" v-if="counts.seeding > 0">{{ counts.seeding }}</span>
           </div>
@@ -94,7 +94,7 @@
             :title="t('sidebar.queued')"
           >
             <div class="active-indicator"></div>
-            <span class="material-icons nav-icon text-warning">low_priority</span>
+            <FluentIcon name="low_priority" class="nav-icon text-warning" />
             <span class="nav-label">{{ t('sidebar.queued') }}</span>
             <span class="nav-badge badge-queued" v-if="counts.queued > 0">{{ counts.queued }}</span>
           </div>
@@ -107,7 +107,7 @@
             :title="t('sidebar.finished')"
           >
             <div class="active-indicator"></div>
-            <span class="material-icons nav-icon text-muted">check_circle_outline</span>
+            <FluentIcon name="check_circle_outline" class="nav-icon text-muted" />
             <span class="nav-label">{{ t('sidebar.finished') }}</span>
             <span class="nav-badge" v-if="counts.finished > 0">{{ counts.finished }}</span>
           </div>
@@ -120,7 +120,7 @@
             :title="t('sidebar.paused')"
           >
             <div class="active-indicator"></div>
-            <span class="material-icons nav-icon text-muted">pause</span>
+            <FluentIcon name="pause" class="nav-icon text-muted" />
             <span class="nav-label">{{ t('sidebar.paused') }}</span>
             <span class="nav-badge" v-if="counts.paused > 0">{{ counts.paused }}</span>
           </div>
@@ -133,7 +133,7 @@
             :title="t('sidebar.errors')"
           >
             <div class="active-indicator"></div>
-            <span class="material-icons nav-icon text-danger">error_outline</span>
+            <FluentIcon name="error_outline" class="nav-icon text-danger" />
             <span class="nav-label">{{ t('sidebar.errors') }}</span>
             <span class="nav-badge badge-error" v-if="counts.error > 0">{{ counts.error }}</span>
           </div>
@@ -153,10 +153,10 @@
                 @click.stop="clearGroupFilter"
                 title="Clear"
               >
-                <span class="material-icons">close</span>
+                <FluentIcon name="close" />
               </button>
               <button class="section-collapse-btn" @click.stop="tagCollapsed = !tagCollapsed">
-                <span class="material-icons">{{ tagCollapsed ? 'chevron_right' : 'expand_more' }}</span>
+                <FluentIcon :name="tagCollapsed ? 'chevron_right' : 'expand_more'" />
               </button>
             </div>
           </div>
@@ -171,7 +171,7 @@
               :title="tg.name"
             >
               <div class="active-indicator"></div>
-              <span class="material-icons nav-icon text-accent">local_offer</span>
+              <FluentIcon name="local_offer" class="nav-icon text-accent" />
               <span class="nav-label">{{ tg.name }}</span>
               <span class="nav-badge">{{ tg.count }}</span>
             </div>
@@ -192,10 +192,10 @@
                 @click.stop="clearGroupFilter"
                 title="Clear"
               >
-                <span class="material-icons">close</span>
+                <FluentIcon name="close" />
               </button>
               <button class="section-collapse-btn" @click.stop="trackerCollapsed = !trackerCollapsed">
-                <span class="material-icons">{{ trackerCollapsed ? 'chevron_right' : 'expand_more' }}</span>
+                <FluentIcon :name="trackerCollapsed ? 'chevron_right' : 'expand_more'" />
               </button>
             </div>
           </div>
@@ -210,7 +210,7 @@
               :title="tr.host"
             >
               <div class="active-indicator"></div>
-              <span class="material-icons nav-icon text-muted">dns</span>
+              <FluentIcon name="dns" class="nav-icon text-muted" />
               <span class="nav-label">{{ tr.host }}</span>
               <span class="nav-badge">{{ tr.count }}</span>
             </div>
@@ -224,7 +224,7 @@
       <div class="footer-card" :class="{ collapsed: statsCollapsed }">
         <div class="footer-card-header">
           <div class="header-left">
-            <span class="material-icons card-icon">insights</span>
+            <FluentIcon name="insights" class="card-icon" />
             <span class="card-title">{{ t('sidebar.stats') }}</span>
           </div>
           <button
@@ -232,7 +232,7 @@
             @click.stop="statsCollapsed = !statsCollapsed"
             :title="statsCollapsed ? t('ribbon.expand') : t('ribbon.collapse')"
           >
-            <span class="material-icons">{{ statsCollapsed ? 'expand_less' : 'expand_more' }}</span>
+            <FluentIcon :name="statsCollapsed ? 'expand_less' : 'expand_more'" />
           </button>
         </div>
 
@@ -243,7 +243,7 @@
             @click.stop="toggleSpeedFlyout('down')"
             :title="t('sidebar.speedLimitFlyout')"
           >
-            <span class="material-icons speed-icon">arrow_downward</span>
+            <FluentIcon name="arrow_downward" class="speed-icon" />
             <span class="speed-fixed-val">{{ formatSpeed(state.stats?.downloadSpeed) }}</span>
           </div>
           <div
@@ -251,7 +251,7 @@
             @click.stop="toggleSpeedFlyout('up')"
             :title="t('sidebar.speedLimitFlyout')"
           >
-            <span class="material-icons speed-icon">arrow_upward</span>
+            <FluentIcon name="arrow_upward" class="speed-icon" />
             <span class="speed-fixed-val">{{ formatSpeed(state.stats?.uploadSpeed) }}</span>
           </div>
         </div>
@@ -277,7 +277,7 @@
           <div class="flyout-header">
             <span>{{ speedFlyout.type === 'down' ? t('sidebar.downLimit') : t('sidebar.upLimit') }}</span>
             <button class="flyout-close-btn" @click="speedFlyout.open = false">
-              <span class="material-icons">close</span>
+              <FluentIcon name="close" />
             </button>
           </div>
           <div class="flyout-body">

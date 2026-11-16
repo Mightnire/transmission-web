@@ -3,11 +3,11 @@
     <div class="md-dialog session-dialog">
       <div class="dialog-header">
         <div class="header-title-row">
-          <span class="material-icons header-icon">settings</span>
+          <FluentIcon name="settings" class="header-icon" />
           <h2 class="md-dialog-title">{{ t('session.title') }}</h2>
         </div>
         <button class="md-icon-button" @click="state.sessionDialogOpen = false" :title="t('common.close')">
-          <span class="material-icons">close</span>
+          <FluentIcon name="close" />
         </button>
       </div>
 
@@ -225,16 +225,14 @@
             <div class="port-input-group">
               <input type="number" class="num-input" v-model.number="form.peerPort" />
               <button class="md-btn md-btn-flat btn-sm" @click="testPort" :disabled="testingPort">
-                <span class="material-icons" style="font-size: 16px;">{{ testingPort ? 'sync' : 'network_check' }}</span>
+                <FluentIcon :name="testingPort ? 'sync' : 'network_check'" style="font-size: 16px;" />
                 {{ testingPort ? t('session.network.portTesting') : t('session.network.testPort') }}
               </button>
             </div>
           </div>
 
           <div class="port-status-box" v-if="portStatus !== null">
-            <span class="material-icons" :style="{ color: portStatus ? 'var(--md-success)' : 'var(--md-error)' }">
-              {{ portStatus ? 'check_circle' : 'cancel' }}
-            </span>
+            <FluentIcon :name="portStatus ? 'check_circle' : 'cancel'" :style="{ color: portStatus ? 'var(--md-success)' : 'var(--md-error)' }" />
             <span>{{ portStatus ? t('session.network.portOpen') : t('session.network.portClosed') }}</span>
           </div>
 
@@ -313,7 +311,7 @@
           </div>
 
           <div class="free-space-badge" v-if="freeSpaceBytes !== null">
-            <span class="material-icons">storage</span>
+            <FluentIcon name="storage" />
             <span>{{ t('session.storage.freeSpace', { size: formatBytes(freeSpaceBytes) }) }}</span>
           </div>
 
@@ -376,7 +374,7 @@
           </div>
           <div class="blocklist-action-row">
             <button class="md-btn md-btn-flat" @click="updateBlocklist" :disabled="updatingBlocklist || !form.blocklistEnabled">
-              <span class="material-icons">security</span>
+              <FluentIcon name="security" />
               {{ updatingBlocklist ? t('session.automation.blocklistUpdating') : t('session.automation.blocklistUpdate') }}
             </button>
             <span class="blocklist-size" v-if="state.session?.['blocklist-size']">

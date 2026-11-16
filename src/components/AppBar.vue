@@ -8,12 +8,12 @@
         @click.stop="toggleSidebar"
         :title="t('app.toggleSidebar')"
       >
-        <span class="material-icons">menu</span>
+        <FluentIcon name="menu" />
       </button>
 
       <!-- 应用标题 / 品牌标识 -->
       <div class="fluent-brand">
-        <span class="material-icons brand-icon">cloud_download</span>
+        <FluentIcon name="cloud_download" class="brand-icon" />
         <span class="brand-text">Transmission</span>
       </div>
 
@@ -24,7 +24,7 @@
           :class="{ active: currentTab === 'tasks' && !isRibbonCollapsed }"
           @click.stop="selectTab('tasks')"
         >
-          <span class="material-icons tab-icon">home</span>
+          <FluentIcon name="home" class="tab-icon" />
           <span class="tab-text">{{ t('ribbon.tabs.tasks') }}</span>
         </button>
 
@@ -34,7 +34,7 @@
           :class="{ active: currentTab === 'queue' && !isRibbonCollapsed }"
           @click.stop="selectTab('queue')"
         >
-          <span class="material-icons tab-icon">low_priority</span>
+          <FluentIcon name="low_priority" class="tab-icon" />
           <span class="tab-text">{{ t('ribbon.tabs.queue') }}</span>
         </button>
 
@@ -43,7 +43,7 @@
           :class="{ active: currentTab === 'bandwidth' && !isRibbonCollapsed }"
           @click.stop="selectTab('bandwidth')"
         >
-          <span class="material-icons tab-icon">speed</span>
+          <FluentIcon name="speed" class="tab-icon" />
           <span class="tab-text">{{ t('ribbon.tabs.bandwidth') }}</span>
         </button>
 
@@ -52,7 +52,7 @@
           :class="{ active: currentTab === 'tools' && !isRibbonCollapsed }"
           @click.stop="selectTab('tools')"
         >
-          <span class="material-icons tab-icon">build</span>
+          <FluentIcon name="build" class="tab-icon" />
           <span class="tab-text">{{ t('ribbon.tabs.tools') }}</span>
         </button>
 
@@ -61,7 +61,7 @@
           :class="{ active: currentTab === 'view' && !isRibbonCollapsed }"
           @click.stop="selectTab('view')"
         >
-          <span class="material-icons tab-icon">tune</span>
+          <FluentIcon name="tune" class="tab-icon" />
           <span class="tab-text">{{ t('ribbon.tabs.view') }}</span>
         </button>
 
@@ -73,7 +73,7 @@
           @click.stop="selectTab('torrentProps')"
           :title="t('ribbon.tabs.torrentProps')"
         >
-          <span class="material-icons tab-icon">tune</span>
+          <FluentIcon name="tune" class="tab-icon" />
           <span class="tab-text">{{ t('ribbon.tabs.torrentProps') }}</span>
         </button>
       </nav>
@@ -86,7 +86,7 @@
           @click="toggleViewMode"
           :title="state.viewMode === 'table' ? t('common.cardsView') : t('common.tableView')"
         >
-          <span class="material-icons">{{ state.viewMode === 'table' ? 'view_agenda' : 'table_chart' }}</span>
+          <FluentIcon :name="state.viewMode === 'table' ? 'view_agenda' : 'table_chart'" />
         </button>
 
         <!-- 乌龟临时限速开关 -->
@@ -96,17 +96,17 @@
           @click="toggleTurtleMode"
           :title="t('toolbar.turtle')"
         >
-          <span class="material-icons">speed</span>
+          <FluentIcon name="speed" />
         </button>
 
         <!-- 全局首选项 -->
         <button class="fluent-tool-btn" @click="state.sessionDialogOpen = true" :title="t('toolbar.settings')">
-          <span class="material-icons">settings</span>
+          <FluentIcon name="settings" />
         </button>
 
         <!-- 主题切换 -->
         <button class="fluent-tool-btn" @click="toggleTheme" :title="t('app.toggleTheme')">
-          <span class="material-icons">{{ isDark ? 'light_mode' : 'dark_mode' }}</span>
+          <FluentIcon :name="isDark ? 'light_mode' : 'dark_mode'" />
         </button>
 
         <!-- 语言选择 (图标下拉菜单) -->
@@ -116,7 +116,7 @@
             @click.stop="toggleMenu('lang', $event)"
             :title="t('app.language')"
           >
-            <span class="material-icons">translate</span>
+            <FluentIcon name="translate" />
           </button>
         </div>
 
@@ -126,7 +126,7 @@
           @click="toggleRibbonCollapse"
           :title="isRibbonCollapsed ? t('ribbon.expand') : t('ribbon.collapse')"
         >
-          <span class="material-icons">{{ isRibbonCollapsed ? 'expand_more' : 'expand_less' }}</span>
+          <FluentIcon :name="isRibbonCollapsed ? 'expand_more' : 'expand_less'" />
         </button>
       </div>
     </div>
@@ -140,7 +140,7 @@
           <div class="ribbon-controls">
             <!-- 添加任务 (大按钮) -->
             <button class="fluent-btn-large primary-btn" @click="state.addDialogOpen = true" :title="t('toolbar.addTitle')">
-              <span class="material-icons large-icon">add_circle</span>
+              <FluentIcon name="add_circle" class="large-icon" />
               <span class="btn-caption">{{ t('toolbar.add') }}</span>
             </button>
 
@@ -152,7 +152,7 @@
                 @click="handleStart"
                 :title="hasSelection ? t('toolbar.start') : t('toolbar.startAll')"
               >
-                <span class="material-icons text-success">play_arrow</span>
+                <FluentIcon name="play_arrow" class="text-success" />
                 <span>{{ hasSelection ? t('toolbar.start') : t('toolbar.startAll') }}</span>
               </button>
               <button
@@ -160,7 +160,7 @@
                 :disabled="state.torrents.length === 0"
                 @click.stop="toggleMenu('start', $event)"
               >
-                <span class="material-icons">arrow_drop_down</span>
+                <FluentIcon name="arrow_drop_down" />
               </button>
             </div>
 
@@ -172,7 +172,7 @@
                 @click="handleStop"
                 :title="hasSelection ? t('toolbar.pause') : t('toolbar.pauseAll')"
               >
-                <span class="material-icons text-warning">pause</span>
+                <FluentIcon name="pause" class="text-warning" />
                 <span>{{ hasSelection ? t('toolbar.pause') : t('toolbar.pauseAll') }}</span>
               </button>
               <button
@@ -180,7 +180,7 @@
                 :disabled="state.torrents.length === 0"
                 @click.stop="toggleMenu('stop', $event)"
               >
-                <span class="material-icons">arrow_drop_down</span>
+                <FluentIcon name="arrow_drop_down" />
               </button>
             </div>
 
@@ -192,7 +192,7 @@
                 @click="handleRemove(false)"
                 :title="t('toolbar.deleteTitle')"
               >
-                <span class="material-icons text-danger">delete</span>
+                <FluentIcon name="delete" class="text-danger" />
                 <span>{{ t('toolbar.delete') }}</span>
               </button>
               <button
@@ -200,7 +200,7 @@
                 :disabled="!hasSelection"
                 @click.stop="toggleMenu('delete', $event)"
               >
-                <span class="material-icons">arrow_drop_down</span>
+                <FluentIcon name="arrow_drop_down" />
               </button>
             </div>
           </div>
@@ -217,7 +217,7 @@
               @click="verifySelected"
               :title="t('toolbar.verifyTitle')"
             >
-              <span class="material-icons">check_circle_outline</span>
+              <FluentIcon name="check_circle_outline" />
               <span>{{ t('toolbar.verify') }}</span>
             </button>
 
@@ -228,7 +228,7 @@
               @click="copyMagnet"
               :title="t('menu.copyMagnet')"
             >
-              <span class="material-icons">link</span>
+              <FluentIcon name="link" />
               <span>{{ t('menu.copyMagnet') }}</span>
             </button>
 
@@ -239,7 +239,7 @@
               @click="openProps"
               :title="t('ribbon.props')"
             >
-              <span class="material-icons">tune</span>
+              <FluentIcon name="tune" />
               <span>{{ t('ribbon.props') }}</span>
             </button>
           </div>
@@ -256,24 +256,20 @@
               @click="state.detailOpen = !state.detailOpen"
               :title="t('toolbar.detailTitle')"
             >
-              <span class="material-icons">vertical_split</span>
+              <FluentIcon name="vertical_split" />
               <span>{{ t('toolbar.detail') }}</span>
             </button>
 
             <!-- Fluent 极简搜索框 -->
             <div class="fluent-search-box">
-              <span class="material-icons search-ico">search</span>
+              <FluentIcon name="search" class="search-ico" />
               <input
                 type="text"
                 class="fluent-search-input"
                 :placeholder="t('app.searchPlaceholder')"
                 v-model="state.filter.search"
               />
-              <span
-                class="material-icons clear-ico"
-                v-if="state.filter.search"
-                @click="state.filter.search = ''"
-              >close</span>
+              <FluentIcon name="close" class="clear-ico" v-if="state.filter.search" @click="state.filter.search = ''" />
             </div>
           </div>
           <div class="group-title">{{ t('sidebar.filters') }}</div>
@@ -291,7 +287,7 @@
               @click="moveQueue('top')"
               title="Move to Top"
             >
-              <span class="material-icons">vertical_align_top</span>
+              <FluentIcon name="vertical_align_top" />
               <span>{{ t('menu.moveTop') }}</span>
             </button>
             <button
@@ -300,7 +296,7 @@
               @click="moveQueue('up')"
               title="Move Up"
             >
-              <span class="material-icons">arrow_upward</span>
+              <FluentIcon name="arrow_upward" />
               <span>{{ t('menu.moveUp') }}</span>
             </button>
             <button
@@ -309,7 +305,7 @@
               @click="moveQueue('down')"
               title="Move Down"
             >
-              <span class="material-icons">arrow_downward</span>
+              <FluentIcon name="arrow_downward" />
               <span>{{ t('menu.moveDown') }}</span>
             </button>
             <button
@@ -318,7 +314,7 @@
               @click="moveQueue('bottom')"
               title="Move to Bottom"
             >
-              <span class="material-icons">vertical_align_bottom</span>
+              <FluentIcon name="vertical_align_bottom" />
               <span>{{ t('menu.moveBottom') }}</span>
             </button>
           </div>
@@ -334,7 +330,7 @@
               @click="handleStartNow"
               :title="t('ribbon.startNow')"
             >
-              <span class="material-icons text-warning">bolt</span>
+              <FluentIcon name="bolt" class="text-warning" />
               <span>{{ t('ribbon.startNow') }}</span>
             </button>
 
@@ -344,7 +340,7 @@
               @click="handleReannounce"
               :title="t('ribbon.reannounce')"
             >
-              <span class="material-icons">sync</span>
+              <FluentIcon name="sync" />
               <span>{{ t('ribbon.reannounce') }}</span>
             </button>
           </div>
@@ -363,7 +359,7 @@
               @click="toggleTurtleMode"
               :title="t('toolbar.turtle')"
             >
-              <span class="material-icons large-icon">speed</span>
+              <FluentIcon name="speed" class="large-icon" />
               <span class="btn-caption">{{ t('toolbar.turtle') }}</span>
             </button>
 
@@ -385,7 +381,7 @@
               @click="setPriority(1)"
               :title="t('ribbon.highPriority')"
             >
-              <span class="material-icons text-danger">priority_high</span>
+              <FluentIcon name="priority_high" class="text-danger" />
               <span>{{ t('ribbon.highPriority') }}</span>
             </button>
             <button
@@ -395,7 +391,7 @@
               @click="setPriority(0)"
               :title="t('ribbon.normalPriority')"
             >
-              <span class="material-icons">remove</span>
+              <FluentIcon name="remove" />
               <span>{{ t('ribbon.normalPriority') }}</span>
             </button>
             <button
@@ -405,7 +401,7 @@
               @click="setPriority(-1)"
               :title="t('ribbon.lowPriority')"
             >
-              <span class="material-icons text-secondary">arrow_downward</span>
+              <FluentIcon name="arrow_downward" class="text-secondary" />
               <span>{{ t('ribbon.lowPriority') }}</span>
             </button>
           </div>
@@ -424,7 +420,7 @@
               @click="handleSetLocation"
               :title="t('ribbon.setLocation')"
             >
-              <span class="material-icons">folder_open</span>
+              <FluentIcon name="folder_open" />
               <span>{{ t('ribbon.setLocation') }}</span>
             </button>
 
@@ -434,7 +430,7 @@
               @click="handleRename"
               :title="t('ribbon.rename')"
             >
-              <span class="material-icons">edit</span>
+              <FluentIcon name="edit" />
               <span>{{ t('ribbon.rename') }}</span>
             </button>
           </div>
@@ -445,12 +441,12 @@
         <div class="ribbon-group">
           <div class="ribbon-controls">
             <button class="fluent-btn-small" @click="state.sessionDialogOpen = true" :title="t('toolbar.settings')">
-              <span class="material-icons">settings</span>
+              <FluentIcon name="settings" />
               <span>{{ t('toolbar.settings') }}</span>
             </button>
 
             <button class="fluent-btn-small" @click="fetchTorrents" title="Refresh">
-              <span class="material-icons">refresh</span>
+              <FluentIcon name="refresh" />
               <span>{{ t('common.verify') }}</span>
             </button>
           </div>
@@ -470,7 +466,7 @@
               @click="togglePreference('showTrackerGroup')"
               :title="t('ribbon.showTrackers')"
             >
-              <span class="material-icons btn-icon">{{ state.uiPreferences.showTrackerGroup ? 'check_box' : 'check_box_outline_blank' }}</span>
+              <FluentIcon :name="state.uiPreferences.showTrackerGroup ? 'check_box' : 'check_box_outline_blank'" class="btn-icon" />
               <span>{{ t('ribbon.showTrackers') }}</span>
             </button>
             <button
@@ -480,7 +476,7 @@
               @click="togglePreference('showTagGroup')"
               :title="t('ribbon.showTags')"
             >
-              <span class="material-icons btn-icon">{{ state.uiPreferences.showTagGroup ? 'check_box' : 'check_box_outline_blank' }}</span>
+              <FluentIcon :name="state.uiPreferences.showTagGroup ? 'check_box' : 'check_box_outline_blank'" class="btn-icon" />
               <span>{{ t('ribbon.showTags') }}</span>
             </button>
           </div>
@@ -530,7 +526,7 @@
               @click.stop="toggleMenu('columns', $event)"
               :title="t('ribbon.customizeCols')"
             >
-              <span class="material-icons">view_column</span>
+              <FluentIcon name="view_column" />
               <span>{{ t('ribbon.customizeCols') }}</span>
             </button>
             <button
@@ -538,7 +534,7 @@
               @click="handleResetColumns"
               :title="t('ribbon.resetCols')"
             >
-              <span class="material-icons">restart_alt</span>
+              <FluentIcon name="restart_alt" />
               <span>{{ t('ribbon.resetCols') }}</span>
             </button>
           </div>
@@ -558,7 +554,7 @@
                 @click="setTorrentPriority(1)"
                 :title="t('ribbon.highPriority')"
               >
-                <span class="material-icons text-danger">arrow_upward</span>
+                <FluentIcon name="arrow_upward" class="text-danger" />
                 <span>{{ t('priority.high') }}</span>
               </button>
               <button
@@ -567,7 +563,7 @@
                 @click="setTorrentPriority(0)"
                 :title="t('ribbon.normalPriority')"
               >
-                <span class="material-icons text-info">remove</span>
+                <FluentIcon name="remove" class="text-info" />
                 <span>{{ t('priority.normal') }}</span>
               </button>
               <button
@@ -576,7 +572,7 @@
                 @click="setTorrentPriority(-1)"
                 :title="t('ribbon.lowPriority')"
               >
-                <span class="material-icons text-secondary">arrow_downward</span>
+                <FluentIcon name="arrow_downward" class="text-secondary" />
                 <span>{{ t('priority.low') }}</span>
               </button>
             </div>
@@ -609,7 +605,7 @@
                 @click="toggleTorrentDownloadLimited"
                 :title="t('ribbon.limitDown')"
               >
-                <span class="material-icons mini-check-ico">{{ currentTorrentDownloadLimited ? 'check_box' : 'check_box_outline_blank' }}</span>
+                <FluentIcon :name="currentTorrentDownloadLimited ? 'check_box' : 'check_box_outline_blank'" class="mini-check-ico" />
                 <span>{{ t('ribbon.limitDown') }}</span>
               </button>
               <input
@@ -633,7 +629,7 @@
                 @click="toggleTorrentUploadLimited"
                 :title="t('ribbon.limitUp')"
               >
-                <span class="material-icons mini-check-ico">{{ currentTorrentUploadLimited ? 'check_box' : 'check_box_outline_blank' }}</span>
+                <FluentIcon :name="currentTorrentUploadLimited ? 'check_box' : 'check_box_outline_blank'" class="mini-check-ico" />
                 <span>{{ t('ribbon.limitUp') }}</span>
               </button>
               <input
@@ -656,7 +652,7 @@
               @click="toggleTorrentHonorsSession"
               :title="t('props.honorsSession')"
             >
-              <span class="material-icons mini-check-ico">{{ currentTorrentHonorsSession ? 'check_box' : 'check_box_outline_blank' }}</span>
+              <FluentIcon :name="currentTorrentHonorsSession ? 'check_box' : 'check_box_outline_blank'" class="mini-check-ico" />
               <span>{{ t('ribbon.honorsSession') || t('props.honorsSession') }}</span>
             </button>
           </div>
@@ -712,19 +708,19 @@
         <div class="ribbon-group">
           <div class="ribbon-controls">
             <button class="fluent-btn-small" @click="handleSetLocation" :title="t('ribbon.setLocation')">
-              <span class="material-icons">folder_open</span>
+              <FluentIcon name="folder_open" />
               <span>{{ t('ribbon.setLocation') }}</span>
             </button>
             <button class="fluent-btn-small" @click="handleRename" :title="t('ribbon.rename')">
-              <span class="material-icons">edit</span>
+              <FluentIcon name="edit" />
               <span>{{ t('ribbon.rename') }}</span>
             </button>
             <button class="fluent-btn-small" @click="copyMagnet" :title="t('detail.general.copyMagnet')">
-              <span class="material-icons">link</span>
+              <FluentIcon name="link" />
               <span>{{ t('detail.general.copyMagnet') }}</span>
             </button>
             <button class="fluent-btn-small primary" @click="openProps" :title="t('ribbon.props')">
-              <span class="material-icons">tune</span>
+              <FluentIcon name="tune" />
               <span>{{ t('ribbon.props') }}...</span>
             </button>
           </div>
@@ -738,19 +734,19 @@
       <!-- 模式 A：无选中任务时的常规工具条 -->
       <template v-if="!hasSelection">
         <button class="fluent-btn-mobile btn-primary" @click="state.addDialogOpen = true" :title="t('toolbar.add')">
-          <span class="material-icons">add</span>
+          <FluentIcon name="add" />
         </button>
         <button class="fluent-btn-mobile" @click="handleStartAll" :title="t('toolbar.startAll')">
-          <span class="material-icons text-success">fast_forward</span>
+          <FluentIcon name="fast_forward" class="text-success" />
         </button>
         <button class="fluent-btn-mobile" @click="handleStopAll" :title="t('toolbar.pauseAll')">
-          <span class="material-icons text-warning">pause_circle_outline</span>
+          <FluentIcon name="pause_circle_outline" class="text-warning" />
         </button>
         <button class="fluent-btn-mobile" @click="selectAllTorrents" :title="t('ribbon.selectAll')">
-          <span class="material-icons">select_all</span>
+          <FluentIcon name="select_all" />
         </button>
         <div class="mobile-search-wrap">
-          <span class="material-icons search-prefix-icon">search</span>
+          <FluentIcon name="search" class="search-prefix-icon" />
           <input
             type="text"
             class="mobile-search-input"
@@ -762,7 +758,7 @@
             v-if="state.filter.search"
             @click="state.filter.search = ''"
           >
-            <span class="material-icons">close</span>
+            <FluentIcon name="close" />
           </button>
         </div>
       </template>
@@ -773,22 +769,22 @@
           <span class="badge-text">{{ t('ribbon.selectedCount', { count: selectedCount }) }}</span>
         </div>
         <button class="fluent-btn-mobile" @click="selectAllTorrents" :title="t('ribbon.selectAll')">
-          <span class="material-icons">select_all</span>
+          <FluentIcon name="select_all" />
         </button>
         <button class="fluent-btn-mobile" @click="handleStart" :title="t('common.start')">
-          <span class="material-icons text-success">play_arrow</span>
+          <FluentIcon name="play_arrow" class="text-success" />
         </button>
         <button class="fluent-btn-mobile" @click="handleStop" :title="t('common.pause')">
-          <span class="material-icons text-warning">pause</span>
+          <FluentIcon name="pause" class="text-warning" />
         </button>
         <button class="fluent-btn-mobile" @click="handleRemove(false)" :title="t('common.delete')">
-          <span class="material-icons text-danger">delete</span>
+          <FluentIcon name="delete" class="text-danger" />
         </button>
         <button class="fluent-btn-mobile" v-if="selectedCount === 1" @click="openProps" :title="t('ribbon.tabs.torrentProps')">
-          <span class="material-icons">tune</span>
+          <FluentIcon name="tune" />
         </button>
         <button class="fluent-btn-mobile clear-sel-btn" @click="clearSelection" :title="t('common.cancel')">
-          <span class="material-icons">close</span>
+          <FluentIcon name="close" />
         </button>
       </template>
     </div>
@@ -803,11 +799,11 @@
         @click.stop
       >
         <div class="menu-opt" @click="handleStartAll">
-          <span class="material-icons">fast_forward</span>
+          <FluentIcon name="fast_forward" />
           <span>{{ t('toolbar.startAll') }}</span>
         </div>
         <div class="menu-opt" :class="{ disabled: !hasSelection }" @click="handleStartNow">
-          <span class="material-icons">bolt</span>
+          <FluentIcon name="bolt" />
           <span>{{ t('ribbon.startNow') }}</span>
         </div>
       </div>
@@ -820,7 +816,7 @@
         @click.stop
       >
         <div class="menu-opt" @click="handleStopAll">
-          <span class="material-icons">pause_circle_outline</span>
+          <FluentIcon name="pause_circle_outline" />
           <span>{{ t('toolbar.pauseAll') }}</span>
         </div>
       </div>
@@ -833,7 +829,7 @@
         @click.stop
       >
         <div class="menu-opt text-danger" @click="handleRemove(true)">
-          <span class="material-icons">delete_forever</span>
+          <FluentIcon name="delete_forever" />
           <span>{{ t('ribbon.deleteWithData') }}</span>
         </div>
       </div>
@@ -846,15 +842,15 @@
         @click.stop
       >
         <div class="menu-opt" :class="{ active: currentLocale === 'zh-CN' }" @click="selectLocale('zh-CN')">
-          <span class="material-icons menu-check-ico" :style="{ visibility: currentLocale === 'zh-CN' ? 'visible' : 'hidden' }">check</span>
+          <FluentIcon name="check" class="menu-check-ico" :style="{ visibility: currentLocale === 'zh-CN' ? 'visible' : 'hidden' }" />
           <span>简体中文</span>
         </div>
         <div class="menu-opt" :class="{ active: currentLocale === 'en-US' }" @click="selectLocale('en-US')">
-          <span class="material-icons menu-check-ico" :style="{ visibility: currentLocale === 'en-US' ? 'visible' : 'hidden' }">check</span>
+          <FluentIcon name="check" class="menu-check-ico" :style="{ visibility: currentLocale === 'en-US' ? 'visible' : 'hidden' }" />
           <span>English</span>
         </div>
         <div class="menu-opt" :class="{ active: currentLocale === 'ru-RU' }" @click="selectLocale('ru-RU')">
-          <span class="material-icons menu-check-ico" :style="{ visibility: currentLocale === 'ru-RU' ? 'visible' : 'hidden' }">check</span>
+          <FluentIcon name="check" class="menu-check-ico" :style="{ visibility: currentLocale === 'ru-RU' ? 'visible' : 'hidden' }" />
           <span>Русский</span>
         </div>
       </div>
@@ -1117,7 +1113,30 @@ function toggleRibbonCollapse() {
 }
 
 // 快捷键 Ctrl+F1 折叠/展开
+function onGlobalClick(e: MouseEvent) {
+  if (!menus.start && !menus.stop && !menus.delete && !menus.lang && !menus.columns) {
+    return;
+  }
+  const target = e.target as HTMLElement | null;
+  if (!target) return;
+  if (target.closest('.fluent-dropdown-menu')) {
+    return;
+  }
+  if (
+    target.closest('.split-arrow-btn') ||
+    target.closest('.lang-dropdown-wrapper') ||
+    target.closest('.fluent-btn-small')
+  ) {
+    return;
+  }
+  closeAllMenus();
+}
+
 function handleKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    closeAllMenus();
+    return;
+  }
   if (e.ctrlKey && e.key === 'F1') {
     e.preventDefault();
     toggleRibbonCollapse();
@@ -1126,10 +1145,12 @@ function handleKeyDown(e: KeyboardEvent) {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('click', onGlobalClick, true);
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('click', onGlobalClick, true);
 });
 
 // 操作函数
@@ -1726,15 +1747,15 @@ function onLocaleChange(e: Event) {
    Microsoft Word / Fluent Ribbon 激活高亮规范 (Toggle Active)
    ========================================================= */
 
-/* 1. 图三：详情按钮与小型 Toggle 按钮激活状态 */
+/* 1. 图三：详情按钮与小型 Toggle 按钮激活状态 (对齐 Word Ribbon 激活状态：细腻底色 + 微边框，无内凹阴影) */
 .btn-selected,
 .fluent-btn-small.active,
 .fluent-toggle-btn.active,
 .limit-toggle-pill.active {
-  background-color: rgba(0, 0, 0, 0.08) !important;
-  border-color: rgba(0, 0, 0, 0.24) !important;
+  background-color: rgba(0, 0, 0, 0.07) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
   color: var(--md-text-primary) !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: none !important;
   font-weight: 500;
 }
 
@@ -1745,7 +1766,7 @@ function onLocaleChange(e: Event) {
   background-color: rgba(255, 255, 255, 0.12) !important;
   border-color: rgba(255, 255, 255, 0.28) !important;
   color: var(--md-text-primary) !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: none !important;
 }
 
 /* 2. 图二：视图与首选项中的 Toggle 按钮基础样式 */

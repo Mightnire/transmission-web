@@ -20,7 +20,7 @@
         <div class="header-main">
           <div class="pill-row">
             <span class="status-pill" :class="statusClass">
-              <span class="material-icons pill-icon">{{ statusIcon }}</span>
+              <FluentIcon :name="statusIcon" class="pill-icon" />
               <span class="pill-text">{{ statusText }}</span>
             </span>
             <span
@@ -28,7 +28,7 @@
               v-if="torrent.corruptEver > 0"
               :title="t('table.corruptTitle', { size: formatBytes(torrent.corruptEver) })"
             >
-              <span class="material-icons pill-icon">warning</span>
+              <FluentIcon name="warning" class="pill-icon" />
               <span>{{ t('common.corrupt') }}: {{ formatBytes(torrent.corruptEver) }}</span>
             </span>
           </div>
@@ -66,7 +66,7 @@
 
           <div class="metric-group-right">
             <span class="metric-eta" v-if="torrent.eta > 0 && !isPaused && torrent.percentDone < 1">
-              <span class="material-icons mini-icon">schedule</span>
+              <FluentIcon name="schedule" class="mini-icon" />
               {{ formatETA(torrent.eta) }}
             </span>
             <span class="metric-ratio" v-else-if="torrent.percentDone >= 1">
@@ -88,7 +88,7 @@
 
           <div class="metric-peers">
             <span class="peers-badge" :title="`${torrent.peersGettingFromUs} ↑ / ${torrent.peersSendingToUs} ↓`">
-              <span class="material-icons mini-icon">group</span>
+              <FluentIcon name="group" class="mini-icon" />
               {{ t('common.peers') }}: {{ torrent.peersConnected }}
             </span>
             <span class="metric-ratio-downloading" v-if="torrent.percentDone < 1">
@@ -100,7 +100,7 @@
 
       <!-- 异常报警条 (仅存在错误时显示) -->
       <div class="error-notice" v-if="torrent.error !== 0">
-        <span class="material-icons mini-icon">error_outline</span>
+        <FluentIcon name="error_outline" class="mini-icon" />
         <span class="error-text">{{ torrent.errorString || t('sidebar.errors') }}</span>
       </div>
 
@@ -113,7 +113,7 @@
           @click="togglePlay"
           :title="isPaused ? t('common.start') : t('common.pause')"
         >
-          <span class="material-icons btn-icon">{{ isPaused ? 'play_arrow' : 'pause' }}</span>
+          <FluentIcon :name="isPaused ? 'play_arrow' : 'pause'" class="btn-icon" />
           <span>{{ isPaused ? t('common.start') : t('common.pause') }}</span>
         </button>
 
@@ -123,7 +123,7 @@
           @click="openDetail"
           :title="t('common.details')"
         >
-          <span class="material-icons btn-icon">info</span>
+          <FluentIcon name="info" class="btn-icon" />
           <span>{{ t('common.details') }}</span>
         </button>
 
@@ -133,7 +133,7 @@
           @click="openProps"
           :title="t('ribbon.tabs.torrentProps')"
         >
-          <span class="material-icons btn-icon">tune</span>
+          <FluentIcon name="tune" class="btn-icon" />
           <span>{{ t('common.properties') }}</span>
         </button>
 
@@ -143,7 +143,7 @@
           @click="removeTorrent"
           :title="t('common.delete')"
         >
-          <span class="material-icons btn-icon">delete_outline</span>
+          <FluentIcon name="delete_outline" class="btn-icon" />
         </button>
       </div>
     </div>
