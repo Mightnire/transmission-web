@@ -42,11 +42,6 @@
           <circle :cx="lastX" :cy="lastUpY" r="3.5" class="series-dot up-dot" />
         </template>
 
-        <g class="chart-time-labels" v-if="points.length >= 2">
-          <text v-for="label in timeLabels" :key="label.x" :x="label.x" :y="H - 8" :text-anchor="label.anchor">
-            {{ label.text }}
-          </text>
-        </g>
       </svg>
 
       <div class="chart-empty" v-if="points.length < 2">
@@ -71,18 +66,51 @@ const H = 260;
 const PL = 64;
 const PR = 16;
 const PT = 14;
-const PB = 28;
+const PB = 16;
 const plotW = W - PL - PR;
 const plotH = H - PT - PB;
 
 const lastDown = computed(() => props.points[props.points.length - 1]?.down || 0);
 const lastUp = computed(() => props.points[props.points.length - 1]?.up || 0);
 
-const maxValue = computed(() => {
+interface AxisUnit {
+  label: string;
+  div: number;
+}
+
+const AXIS_UNITS: AxisUnit[] = [
+  { label: 'B/s', div: 1 },
+  { label: 'KB/s', div: 1024 },
+  { label: 'MB/s', div: 1024 ** 2 },
+  { label: 'GB/s', div: 1024 ** 3 },
+];
+
+function niceIntegerStep(raw: number): number {
+  if (!Number.isFinite(raw) || raw <= 1) return 1;
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  const normalized = raw / magnitude;
+  const nice = normalized <= 1 ? 1 : normalized <= 1.5 ? 1.5 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  return Math.max(1, Math.round(nice * magnitude));
+}
+
+const yAxis = computed(() => {
   const peak = props.points.reduce((max, point) => Math.max(max, point.down, point.up), 0);
-  // 最小刻度到 1 KB/s，避免低速时出现 0.25 B/s 这类无意义刻度
-  return Math.max(1024, peak * 1.12);
+  const target = Math.max(1024, peak * 1.12);
+
+  // 选择能让 4 个刻度都保持整数的最大单位；例如 1.5 MB/s 用 KB/s，
+  // 避免出现 0.4 MB/s 这类小数刻度。
+  let unit = AXIS_UNITS[0];
+  for (const candidate of AXIS_UNITS) {
+    if (target / candidate.div >= 4) unit = candidate;
+    else break;
+  }
+
+  const step = niceIntegerStep(target / unit.div / 4);
+  const max = step * 4 * unit.div;
+  return { unit, step, max };
 });
+
+const maxValue = computed(() => yAxis.value.max);
 
 function xAt(index: number): number {
   if (props.points.length <= 1) return PL + plotW;
@@ -97,12 +125,13 @@ const lastX = computed(() => xAt(props.points.length - 1));
 const lastDownY = computed(() => yAt(lastDown.value));
 const lastUpY = computed(() => yAt(lastUp.value));
 
-const gridLines = computed(() =>
-  [0, 0.25, 0.5, 0.75, 1].map((ratio) => ({
-    y: PT + plotH - ratio * plotH,
-    label: formatSpeed(maxValue.value * ratio),
-  }))
-);
+const gridLines = computed(() => {
+  const { unit, step } = yAxis.value;
+  return [0, 1, 2, 3, 4].map((index) => ({
+    y: PT + plotH - (index / 4) * plotH,
+    label: index === 0 ? '0 B/s' : `${step * index} ${unit.label}`,
+  }));
+});
 
 function polylineFor(key: 'down' | 'up'): string {
   return props.points.map((point, index) => `${xAt(index)},${yAt(point[key])}`).join(' ');
@@ -121,29 +150,6 @@ function areaFor(key: 'down' | 'up'): string {
 const downArea = computed(() => areaFor('down'));
 const upArea = computed(() => areaFor('up'));
 
-const timeLabels = computed(() => {
-  if (props.points.length < 2) return [];
-  const firstTime = props.points[0].time;
-  const lastTime = props.points[props.points.length - 1].time;
-  const span = Math.max(1, lastTime - firstTime);
-
-  if (span < 10000) {
-    return [{ x: PL + plotW, anchor: 'end', text: t('backstage.current') }];
-  }
-
-  const offsetLabel = (offsetMs: number) => {
-    if (offsetMs < 60000) {
-      return `${Math.max(1, Math.round(offsetMs / 1000))}${t('common.sec')}`;
-    }
-    return `${Math.max(1, Math.round(offsetMs / 60000))}${t('common.min')}`;
-  };
-
-  return [0, 0.5, 1].map((position, index) => ({
-    x: PL + position * plotW,
-    anchor: index === 0 ? 'start' : index === 2 ? 'end' : 'middle',
-    text: index === 2 ? t('backstage.current') : `-${offsetLabel(span * (1 - position))}`,
-  }));
-});
 </script>
 
 <style scoped>
@@ -208,8 +214,7 @@ const timeLabels = computed(() => {
   stroke-width: 1;
 }
 
-.chart-grid text,
-.chart-time-labels text {
+.chart-grid text {
   fill: var(--md-text-secondary);
   font-size: 19px;
 }
@@ -264,8 +269,7 @@ const timeLabels = computed(() => {
     height: 180px;
   }
 
-  .chart-grid text,
-  .chart-time-labels text {
+  .chart-grid text {
     font-size: 34px;
   }
 }
