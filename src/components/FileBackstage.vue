@@ -45,10 +45,6 @@
               <span>{{ t('backstage.about') }}</span>
             </button>
           </nav>
-
-          <div class="nav-footer">
-            <span>{{ t('backstage.versionLine', { version: appVersion }) }}</span>
-          </div>
         </aside>
 
         <!-- 右侧内容区 -->
@@ -71,13 +67,8 @@
                   <TransmissionLogo :size="58" />
                   <div>
                     <h2>Transmission Web</h2>
-                    <p>{{ t('backstage.versionLine', { version: appVersion }) }}</p>
                   </div>
                 </div>
-                <span class="conn-badge" :class="{ online: connected }">
-                  <i></i>
-                  {{ connected ? t('backstage.connected') : t('backstage.disconnected') }}
-                </span>
               </div>
 
               <div class="stat-cards">
@@ -103,35 +94,15 @@
                 </div>
               </div>
 
-              <div class="backstage-grid">
-                <div class="panel chart-panel">
-                  <div class="panel-head">
-                    <div>
-                      <h3>{{ t('backstage.chartTitle') }}</h3>
-                      <p>{{ t('backstage.chartWindow') }}</p>
-                    </div>
-                    <FluentIcon name="insights" class="panel-icon text-accent" />
+              <div class="panel chart-panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>{{ t('backstage.chartTitle') }}</h3>
+                    <p>{{ t('backstage.chartWindow') }}</p>
                   </div>
-                  <SpeedChart :points="state.speedHistory" />
+                  <FluentIcon name="insights" class="panel-icon text-accent" />
                 </div>
-
-                <div class="panel">
-                  <div class="panel-head">
-                    <div>
-                      <h3>{{ t('backstage.overview') }}</h3>
-                      <p>{{ t('backstage.overviewDesc') }}</p>
-                    </div>
-                  </div>
-                  <div class="status-bars">
-                    <div class="status-bar-row" v-for="bar in statusBars" :key="bar.label">
-                      <span class="status-bar-label">{{ bar.label }}</span>
-                      <div class="status-bar-track">
-                        <div class="status-bar-fill" :style="{ width: `${bar.pct}%`, backgroundColor: bar.color }"></div>
-                      </div>
-                      <span class="status-bar-value">{{ bar.value }}</span>
-                    </div>
-                  </div>
-                </div>
+                <SpeedChart :points="state.speedHistory" />
               </div>
 
               <div class="quick-actions-panel">
@@ -218,36 +189,21 @@
                 </div>
               </div>
 
-              <div class="backstage-grid two">
-                <div class="panel">
-                  <h3>{{ t('backstage.overview') }}</h3>
-                  <div class="status-bars">
-                    <div class="status-bar-row" v-for="bar in statusBars" :key="bar.label">
-                      <span class="status-bar-label">{{ bar.label }}</span>
-                      <div class="status-bar-track">
-                        <div class="status-bar-fill" :style="{ width: `${bar.pct}%`, backgroundColor: bar.color }"></div>
-                      </div>
-                      <span class="status-bar-value">{{ bar.value }}</span>
-                    </div>
+              <div class="panel storage-panel">
+                <h3>{{ t('backstage.storage') }}</h3>
+                <p class="storage-path" :title="downloadDir">{{ downloadDir }}</p>
+                <div class="mini-metrics">
+                  <div class="mini-metric">
+                    <span>{{ t('backstage.torrents') }}</span>
+                    <strong>{{ state.torrents.length }}</strong>
                   </div>
-                </div>
-
-                <div class="panel">
-                  <h3>{{ t('backstage.storage') }}</h3>
-                  <p class="storage-path" :title="downloadDir">{{ downloadDir }}</p>
-                  <div class="mini-metrics">
-                    <div class="mini-metric">
-                      <span>{{ t('backstage.torrents') }}</span>
-                      <strong>{{ state.torrents.length }}</strong>
-                    </div>
-                    <div class="mini-metric">
-                      <span>{{ t('backstage.labels') }}</span>
-                      <strong>{{ labelCount }}</strong>
-                    </div>
-                    <div class="mini-metric">
-                      <span>{{ t('backstage.trackers') }}</span>
-                      <strong>{{ trackerCount }}</strong>
-                    </div>
+                  <div class="mini-metric">
+                    <span>{{ t('backstage.labels') }}</span>
+                    <strong>{{ labelCount }}</strong>
+                  </div>
+                  <div class="mini-metric">
+                    <span>{{ t('backstage.trackers') }}</span>
+                    <strong>{{ trackerCount }}</strong>
                   </div>
                 </div>
               </div>
@@ -312,8 +268,6 @@ const appVersion = __APP_VERSION__;
 type BackstageTab = 'info' | 'stats' | 'about';
 const activeTab = ref<BackstageTab>('info');
 
-const connected = computed(() => !!state.session);
-
 const counts = computed(() => {
   const result = { downloading: 0, seeding: 0, paused: 0, queued: 0, checking: 0, errors: 0, finished: 0 };
   for (const torrent of state.torrents) {
@@ -343,18 +297,6 @@ const counts = computed(() => {
   return result;
 });
 
-const statusBars = computed(() => {
-  const raw = [
-    { label: t('sidebar.downloading'), value: counts.value.downloading, color: '#0078d4' },
-    { label: t('sidebar.seeding'), value: counts.value.seeding, color: '#2e7d32' },
-    { label: t('sidebar.queued'), value: counts.value.queued, color: '#ffb900' },
-    { label: t('sidebar.paused'), value: counts.value.paused, color: '#8a8886' },
-    { label: t('sidebar.errors'), value: counts.value.errors, color: '#d32f2f' },
-  ];
-  const max = Math.max(1, ...raw.map((item) => item.value));
-  return raw.map((item) => ({ ...item, pct: (item.value / max) * 100 }));
-});
-
 const labelCount = computed(() => {
   const set = new Set<string>();
   for (const torrent of state.torrents) {
@@ -380,9 +322,9 @@ const activeTabTitle = computed(() => {
 });
 
 const activeTabSubtitle = computed(() => {
-  if (activeTab.value === 'stats') return t('backstage.overviewDesc');
+  if (activeTab.value === 'stats') return t('backstage.statsSubtitle');
   if (activeTab.value === 'about') return t('backstage.aboutDesc');
-  return t('backstage.versionLine', { version: appVersion });
+  return t('backstage.infoSubtitle');
 });
 
 function handleAdd() {
@@ -529,14 +471,6 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-.nav-footer {
-  margin-top: auto;
-  padding: 12px 18px 0;
-  font-size: 10px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.62);
-}
-
 .backstage-main {
   flex: 1;
   min-width: 0;
@@ -617,37 +551,6 @@ onUnmounted(() => {
   color: var(--md-text-primary);
 }
 
-.hero-brand p {
-  font-size: 12px;
-  color: var(--md-text-secondary);
-  margin-top: 2px;
-}
-
-.conn-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 12px;
-  background: rgba(211, 47, 47, 0.1);
-  color: #d32f2f;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.conn-badge i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.conn-badge.online {
-  background: rgba(46, 125, 50, 0.12);
-  color: #2e7d32;
-}
-
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -725,45 +628,6 @@ onUnmounted(() => {
 
 .panel-icon {
   font-size: 18px;
-}
-
-.status-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 2px;
-}
-
-.status-bar-row {
-  display: grid;
-  grid-template-columns: 88px 1fr 28px;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-}
-
-.status-bar-label {
-  color: var(--md-text-secondary);
-  white-space: nowrap;
-}
-
-.status-bar-track {
-  height: 7px;
-  border-radius: 4px;
-  background: var(--fluent-bg-subtle);
-  overflow: hidden;
-}
-
-.status-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.status-bar-value {
-  text-align: right;
-  font-weight: 600;
-  color: var(--md-text-primary);
 }
 
 .quick-actions-panel {
@@ -1030,10 +894,6 @@ onUnmounted(() => {
     gap: 10px;
   }
 
-  .conn-badge {
-    align-self: flex-start;
-  }
-
   .hero-brand h2 {
     font-size: 17px;
   }
@@ -1048,15 +908,6 @@ onUnmounted(() => {
 
   .stat-value {
     font-size: 16px;
-  }
-
-  .conn-badge {
-    font-size: 10px;
-    padding: 4px 8px;
-  }
-
-  .status-bar-row {
-    grid-template-columns: 76px 1fr 24px;
   }
 }
 </style>

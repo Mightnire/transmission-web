@@ -22,7 +22,7 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
   - 所有下拉菜单通过 `Teleport` 挂载到 `body`，不被 Ribbon 的 `overflow` 裁剪；支持点击空白处、按 `Esc` 关闭。
 - **Office 2016 全屏「文件」菜单（Backstage）**
   - 点击 `文件` 不再是窄下拉菜单，而是打开 Office 2016 风格的全屏 Backstage：左侧深红导航，右侧信息面板。
-  - `信息`：连接状态、实时上下行速度、活动/完成任务数、实时速度曲线、任务状态分布、存储位置与快捷操作。
+  - `信息`：实时上下行速度、活动/完成任务数、实时速度曲线与快捷操作。
   - `统计`：类似 BiglyBT 的实时下载/上传速度面积图（最近 6 分钟），以及本次会话 / 历史累计统计和任务构成。
   - `关于`：Web UI / Transmission 核心 / RPC 版本、离线状态、MIT 协议与仓库入口。
 - **批量标签（Batch Labels）**
