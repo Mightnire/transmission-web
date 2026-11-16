@@ -45,6 +45,8 @@ export interface TorrentFileStat {
 
 export interface TorrentPeer {
   address: string;
+  bytesToClient?: number;
+  bytesToPeer?: number;
   clientName: string;
   clientIsChoked: boolean;
   clientIsInterested: boolean;

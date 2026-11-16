@@ -11,6 +11,9 @@
       </span>
 
       <div class="file-tree-actions">
+        <span class="file-tree-selection" v-if="selectedFileCount > 0">
+          {{ t('fileTree.selectedFiles', { count: selectedFileCount }) }}
+        </span>
         <label class="batch-priority" :title="t('fileTree.batchPriorityHint')">
           <span>{{ t('fileTree.batchPriority') }}</span>
           <select v-model.number="batchPriority" class="priority-select batch-priority-select" :class="priorityClass(batchPriority)">
@@ -22,14 +25,10 @@
         <button
           class="batch-apply-btn"
           @click="applyBatchPriority"
-          :disabled="selectedCount === 0"
+          :disabled="selectedFileCount === 0"
           :title="t('fileTree.batchPriorityHint')"
         >
           {{ t('fileTree.applyPriority') }}
-        </button>
-        <span class="file-tree-divider"></span>
-        <button class="md-btn md-btn-flat" @click="toggleSelectAll" style="height: 28px; font-size: 11px;">
-          {{ isAllSelected ? t('fileTree.deselectAll') : t('fileTree.selectAll') }}
         </button>
       </div>
     </div>
@@ -42,13 +41,26 @@
           :style="{ paddingLeft: `${node.depth * 20 + 16}px` }"
           :class="{
             'is-dir': node.isDir,
-            'is-wanted': isNodeWanted(node),
+            'file-selected': isNodeSelected(node),
             'prio-high': !node.isDir && nodePriority(node) === 1,
             'prio-low': !node.isDir && nodePriority(node) === -1,
           }"
+          @click="toggleNodeSelection(node, $event)"
+          @contextmenu.prevent.stop="openNodeMenu($event, node)"
         >
+          <!-- 当前层级的树形引导线 -->
+          <span class="tree-guides" aria-hidden="true" v-if="node.depth > 0">
+            <span
+              v-for="(last, index) in node.ancestorLast"
+              :key="`guide-${index}`"
+              class="guide-col guide-ancestor"
+              :class="{ 'guide-stop': last }"
+            ></span>
+            <span class="guide-col guide-current" :class="{ 'guide-stop': node.isLast }"></span>
+          </span>
+
           <!-- 折叠展开图标 (目录专用) -->
-          <FluentIcon :name="isCollapsed(node.path) ? 'chevron_right' : 'expand_more'" class="expand-icon" v-if="node.isDir" @click="toggleCollapse(node.path)" />
+          <FluentIcon :name="isCollapsed(node.path) ? 'chevron_right' : 'expand_more'" class="expand-icon" v-if="node.isDir" @click.stop="toggleCollapse(node.path)" />
           <span class="expand-placeholder" v-else></span>
 
           <!-- 勾选框（勾选 = 下载此文件） -->
@@ -57,6 +69,7 @@
             class="tree-checkbox"
             :checked="isNodeWanted(node)"
             :title="t('fileTree.wantedHint')"
+            @click.stop
             @change="onCheckChange(node, $event)"
           />
 
@@ -64,7 +77,14 @@
           <FluentIcon :name="node.isDir ? (isCollapsed(node.path) ? 'folder' : 'folder_open') : 'insert_drive_file'" class="node-type-icon" />
 
           <!-- 名称 -->
-          <span class="node-name" :title="node.name">{{ node.name }}</span>
+          <span
+            class="node-name"
+            :class="{
+              'name-prio-high': !node.isDir && nodePriority(node) === 1,
+              'name-prio-low': !node.isDir && nodePriority(node) === -1,
+            }"
+            :title="node.name"
+          >{{ node.name }}</span>
 
           <!-- 文件大小与进度条 -->
           <div class="node-meta">
@@ -88,6 +108,7 @@
               class="priority-select"
               :class="priorityClass(nodePriority(node))"
               :value="fileStats[node.fileIndex!]?.priority ?? 0"
+              @click.stop
               @change="changePriority(node.fileIndex!, $event)"
             >
               <option :value="1">{{ t('fileTree.priorityHigh') }}</option>
@@ -99,10 +120,48 @@
       </template>
     </div>
   </div>
+
+  <Teleport to="body">
+    <div
+      class="file-context-menu"
+      v-if="contextMenu.open && contextNode"
+      :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }"
+      @click.stop
+      @contextmenu.prevent
+    >
+      <div class="context-menu-title" :title="contextNode.name">{{ contextNode.name }}</div>
+      <button class="context-menu-item" @click="contextRename">
+        <FluentIcon name="edit" />
+        <span>{{ t('fileTree.menuRename') }}</span>
+      </button>
+      <button class="context-menu-item" @click="contextToggleWanted">
+        <FluentIcon :name="isNodeWanted(contextNode) ? 'remove' : 'check_circle'" />
+        <span>{{ isNodeWanted(contextNode) ? t('fileTree.menuUnwanted') : t('fileTree.menuWanted') }}</span>
+      </button>
+      <div class="context-menu-divider"></div>
+      <button class="context-menu-item" @click="contextSetPriority(Priority.HIGH)">
+        <FluentIcon name="priority_high" class="name-prio-high" />
+        <span>{{ t('fileTree.menuHigh') }}</span>
+      </button>
+      <button class="context-menu-item" @click="contextSetPriority(Priority.NORMAL)">
+        <FluentIcon name="remove" />
+        <span>{{ t('fileTree.menuNormal') }}</span>
+      </button>
+      <button class="context-menu-item" @click="contextSetPriority(Priority.LOW)">
+        <FluentIcon name="arrow_downward" class="name-prio-low" />
+        <span>{{ t('fileTree.menuLow') }}</span>
+      </button>
+      <div class="context-menu-divider"></div>
+      <button class="context-menu-item" @click="contextCopyName">
+        <FluentIcon name="content_copy" />
+        <span>{{ t('fileTree.menuCopyName') }}</span>
+      </button>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, reactive, onMounted, onUnmounted } from 'vue';
 import { TorrentFile, TorrentFileStat, Priority } from '../api/types';
 import { state, fetchTorrents, formatBytes, openPrompt, showToast } from '../stores/transmission';
 import { t } from '../locales';
@@ -130,6 +189,105 @@ const collapsedSet = ref<Set<string>>(
 
 const batchPriority = ref<Priority>(Priority.NORMAL);
 
+// 独立的多选集合：用于批量操作，与“勾选=下载此文件”完全解耦
+const selectedFiles = ref<Set<number>>(new Set());
+const selectedFileCount = computed(() => selectedFiles.value.size);
+
+const contextMenu = reactive({ open: false, x: 0, y: 0 });
+const contextNode = ref<TreeNode | null>(null);
+
+function nodeFileIndices(node: TreeNode): number[] {
+  if (!node.isDir) return node.fileIndex !== undefined ? [node.fileIndex] : [];
+  const prefix = node.path + '/';
+  return props.files
+    .map((file, index) => (file.name.startsWith(prefix) ? index : -1))
+    .filter((index) => index >= 0);
+}
+
+function isNodeSelected(node: TreeNode): boolean {
+  const indices = nodeFileIndices(node);
+  return indices.length > 0 && indices.every((index) => selectedFiles.value.has(index));
+}
+
+function toggleNodeSelection(node: TreeNode, event: MouseEvent) {
+  const indices = nodeFileIndices(node);
+  if (indices.length === 0) return;
+
+  const additive = event.ctrlKey || event.metaKey;
+  const allSelected = indices.every((index) => selectedFiles.value.has(index));
+  const next = new Set(additive ? selectedFiles.value : []);
+
+  if (allSelected) {
+    for (const index of indices) next.delete(index);
+  } else {
+    for (const index of indices) next.add(index);
+  }
+
+  selectedFiles.value = next;
+}
+
+function openNodeMenu(event: MouseEvent, node: TreeNode) {
+  if (!isNodeSelected(node)) {
+    selectedFiles.value = new Set(nodeFileIndices(node));
+  }
+  contextNode.value = node;
+  contextMenu.x = Math.min(event.clientX, window.innerWidth - 220);
+  contextMenu.y = Math.min(event.clientY, window.innerHeight - 280);
+  contextMenu.open = true;
+}
+
+function closeContextMenu() {
+  contextMenu.open = false;
+  contextNode.value = null;
+}
+
+function contextRename() {
+  const node = contextNode.value;
+  closeContextMenu();
+  if (node) renamePath(node);
+}
+
+async function contextToggleWanted() {
+  const node = contextNode.value;
+  closeContextMenu();
+  if (!node) return;
+  const wanted = !isNodeWanted(node);
+  const indices = nodeFileIndices(node);
+  if (indices.length === 0) return;
+  await rpc.setFileWanted(props.torrentId, wanted ? indices : [], wanted ? [] : indices);
+  await refreshDetail();
+}
+
+async function contextSetPriority(priority: Priority) {
+  const node = contextNode.value;
+  closeContextMenu();
+  if (!node) return;
+  const indices = nodeFileIndices(node);
+  if (indices.length === 0) return;
+  await rpc.setFilePriority(props.torrentId, priority, indices);
+  showToast(t('fileTree.priorityApplied'), 'success');
+  await refreshDetail();
+}
+
+async function contextCopyName() {
+  const node = contextNode.value;
+  closeContextMenu();
+  if (!node) return;
+  try {
+    await navigator.clipboard.writeText(node.name);
+    showToast(t('fileTree.copied'), 'success');
+  } catch {
+    showToast(t('toast.copyFailed'), 'error');
+  }
+}
+
+function onGlobalClick() {
+  if (contextMenu.open) closeContextMenu();
+}
+
+onMounted(() => window.addEventListener('click', onGlobalClick));
+onUnmounted(() => window.removeEventListener('click', onGlobalClick));
+
 function nodePriority(node: TreeNode): Priority {
   if (node.isDir || node.fileIndex === undefined) return Priority.NORMAL;
   return (props.fileStats[node.fileIndex]?.priority ?? Priority.NORMAL) as Priority;
@@ -154,10 +312,7 @@ async function refreshDetail() {
 }
 
 async function applyBatchPriority() {
-  const indices = props.fileStats
-    .map((stat, index) => (stat.wanted ? index : -1))
-    .filter((index) => index >= 0);
-
+  const indices = Array.from(selectedFiles.value);
   if (indices.length === 0) return;
 
   await rpc.setFilePriority(props.torrentId, batchPriority.value, indices);
@@ -217,6 +372,8 @@ interface TreeNode {
   progress: number;
   wanted: boolean;
   depth: number;
+  isLast: boolean;
+  ancestorLast: boolean[];
   fileIndex?: number;
   children?: TreeNode[];
 }
@@ -254,6 +411,8 @@ const treeRoot = computed(() => {
             progress: isFile && f.length > 0 ? f.bytesCompleted / f.length : 0,
             wanted: isFile ? (props.fileStats[idx]?.wanted ?? true) : true,
             depth: i,
+            isLast: false,
+            ancestorLast: [],
             fileIndex: isFile ? idx : undefined,
           },
           children: {},
@@ -273,13 +432,16 @@ const treeRoot = computed(() => {
 
       let size = 0;
       let completed = 0;
+      let allWanted = true;
       for (const child of Object.values(item.children)) {
         size += child.node.size;
         completed += child.node.completedBytes;
+        allWanted = allWanted && child.node.wanted;
       }
       item.node.size = size;
       item.node.completedBytes = completed;
       item.node.progress = size > 0 ? completed / size : 0;
+      item.node.wanted = allWanted;
     }
   }
 
@@ -288,17 +450,23 @@ const treeRoot = computed(() => {
   // 递归展平列表并应用折叠过滤
   const flatList: TreeNode[] = [];
 
-  function traverse(dir: DirMap, isParentCollapsed = false) {
-    for (const key of Object.keys(dir)) {
+  function traverse(dir: DirMap, isParentCollapsed = false, ancestorLast: boolean[] = []) {
+    const keys = Object.keys(dir);
+    keys.forEach((key, index) => {
       const item = dir[key];
+      const isLast = index === keys.length - 1;
+      item.node.isLast = isLast;
+      item.node.ancestorLast = ancestorLast;
       if (!isParentCollapsed) {
         flatList.push(item.node);
       }
       const selfCollapsed = isParentCollapsed || isCollapsed(item.node.path);
       if (item.node.isDir) {
-        traverse(item.children, selfCollapsed);
+        // 根节点本身不画引导线，因此 depth 0 的子节点从空祖先链开始
+        const nextAncestors = item.node.depth === 0 ? [] : [...ancestorLast, isLast];
+        traverse(item.children, selfCollapsed, nextAncestors);
       }
-    }
+    });
   }
 
   traverse(root, false);
@@ -318,24 +486,6 @@ const totalSelectedBytes = computed(() => {
 const selectedCount = computed(() => {
   return props.fileStats.filter((st) => st.wanted).length;
 });
-
-const isAllSelected = computed(() => {
-  return selectedCount.value === props.files.length;
-});
-
-async function toggleSelectAll() {
-  const newWanted = !isAllSelected.value;
-  const wantedIndices: number[] = [];
-  const unwantedIndices: number[] = [];
-
-  props.files.forEach((_, idx) => {
-    if (newWanted) wantedIndices.push(idx);
-    else unwantedIndices.push(idx);
-  });
-
-  await rpc.setFileWanted(props.torrentId, wantedIndices, unwantedIndices);
-  await refreshDetail();
-}
 
 async function onCheckChange(node: TreeNode, e: Event) {
   const target = e.target as HTMLInputElement;
@@ -443,6 +593,13 @@ async function changePriority(index: number, e: Event) {
   cursor: not-allowed;
 }
 
+.file-tree-selection {
+  font-size: 11px;
+  color: var(--fluent-accent);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .file-tree-divider {
   width: 1px;
   height: 18px;
@@ -456,6 +613,7 @@ async function changePriority(index: number, e: Event) {
 }
 
 .tree-row {
+  position: relative;
   display: flex;
   align-items: center;
   height: 34px;
@@ -469,20 +627,20 @@ async function changePriority(index: number, e: Event) {
   background-color: var(--fluent-bg-hover);
 }
 
-.tree-row.is-wanted {
-  background-color: rgba(0, 120, 212, 0.055);
+.tree-row.file-selected {
+  background-color: rgba(0, 120, 212, 0.08);
 }
 
-.tree-row.is-wanted:hover {
-  background-color: rgba(0, 120, 212, 0.1);
+.tree-row.file-selected:hover {
+  background-color: rgba(0, 120, 212, 0.13);
 }
 
-[data-theme="dark"] .tree-row.is-wanted {
-  background-color: rgba(40, 134, 222, 0.16);
+[data-theme="dark"] .tree-row.file-selected {
+  background-color: rgba(40, 134, 222, 0.18);
 }
 
-[data-theme="dark"] .tree-row.is-wanted:hover {
-  background-color: rgba(40, 134, 222, 0.24);
+[data-theme="dark"] .tree-row.file-selected:hover {
+  background-color: rgba(40, 134, 222, 0.26);
 }
 
 .tree-row.is-dir {
@@ -495,6 +653,51 @@ async function changePriority(index: number, e: Event) {
 
 .tree-row.prio-low {
   box-shadow: inset 3px 0 0 #0078d4;
+}
+
+/* Windows Explorer 风格层级引导线 */
+.tree-guides {
+  position: absolute;
+  left: 16px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  pointer-events: none;
+}
+
+.guide-col {
+  position: relative;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.guide-col::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--fluent-border-divider);
+}
+
+.guide-ancestor.guide-stop::before {
+  display: none;
+}
+
+.guide-current.guide-stop::before {
+  display: block;
+  bottom: 50%;
+}
+
+.guide-current::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background: var(--fluent-border-divider);
 }
 
 .expand-icon {
@@ -525,6 +728,16 @@ async function changePriority(index: number, e: Event) {
   overflow: hidden;
   text-overflow: ellipsis;
   margin-right: 12px;
+}
+
+.node-name.name-prio-high {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.node-name.name-prio-low {
+  color: #0078d4;
+  font-weight: 600;
 }
 
 .node-meta {
@@ -595,5 +808,52 @@ async function changePriority(index: number, e: Event) {
 .rename-file-btn:hover {
   color: var(--fluent-accent);
   background: var(--fluent-bg-hover);
+}
+
+.file-context-menu {
+  position: fixed;
+  width: 214px;
+  padding: 4px;
+  background: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-divider);
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  z-index: 100000;
+}
+
+.context-menu-title {
+  padding: 5px 9px 7px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  font-size: 11px;
+  color: var(--md-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 9px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--md-text-primary);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.context-menu-item:hover {
+  background: var(--fluent-bg-hover);
+}
+
+.context-menu-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--fluent-border-subtle);
 }
 </style>

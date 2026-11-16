@@ -84,6 +84,16 @@
 
       <button
         class="tab-item"
+        :class="{ active: currentTab === 'pieces' }"
+        @click="currentTab = 'pieces'"
+      >
+        <FluentIcon name="table_chart" class="tab-icon" />
+        <span>{{ t('detail.tabs.pieces') }}</span>
+        <span class="tab-badge" v-if="activeTorrent.pieceCount">({{ activeTorrent.pieceCount }})</span>
+      </button>
+
+      <button
+        class="tab-item"
         :class="{ active: currentTab === 'peers' }"
         @click="currentTab = 'peers'"
       >
@@ -273,7 +283,18 @@
         </div>
       </div>
 
-      <!-- 3. 节点列表 (Peers) -->
+      <!-- 3. 区块映射 (Piece Map，类似 BiglyBT) -->
+      <div v-else-if="currentTab === 'pieces'" class="tab-pane pieces-pane">
+        <PieceMap
+          :pieces="activeTorrent.pieces"
+          :availability="activeTorrent.availability"
+          :pieceCount="activeTorrent.pieceCount"
+          :pieceSize="activeTorrent.pieceSize"
+          :files="activeTorrent.files"
+        />
+      </div>
+
+      <!-- 4. 节点列表 (Peers) -->
       <div v-else-if="currentTab === 'peers'" class="tab-pane peers-pane">
         <div class="peer-source-bar" v-if="activeTorrent.peersFrom && (peerSources.length > 0 || activeTorrent.webseeds?.length)">
           <span class="peer-source-label">{{ t('detail.peers.sources') }}</span>
@@ -294,6 +315,10 @@
               <th>{{ t('detail.peers.colClient') }}</th>
               <th>{{ t('detail.peers.colDownSpeed') }}</th>
               <th>{{ t('detail.peers.colUpSpeed') }}</th>
+              <th>{{ t('detail.peers.colDownloaded') }}</th>
+              <th>{{ t('detail.peers.colUploaded') }}</th>
+              <th>{{ t('detail.peers.colEncrypted') }}</th>
+              <th>{{ t('detail.peers.colDirection') }}</th>
               <th>{{ t('detail.peers.colProgress') }}</th>
               <th>{{ t('detail.peers.colFlags') }}</th>
               <th>{{ t('detail.peers.colProtocol') }}</th>
@@ -305,6 +330,10 @@
               <td>{{ peer.clientName || t('detail.peers.unknownClient') }}</td>
               <td class="down-val">{{ peer.rateToClient > 0 ? formatSpeed(peer.rateToClient) : '—' }}</td>
               <td class="up-val">{{ peer.rateToPeer > 0 ? formatSpeed(peer.rateToPeer) : '—' }}</td>
+              <td>{{ peer.bytesToClient !== undefined ? formatBytes(peer.bytesToClient) : '—' }}</td>
+              <td>{{ peer.bytesToPeer !== undefined ? formatBytes(peer.bytesToPeer) : '—' }}</td>
+              <td>{{ peer.isEncrypted ? t('detail.peers.encrypted') : '—' }}</td>
+              <td>{{ peer.isIncoming ? t('detail.peers.incoming') : t('detail.peers.outgoing') }}</td>
               <td>{{ (peer.progress * 100).toFixed(1) }}%</td>
               <td class="monospace font-sm">{{ peer.flagStr || '—' }}</td>
               <td>{{ peer.isUTP ? 'uTP' : 'TCP' }}</td>
@@ -395,8 +424,9 @@ import { Priority } from '../api/types';
 import { t } from '../locales';
 import { rpc } from '../api/rpc';
 import FileTree from './FileTree.vue';
+import PieceMap from './PieceMap.vue';
 
-const currentTab = ref<'general' | 'files' | 'peers' | 'trackers'>('general');
+const currentTab = ref<'general' | 'files' | 'pieces' | 'peers' | 'trackers'>('general');
 
 const activeTorrent = computed(() => {
   if (state.activeTorrentDetail && state.activeTorrentDetail.id === state.selectedId) {
@@ -898,6 +928,7 @@ function handleSetLocation() {
 
 /* 文件树与 Tracker 表格铺满详情面板两端 */
 .files-pane,
+.pieces-pane,
 .peers-pane,
 .trackers-pane {
   padding: 0;

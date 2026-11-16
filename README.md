@@ -33,12 +33,17 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
 - **可调节的详情面板**
   - 详情面板默认高度更宽裕，可拖拽顶部手柄自由调整；标题栏左侧箭头在「紧凑 / 展开」之间切换，右侧 X 才真正关闭。
   - 文件树目录行的大小与进度由子文件聚合得出，不再显示无意义的 `0 B / 0%`。
-  - 文件树与种子列表同样铺满两端，勾选行使用统一的 Fluent 选中色；高/低优先级文件在左侧和下拉框中有独立颜色。
-  - 支持对已勾选（要下载）的文件**批量设置优先级**。
+  - 文件树与种子列表同样铺满两端，使用 Windows Explorer 风格的层级引导线；独立的多选机制与“勾选=下载”解耦。
+  - 文件/目录支持右键菜单：重命名、标记下载、高/普通/低优先级、复制名称。
+  - 高/低优先级文件会同时改变左侧色条、优先级下拉框和文件名颜色。
+  - 支持对**当前选中**的文件批量设置优先级（点击行选择，Ctrl 可多选）。
   - 详情页「扩展信息」展示元数据完成度、私有种子、传输停滞、文件数量与连接上限。
+- **BiglyBT 风格区块映射**
+  - 新增「区块映射」标签页：根据 `pieces` bitfield 与 `availability` 数组绘制每个 piece 的完成/缺失/可用副本热力图。
+  - 悬停显示区块编号、完成状态、可用副本、区块大小与所属文件；底部附颜色图例。
 - **更多 RPC 信息**
   - 统计页通过 `free-space` 显示下载目录可用空间（Transmission 4.x 还会显示总容量与使用进度条）。
-  - 节点页按 Tracker / DHT / PEX / LPD / LTEP / 入站 / 缓存 / 打洞 展示 Peer 来源。
+  - 节点页按 Tracker / DHT / PEX / LPD / LTEP / 入站 / 缓存 / 打洞 展示 Peer 来源，并新增已下载/已上传/加密/入站方向列。
   - 会话统计补充 `filesAdded` 与 `sessionCount`；种子表新增「元数据」「停滞」可选列。
 - **Tracker 状态与校验**
   - Tracker 结果在本地解析并着色：成功绿色、连接失败/访问拒绝红色、HTTP 429 等限流黄色、等待宣告灰色。
@@ -99,8 +104,8 @@ npm run build
 | 文件 | 原始 | gzip |
 | --- | --- | --- |
 | `index.html` | 1.1 kB | 0.6 kB |
-| `assets/index-*.css` | 100 kB | 15.2 kB |
-| `assets/index-*.js` | 363 kB | 109 kB |
+| `assets/index-*.css` | 105 kB | 15.9 kB |
+| `assets/index-*.js` | 376 kB | 113 kB |
 
 `base: './'` 使产物可以部署在任意子路径（如 `/transmission/web/`）下。
 
@@ -138,8 +143,9 @@ transmission-web-md1/
 │   │   ├── Drawer.vue             # 状态过滤、标签/Tracker 分组、会话统计
 │   │   ├── TorrentTable.vue       # 桌面端表格：排序、列宽拖拽、列显隐、右键菜单
 │   │   ├── TorrentCard.vue        # 移动端卡片视图
-│   │   ├── TorrentDetail.vue      # 可调高度的详情抽屉：概览、文件树、Peers、Trackers
-│   │   ├── FileTree.vue           # 可折叠文件树，目录大小/进度由子文件聚合
+│   │   ├── TorrentDetail.vue      # 可调高度的详情抽屉：概览、文件树、区块映射、Peers、Trackers
+│   │   ├── PieceMap.vue           # BiglyBT 风格 piece/availability 画布热力图
+│   │   ├── FileTree.vue           # 可折叠文件树：层级引导线、独立多选、右键菜单、目录聚合
 │   │   ├── BatchTagsDialog.vue    # 批量标签对话框
 │   │   ├── FluentActionDialogs.vue# 重命名/移动目录/删除确认/通用 Prompt+Confirm/Toast
 │   │   ├── AddDialog.vue          # 添加种子
