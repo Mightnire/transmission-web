@@ -133,11 +133,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue';
-import { state, fetchTorrents, showToast, describeError } from '../stores/transmission';
-import { useEscapeKey } from '../composables/useEscapeKey';
-import { Torrent, Priority, SeedRatioMode, SeedIdleMode } from '../api/types';
-import { t } from '../locales';
-import { rpc } from '../api/rpc';
+import { state, fetchTorrents, showToast, describeError } from '../../stores/transmission';
+import { useEscapeKey } from '../../composables/useEscapeKey';
+import { Torrent, Priority, SeedRatioMode, SeedIdleMode } from '../../api/types';
+import { t } from '../../locales';
+import { rpc } from '../../api/rpc';
 
 const props = defineProps<{
   torrentId: number | null;

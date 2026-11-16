@@ -82,10 +82,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { state, fetchTorrents, showToast, describeError } from '../stores/transmission';
-import { useEscapeKey } from '../composables/useEscapeKey';
-import { t } from '../locales';
-import { rpc } from '../api/rpc';
+import { state, fetchTorrents, showToast, describeError } from '../../stores/transmission';
+import { useEscapeKey } from '../../composables/useEscapeKey';
+import { t } from '../../locales';
+import { rpc } from '../../api/rpc';
 
 const magnetUrl = ref('');
 const downloadDir = ref(state.session?.['download-dir'] || '');

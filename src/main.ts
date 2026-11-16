@@ -1,7 +1,7 @@
 import { createApp } from 'vue';
 import App from './App.vue';
-import FluentIcon from './components/FluentIcon.vue';
-import TransmissionLogo from './components/TransmissionLogo.vue';
+import FluentIcon from './components/common/FluentIcon.vue';
+import TransmissionLogo from './components/common/TransmissionLogo.vue';
 import './styles/md1.css';
 import { vRipple } from './styles/ripple';
 

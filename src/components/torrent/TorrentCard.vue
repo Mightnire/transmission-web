@@ -152,7 +152,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Torrent, TorrentStatus } from '../api/types';
+import { Torrent, TorrentStatus } from '../../api/types';
 import {
   state,
   selectTorrent,
@@ -162,9 +162,9 @@ import {
   openConfirmRemove,
   startTorrentsAction,
   stopTorrentsAction,
-} from '../stores/transmission';
-import { t } from '../locales';
-import { rpc } from '../api/rpc';
+} from '../../stores/transmission';
+import { t } from '../../locales';
+import { rpc } from '../../api/rpc';
 
 const props = defineProps<{ torrent: Torrent }>();
 

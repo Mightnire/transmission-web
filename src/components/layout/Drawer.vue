@@ -313,11 +313,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue';
-import { state, formatBytes, formatSpeed } from '../stores/transmission';
-import { useEscapeKey } from '../composables/useEscapeKey';
-import { rpc } from '../api/rpc';
-import { TorrentStatus } from '../api/types';
-import { t } from '../locales';
+import { state, formatBytes, formatSpeed } from '../../stores/transmission';
+import { useEscapeKey } from '../../composables/useEscapeKey';
+import { rpc } from '../../api/rpc';
+import { TorrentStatus } from '../../api/types';
+import { t } from '../../locales';
 
 const filterCollapsed = ref(localStorage.getItem('filter_collapsed') === 'true');
 

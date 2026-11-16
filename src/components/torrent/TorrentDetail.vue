@@ -419,10 +419,10 @@ import {
   copyTorrentMagnet,
   toggleDetailHeight,
   saveDetailHeight,
-} from '../stores/transmission';
-import { Priority } from '../api/types';
-import { t } from '../locales';
-import { rpc } from '../api/rpc';
+} from '../../stores/transmission';
+import { Priority } from '../../api/types';
+import { t } from '../../locales';
+import { rpc } from '../../api/rpc';
 import FileTree from './FileTree.vue';
 import PieceMap from './PieceMap.vue';
 

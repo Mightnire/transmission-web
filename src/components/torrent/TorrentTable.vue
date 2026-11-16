@@ -672,10 +672,10 @@ import {
   startNowTorrentsAction,
   confirmVerifySelected,
   reannounceSelected,
-} from '../stores/transmission';
-import { Torrent, TorrentStatus, Priority } from '../api/types';
-import { t } from '../locales';
-import { rpc } from '../api/rpc';
+} from '../../stores/transmission';
+import { Torrent, TorrentStatus, Priority } from '../../api/types';
+import { t } from '../../locales';
+import { rpc } from '../../api/rpc';
 
 const headerMenu = reactive({
   open: false,

@@ -2,6 +2,9 @@ import { reactive, ref, computed } from 'vue';
 import { Torrent, TorrentStatus, SessionInfo, SessionStats } from '../api/types';
 import { rpc } from '../api/rpc';
 import { t } from '../locales';
+import { createDefaultColumns, loadSavedColumns, saveColumnsToStorage, type TableColumnConfig } from '../core/columns';
+export type { TableColumnConfig } from '../core/columns';
+export { formatBytes, formatSpeed, formatETA, getStatusText } from '../core/format';
 
 export interface TorrentFilter {
   status: 'all' | 'active' | 'downloading' | 'seeding' | 'queued' | 'paused' | 'error' | 'finished';
@@ -31,14 +34,6 @@ export interface TorrentFilter {
     | 'recheckProgress'
     | 'uploadRatio';
   sortAsc: boolean;
-}
-
-export interface TableColumnConfig {
-  id: string;
-  labelKey: string;
-  visible: boolean;
-  width: number;
-  minWidth: number;
 }
 
 export interface UIPreferences {
@@ -74,80 +69,6 @@ export interface SpeedSample {
   time: number;
   down: number;
   up: number;
-}
-
-const DEFAULT_COLUMNS: TableColumnConfig[] = [
-  { id: 'status', labelKey: 'common.status', visible: true, width: 38, minWidth: 30 },
-  { id: 'name', labelKey: 'common.name', visible: true, width: 300, minWidth: 160 },
-  { id: 'size', labelKey: 'common.size', visible: true, width: 72, minWidth: 60 },
-  { id: 'progress', labelKey: 'common.progress', visible: true, width: 120, minWidth: 90 },
-  { id: 'statustext', labelKey: 'tableCols.statusText', visible: true, width: 100, minWidth: 70 },
-  { id: 'downSpeed', labelKey: 'common.downSpeed', visible: true, width: 76, minWidth: 60 },
-  { id: 'upSpeed', labelKey: 'common.upSpeed', visible: true, width: 76, minWidth: 60 },
-  { id: 'eta', labelKey: 'common.eta', visible: true, width: 76, minWidth: 60 },
-  { id: 'ratio', labelKey: 'common.ratio', visible: true, width: 60, minWidth: 50 },
-  { id: 'peers', labelKey: 'common.peers', visible: true, width: 64, minWidth: 50 },
-  { id: 'corrupt', labelKey: 'common.corrupt', visible: false, width: 85, minWidth: 60 },
-  { id: 'downloaded', labelKey: 'tableCols.downloaded', visible: false, width: 88, minWidth: 70 },
-  { id: 'uploaded', labelKey: 'tableCols.uploaded', visible: false, width: 88, minWidth: 70 },
-  { id: 'remaining', labelKey: 'tableCols.remaining', visible: false, width: 88, minWidth: 70 },
-  { id: 'haveValid', labelKey: 'tableCols.haveValid', visible: false, width: 88, minWidth: 70 },
-  { id: 'sizeDone', labelKey: 'tableCols.sizeDone', visible: false, width: 88, minWidth: 70 },
-  { id: 'addedDate', labelKey: 'tableCols.addedDate', visible: false, width: 132, minWidth: 100 },
-  { id: 'doneDate', labelKey: 'tableCols.doneDate', visible: false, width: 132, minWidth: 100 },
-  { id: 'activityDate', labelKey: 'tableCols.activityDate', visible: false, width: 132, minWidth: 100 },
-  { id: 'seedingTime', labelKey: 'tableCols.seedingTime', visible: false, width: 92, minWidth: 70 },
-  { id: 'downloadingTime', labelKey: 'tableCols.downloadingTime', visible: false, width: 92, minWidth: 70 },
-  { id: 'peersDetail', labelKey: 'tableCols.peersDetail', visible: false, width: 92, minWidth: 70 },
-  { id: 'webSeeds', labelKey: 'tableCols.webSeeds', visible: false, width: 82, minWidth: 60 },
-  { id: 'priority', labelKey: 'tableCols.priority', visible: false, width: 72, minWidth: 60 },
-  { id: 'metadata', labelKey: 'tableCols.metadata', visible: false, width: 80, minWidth: 60 },
-  { id: 'stalled', labelKey: 'tableCols.stalled', visible: false, width: 64, minWidth: 50 },
-  { id: 'savePath', labelKey: 'tableCols.savePath', visible: false, width: 180, minWidth: 120 },
-  { id: 'labels', labelKey: 'tableCols.labels', visible: false, width: 110, minWidth: 70 },
-  { id: 'hash', labelKey: 'tableCols.hash', visible: false, width: 130, minWidth: 100 },
-  { id: 'private', labelKey: 'tableCols.private', visible: false, width: 64, minWidth: 50 },
-  { id: 'recheck', labelKey: 'tableCols.recheck', visible: false, width: 90, minWidth: 70 },
-  { id: 'downloadLimit', labelKey: 'tableCols.downloadLimit', visible: false, width: 82, minWidth: 60 },
-  { id: 'uploadLimit', labelKey: 'tableCols.uploadLimit', visible: false, width: 82, minWidth: 60 },
-  { id: 'error', labelKey: 'tableCols.error', visible: false, width: 180, minWidth: 120 },
-  { id: 'comment', labelKey: 'tableCols.comment', visible: false, width: 180, minWidth: 120 },
-  { id: 'creator', labelKey: 'tableCols.creator', visible: false, width: 120, minWidth: 80 },
-];
-
-const COLUMNS_STORAGE_KEY = 'torrent_table_columns';
-const COLUMNS_VERSION_KEY = 'torrent_table_columns_version';
-const COLUMNS_LAYOUT_VERSION = '2';
-
-function loadSavedColumns(): TableColumnConfig[] {
-  try {
-    const raw = localStorage.getItem(COLUMNS_STORAGE_KEY);
-    if (raw) {
-      const parsed: TableColumnConfig[] = JSON.parse(raw);
-      const savedVersion = localStorage.getItem(COLUMNS_VERSION_KEY);
-
-      // 2.0 布局升级：保留用户选择的可见列，但重置为更紧凑的列宽，
-      // 避免旧版超宽列在 1280 屏幕上产生不必要的横向滚动。
-      if (savedVersion !== COLUMNS_LAYOUT_VERSION) {
-        const migrated = DEFAULT_COLUMNS.map((def) => {
-          const found = parsed.find((p) => p.id === def.id);
-          return found ? { ...def, visible: found.visible } : { ...def };
-        });
-        localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(migrated));
-        localStorage.setItem(COLUMNS_VERSION_KEY, COLUMNS_LAYOUT_VERSION);
-        return migrated;
-      }
-
-      return DEFAULT_COLUMNS.map((def) => {
-        const found = parsed.find((p) => p.id === def.id);
-        return found ? { ...def, visible: found.visible, width: found.width } : { ...def };
-      });
-    }
-  } catch (e) {
-    console.warn('Failed to parse saved columns:', e);
-  }
-  localStorage.setItem(COLUMNS_VERSION_KEY, COLUMNS_LAYOUT_VERSION);
-  return DEFAULT_COLUMNS.map((c) => ({ ...c }));
 }
 
 const DEFAULT_UI_PREFS: UIPreferences = {
@@ -212,6 +133,7 @@ export const state = reactive<{
   speedHistory: SpeedSample[];
   isPolling: boolean;
   viewMode: 'table' | 'cards';
+  compactDensity: boolean;
 }>({
   torrents: [],
   session: null,
@@ -255,15 +177,15 @@ export const state = reactive<{
   isPolling: false,
   viewMode: (typeof window !== 'undefined' && (localStorage.getItem('view_mode') as ('table' | 'cards'))) ||
     (typeof window !== 'undefined' && window.innerWidth < 768 ? 'cards' : 'table'),
+  compactDensity: typeof window !== 'undefined' && localStorage.getItem('compact_density') === 'true',
 });
 
 export function saveColumns() {
-  localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(state.columns));
-  localStorage.setItem(COLUMNS_VERSION_KEY, COLUMNS_LAYOUT_VERSION);
+  saveColumnsToStorage(state.columns);
 }
 
 export function resetColumns() {
-  state.columns = DEFAULT_COLUMNS.map((c) => ({ ...c }));
+  state.columns = createDefaultColumns();
   saveColumns();
 }
 
@@ -395,6 +317,11 @@ export function openFileMenu() {
 
 export function closeFileMenu() {
   state.fileMenuOpen = false;
+}
+
+export function toggleCompactDensity() {
+  state.compactDensity = !state.compactDensity;
+  localStorage.setItem('compact_density', String(state.compactDensity));
 }
 
 export function saveDetailHeight() {
@@ -916,48 +843,6 @@ export async function copyTorrentMagnet(id: number): Promise<boolean> {
 
   showToast(t('toast.copyFailed'), 'error');
   return false;
-}
-
-// 格式化函数工具箱
-export function formatBytes(bytes?: number, decimals = 1): string {
-  if (bytes === undefined || bytes === null || bytes === 0 || isNaN(bytes)) return '0 B';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-export function formatSpeed(bytesPerSec?: number): string {
-  if (!bytesPerSec || bytesPerSec === 0) return '0 B/s';
-  return formatBytes(bytesPerSec) + '/s';
-}
-
-export function formatETA(seconds?: number): string {
-  if (seconds === undefined || seconds === null || seconds < 0) return '—';
-  if (seconds === 0) return t('common.finished');
-  if (seconds > 86400 * 30) return '∞';
-  const d = Math.floor(seconds / 86400);
-  const h = Math.floor((seconds % 86400) / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (d > 0) return `${d}${t('common.day')} ${h}${t('common.hour')}`;
-  if (h > 0) return `${h}${t('common.hour')} ${m}${t('common.min')}`;
-  if (m > 0) return `${m}${t('common.min')} ${s}${t('common.sec')}`;
-  return `${s}${t('common.sec')}`;
-}
-
-export function getStatusText(status: number): string {
-  switch (status) {
-    case 0: return t('status.stopped');
-    case 1: return t('status.checkWait');
-    case 2: return t('status.checking');
-    case 3: return t('status.downloadWait');
-    case 4: return t('status.downloading');
-    case 5: return t('status.seedWait');
-    case 6: return t('status.seeding');
-    default: return t('status.unknown');
-  }
 }
 
 // 计算过滤与排序后的种子列表

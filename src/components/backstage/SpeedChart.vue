@@ -59,8 +59,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { formatSpeed, type SpeedSample } from '../stores/transmission';
-import { t } from '../locales';
+import { formatSpeed, type SpeedSample } from '../../stores/transmission';
+import { t } from '../../locales';
 
 const props = defineProps<{
   points: SpeedSample[];

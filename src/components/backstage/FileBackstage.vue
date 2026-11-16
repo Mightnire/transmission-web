@@ -283,11 +283,11 @@ import {
   fetchTorrents,
   formatBytes,
   formatSpeed,
-} from '../stores/transmission';
-import { TorrentStatus } from '../api/types';
-import { rpc } from '../api/rpc';
-import { t } from '../locales';
-import { useEscapeKey } from '../composables/useEscapeKey';
+} from '../../stores/transmission';
+import { TorrentStatus } from '../../api/types';
+import { rpc } from '../../api/rpc';
+import { t } from '../../locales';
+import { useEscapeKey } from '../../composables/useEscapeKey';
 import SpeedChart from './SpeedChart.vue';
 
 const appVersion = __APP_VERSION__;

@@ -22,10 +22,10 @@
 </template>
 
 <script setup lang="ts">
-import { state, filteredTorrents } from '../stores/transmission';
-import { t } from '../locales';
-import TorrentTable from './TorrentTable.vue';
-import TorrentCard from './TorrentCard.vue';
+import { state, filteredTorrents } from '../../stores/transmission';
+import { t } from '../../locales';
+import TorrentTable from '../torrent/TorrentTable.vue';
+import TorrentCard from '../torrent/TorrentCard.vue';
 </script>
 
 <style scoped>

@@ -414,3 +414,13 @@ body {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* Compact density (optional): keep the Office ribbon but reclaim vertical space. */
+.compact-density .fluent-desktop-table tbody tr {
+  height: 30px !important;
+}
+
+.compact-density .fluent-desktop-table tbody td {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}

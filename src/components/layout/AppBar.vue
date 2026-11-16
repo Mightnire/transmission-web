@@ -1,5 +1,5 @@
 <template>
-  <header class="fluent-ribbon-root" :class="{ 'ribbon-collapsed': isRibbonCollapsed }" @click="closeAllMenus">
+  <header class="fluent-ribbon-root" :class="{ 'ribbon-collapsed': isRibbonCollapsed, 'compact-density': state.compactDensity }" @click="closeAllMenus">
     <!-- 1. 顶层：窗口标题与 Fluent Ribbon 选项卡栏 (高度 36px) -->
     <div class="ribbon-header-row">
       <!-- 侧边栏切换按钮 (汉堡菜单) -->
@@ -519,6 +519,24 @@
           </div>
         </div>
 
+        <!-- 界面密度 -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls">
+            <button
+              class="fluent-btn-small"
+              :class="{ active: state.compactDensity }"
+              @click="toggleCompactDensity"
+              :title="t('ribbon.compactDensityHint')"
+            >
+              <FluentIcon name="view_agenda" />
+              <span>{{ t('ribbon.compactDensity') }}</span>
+            </button>
+          </div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.interface') }}</span>
+          </div>
+        </div>
+
         <!-- 表格列自定义组 (双行堆叠) -->
         <div class="ribbon-group">
           <div class="ribbon-controls">
@@ -954,9 +972,10 @@ import {
   startNowTorrentsAction,
   reannounceSelected,
   openFileMenu,
-} from '../stores/transmission';
-import { rpc } from '../api/rpc';
-import { t, currentLocale, setLocale, LocaleKey } from '../locales';
+  toggleCompactDensity,
+} from '../../stores/transmission';
+import { rpc } from '../../api/rpc';
+import { t, currentLocale, setLocale, LocaleKey } from '../../locales';
 
 const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
 const currentTab = ref<'tasks' | 'transfer' | 'tools' | 'view' | 'torrentProps'>('tasks');
@@ -1312,6 +1331,20 @@ function toggleTheme() {
   z-index: 200;
   box-shadow: none !important;
   flex-shrink: 0;
+}
+
+.fluent-ribbon-root.compact-density .ribbon-body {
+  height: 84px;
+  min-height: 84px;
+  padding: 2px 8px;
+}
+
+.fluent-ribbon-root.compact-density .ribbon-group {
+  padding-right: 8px;
+}
+
+.fluent-ribbon-root.compact-density .group-title {
+  font-size: 9px;
 }
 
 /* 1. 标题与 Tab 行 (高度 38px，Office 2016 纯平单色，无渐变、无底边线) */

@@ -162,10 +162,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, reactive, onMounted, onUnmounted } from 'vue';
-import { TorrentFile, TorrentFileStat, Priority } from '../api/types';
-import { state, fetchTorrents, formatBytes, openPrompt, showToast } from '../stores/transmission';
-import { t } from '../locales';
-import { rpc } from '../api/rpc';
+import { TorrentFile, TorrentFileStat, Priority } from '../../api/types';
+import { state, fetchTorrents, formatBytes, openPrompt, showToast } from '../../stores/transmission';
+import { t } from '../../locales';
+import { rpc } from '../../api/rpc';
 
 const props = defineProps<{
   torrentId: number;

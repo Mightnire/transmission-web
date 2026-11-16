@@ -48,9 +48,9 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { formatBytes } from '../stores/transmission';
-import { t } from '../locales';
-import type { TorrentFile } from '../api/types';
+import { formatBytes } from '../../stores/transmission';
+import { t } from '../../locales';
+import type { TorrentFile } from '../../api/types';
 
 const props = defineProps<{
   pieces?: string;

@@ -38,6 +38,8 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
   - 高/低优先级文件会同时改变左侧色条、优先级下拉框和文件名颜色。
   - 支持对**当前选中**的文件批量设置优先级（点击行选择，Ctrl 可多选）。
   - 详情页「扩展信息」展示元数据完成度、私有种子、传输停滞、文件数量与连接上限。
+- **可选紧凑密度**
+  - 「视图与首选项 → 界面 → 紧凑密度」会压缩 Ribbon 高度与表格行高，保留全部 Fluent 功能，适合 1080p/小屏提高信息密度。
 - **BiglyBT 风格区块映射**
   - 新增「区块映射」标签页：根据 `pieces` bitfield 与 `availability` 数组绘制每个 piece 的完成/缺失/可用副本热力图。
   - 悬停显示区块编号、完成状态、可用副本、区块大小与所属文件；底部附颜色图例。
@@ -105,7 +107,7 @@ npm run build
 | --- | --- | --- |
 | `index.html` | 1.1 kB | 0.6 kB |
 | `assets/index-*.css` | 105 kB | 15.9 kB |
-| `assets/index-*.js` | 376 kB | 113 kB |
+| `assets/index-*.js` | 377 kB | 113 kB |
 
 `base: './'` 使产物可以部署在任意子路径（如 `/transmission/web/`）下。
 
@@ -128,38 +130,23 @@ npm run build
 transmission-web-md1/
 ├── index.html                     # 入口，内联 favicon，无外部字体
 ├── vite.config.ts                 # 开发代理 / Basic Auth / 版本号注入
-├── .env.example                   # 本地联调环境变量样例
+├── ARCHITECTURE.md                # 模块边界、RPC 可行性与重构路线
 ├── src/
-│   ├── main.ts                    # 应用入口，全局注册 FluentIcon / TransmissionLogo / Ripple
-│   ├── api/
-│   │   ├── rpc.ts                 # Transmission JSON-RPC（含 409 session-id 握手）
-│   │   └── types.ts               # 全量 RPC 类型契约
-│   ├── stores/
-│   │   └── transmission.ts        # 全局状态、轮询、过滤排序、乐观更新、对话框/Toast 控制
+│   ├── main.ts                    # 应用入口
+│   ├── api/                       # RPC 传输与类型契约
+│   ├── core/                      # 与 UI 无关的纯工具（格式化、列配置）
 │   ├── components/
-│   │   ├── AppBar.vue             # Office 2016 Ribbon、上下文选项卡、文件菜单入口、移动端工具条
-│   │   ├── FileBackstage.vue      # Office 2016 全屏「文件」菜单：信息 / 统计 / 关于 / 快捷操作
-│   │   ├── SpeedChart.vue         # BiglyBT 风格实时上下行速度面积图（SVG）
-│   │   ├── Drawer.vue             # 状态过滤、标签/Tracker 分组、会话统计
-│   │   ├── TorrentTable.vue       # 桌面端表格：排序、列宽拖拽、列显隐、右键菜单
-│   │   ├── TorrentCard.vue        # 移动端卡片视图
-│   │   ├── TorrentDetail.vue      # 可调高度的详情抽屉：概览、文件树、区块映射、Peers、Trackers
-│   │   ├── PieceMap.vue           # BiglyBT 风格 piece/availability 画布热力图
-│   │   ├── FileTree.vue           # 可折叠文件树：层级引导线、独立多选、右键菜单、目录聚合
-│   │   ├── BatchTagsDialog.vue    # 批量标签对话框
-│   │   ├── FluentActionDialogs.vue# 重命名/移动目录/删除确认/通用 Prompt+Confirm/Toast
-│   │   ├── AddDialog.vue          # 添加种子
-│   │   ├── SessionDialog.vue      # Transmission 全局首选项
-│   │   ├── TorrentPropsDialog.vue # 单任务属性
-│   │   ├── FluentIcon.vue         # Fluent System Icons 24 Regular 矢量字典
-│   │   └── TransmissionLogo.vue   # Transmission 官方变速杆 Logo（纯 SVG）
-│   ├── composables/
-│   │   └── useEscapeKey.ts        # 统一 Esc 关闭行为
+│   │   ├── common/                # FluentIcon / TransmissionLogo
+│   │   ├── layout/                # AppBar / Drawer / TorrentList
+│   │   ├── torrent/               # TorrentTable / TorrentCard / TorrentDetail / FileTree / PieceMap
+│   │   ├── backstage/             # FileBackstage / SpeedChart
+│   │   └── dialogs/               # Add / Session / Props / BatchTags / FluentActionDialogs
+│   ├── stores/transmission.ts     # 兼容门面（后续拆为 modules/*）
 │   ├── locales/                   # zh-CN / en-US / ru-RU
-│   └── styles/
-│       ├── md1.css                # 设计令牌（Fluent + Office 2016 色板）
-│       └── ripple.ts              # Material Ripple 指令
+│   └── styles/                    # 设计令牌与 Ripple
 ```
+
+> 更细的模块拆分计划、RPC 支持矩阵和 UI 演进方向见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 
 > 目录名与 `md1.css` 保留了项目早期的 Material Design 1 历史命名；当前视觉规范已统一为 Fluent / Office 2016。
 

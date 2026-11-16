@@ -431,10 +431,10 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue';
-import { state, fetchSession, formatBytes, showToast, describeError } from '../stores/transmission';
-import { useEscapeKey } from '../composables/useEscapeKey';
-import { t } from '../locales';
-import { rpc } from '../api/rpc';
+import { state, fetchSession, formatBytes, showToast, describeError } from '../../stores/transmission';
+import { useEscapeKey } from '../../composables/useEscapeKey';
+import { t } from '../../locales';
+import { rpc } from '../../api/rpc';
 
 const activeTab = ref<'speed' | 'queue' | 'network' | 'storage' | 'automation'>('speed');
 const testingPort = ref(false);

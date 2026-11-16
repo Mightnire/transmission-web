@@ -1,5 +1,5 @@
 <template>
-  <div class="app-root">
+  <div class="app-root" :class="{ 'compact-density': state.compactDensity }">
     <!-- 顶部导航与工具栏 (BiglyBT 风格) -->
     <AppBar />
 
@@ -39,16 +39,16 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { state, startPolling, stopPolling } from './stores/transmission';
 import { t } from './locales';
-import AppBar from './components/AppBar.vue';
-import Drawer from './components/Drawer.vue';
-import TorrentList from './components/TorrentList.vue';
-import TorrentDetail from './components/TorrentDetail.vue';
-import AddDialog from './components/AddDialog.vue';
-import SessionDialog from './components/SessionDialog.vue';
-import TorrentPropsDialog from './components/TorrentPropsDialog.vue';
-import BatchTagsDialog from './components/BatchTagsDialog.vue';
-import FluentActionDialogs from './components/FluentActionDialogs.vue';
-import FileBackstage from './components/FileBackstage.vue';
+import AppBar from './components/layout/AppBar.vue';
+import Drawer from './components/layout/Drawer.vue';
+import TorrentList from './components/layout/TorrentList.vue';
+import TorrentDetail from './components/torrent/TorrentDetail.vue';
+import AddDialog from './components/dialogs/AddDialog.vue';
+import SessionDialog from './components/dialogs/SessionDialog.vue';
+import TorrentPropsDialog from './components/dialogs/TorrentPropsDialog.vue';
+import BatchTagsDialog from './components/dialogs/BatchTagsDialog.vue';
+import FluentActionDialogs from './components/dialogs/FluentActionDialogs.vue';
+import FileBackstage from './components/backstage/FileBackstage.vue';
 
 onMounted(() => {
   // 恢复保存的主题

@@ -118,8 +118,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import { state, applyTorrentLabels } from '../stores/transmission';
-import { t } from '../locales';
+import { state, applyTorrentLabels } from '../../stores/transmission';
+import { t } from '../../locales';
 
 const mode = ref<'append' | 'replace' | 'clear'>('append');
 const activeTags = ref<string[]>([]);

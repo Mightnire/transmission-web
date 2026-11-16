@@ -326,9 +326,9 @@ import {
   describeError,
   closePrompt,
   closeConfirm,
-} from '../stores/transmission';
-import { rpc } from '../api/rpc';
-import { t } from '../locales';
+} from '../../stores/transmission';
+import { rpc } from '../../api/rpc';
+import { t } from '../../locales';
 
 const appVersion = __APP_VERSION__;
 
