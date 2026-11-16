@@ -933,7 +933,7 @@ function handleSetLocation() {
 }
 
 .monospace {
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .font-sm {
@@ -975,8 +975,8 @@ function handleSetLocation() {
   background-color: var(--fluent-bg-hover);
 }
 
-.down-val { color: #2e7d32; font-family: monospace; }
-.up-val { color: #ef6c00; font-family: monospace; }
+.down-val { color: #2e7d32; font-family: var(--font-mono); }
+.up-val { color: #ef6c00; font-family: var(--font-mono); }
 
 .tracker-res-badge {
   display: inline-flex;

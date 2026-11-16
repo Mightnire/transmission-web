@@ -329,7 +329,7 @@ async function saveProps() {
   background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   text-align: right;
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;

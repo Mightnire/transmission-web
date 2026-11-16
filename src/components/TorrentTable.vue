@@ -1184,8 +1184,8 @@ function getStatusBadgeClass(item: Torrent): string {
   vertical-align: middle;
 }
 
-.col-queue { width: 44px; text-align: center; font-family: monospace; }
-.col-ratio { font-family: monospace; }
+.col-queue { width: 44px; text-align: center; font-family: var(--font-mono); }
+.col-ratio { font-family: var(--font-mono); }
 
 /* 队列序号徽标 */
 .queue-cell-badge {
@@ -1302,7 +1302,7 @@ function getStatusBadgeClass(item: Torrent): string {
   font-size: 11px;
   width: 42px;
   text-align: right;
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .text-checking {
@@ -1332,11 +1332,11 @@ function getStatusBadgeClass(item: Torrent): string {
 .corrupt-tag {
   color: var(--md-error);
   font-weight: 500;
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .monospace {
-  font-family: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 10.5px;
 }
 

@@ -869,7 +869,7 @@ function getRatio(): string {
 }
 
 .speed-fixed-val {
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   width: 62px;
   text-align: right;
@@ -982,7 +982,7 @@ function getRatio(): string {
 
 .stat-v {
   font-weight: 500;
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .stat-accent {

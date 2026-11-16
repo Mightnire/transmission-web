@@ -5,6 +5,16 @@
 
 :root {
   color-scheme: light;
+
+  /* Unified typography: Latin-first with explicit CJK sans fallbacks.
+     Segoe UI does not contain CJK glyphs; without these fallbacks the
+     browser may pick SimSun/宋体 for some nodes, producing mixed serif UI. */
+  --font-sans: 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei',
+    'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Noto Sans CJK SC',
+    'Source Han Sans SC', 'WenQuanYi Micro Hei', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Cascadia Mono', Consolas, 'SFMono-Regular', 'Microsoft YaHei UI',
+    'Noto Sans SC', 'PingFang SC', monospace;
+
   /* MD1 Classic Palette: Indigo 500 & Pink A200 */
   --md-primary: #3f51b5;
   --md-primary-dark: #303f9f;
@@ -118,8 +128,24 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html,
 body {
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Form controls do NOT inherit fonts from the page by default (Chrome uses
+   Arial for buttons/selects, whose CJK fallback can be SimSun). Force the
+   unified stack so tabs, buttons and selects match the rest of the UI. */
+button,
+input,
+select,
+textarea,
+optgroup,
+option {
+  font-family: inherit;
+}
+
+body {
   background-color: var(--md-bg);
   color: var(--md-text-primary);
   line-height: 1.5;

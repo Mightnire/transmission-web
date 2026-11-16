@@ -850,7 +850,7 @@ async function saveSettings() {
   background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   text-align: right;
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -901,7 +901,7 @@ async function saveSettings() {
   background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
   box-sizing: border-box;
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   resize: vertical;
   outline: none;
@@ -990,7 +990,7 @@ async function saveSettings() {
   border-radius: var(--fluent-radius);
   background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .divider {
