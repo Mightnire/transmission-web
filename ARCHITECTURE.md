@@ -28,29 +28,31 @@
 | Peer 字节数 | `peers[].bytesToClient` / `bytesToPeer` | ✅ | 低 | 已加列 |
 | Peer 加密 / 入站 / uTP | `isEncrypted` / `isIncoming` / `isUTP` | ✅ | 低 | 加密/方向已加列，uTP 已有协议列 |
 | Peer ID / Holepunch | `peerId` / `supportsHolepunch` | 🟡 | 低 | 3.07 不保证返回；先探测再显示 |
-| Tracker 高级状态 | `trackerStats[].sitename`、`lastAnnounceTime`、`nextAnnounceTime`、`downloaderCount`、`lastScrapeResult` | 🟢 | 中 | 建议做成可选列/详情，不占默认宽度 |
-| Web Seed 明细 | `webseeds[]`（旧）/ `webseedsEx[]`（新） | 🟡 | 中 | 3.07 用旧字段；新字段先探测 |
-| 诊断元数据 | `desiredAvailable`、`haveUnchecked`、`etaIdle`、`dateCreated`、`editDate`、`torrentFile`、`trackerList` | 🟢 | 低 | 放「扩展信息」，不占主表 |
+| Tracker 高级状态 | `trackerStats[].sitename`、`lastAnnounceTime`、`nextAnnounceTime`、`downloaderCount`、`lastScrapeResult` | ✅ | 中 | 已接入宣告时间；有 sitename/downloaderCount 时自动加列 |
+| Web Seed 明细 | `webseeds[]`（旧）/ `webseedsEx[]`（新） | ✅ | 中 | 已接入 URL 列表与活跃数；3.07 无逐 URL 速度 |
+| 诊断元数据 | `desiredAvailable`、`haveUnchecked`、`etaIdle`、`dateCreated`、`editDate`、`torrentFile`、`trackerList` | ✅ | 低 | 已接入「扩展信息」，按有值才显示 |
 | 剩余可用空间 | `free-space` | ✅ | 低 | 已接入；3.07 无 `total_size`，4.x 才有总容量/进度条 |
 | 会话统计 | `session-stats` 的 `filesAdded` / `sessionCount` | ✅ | 低 | 已接入 |
-| 端口连通测试 | `port-test` | 🟢 | 中 | 按需点击，不能轮询；失败时给可操作诊断 |
-| 黑名单更新 / 数量 | `blocklist-update` | 🟢 | 中 | 按需执行，避免每次打开页面触发下载 |
-| 会话诊断 | `session-get` 的 DHT/PEX/LPD/uTP/加密/peer-port/rpc-version | 🟢 | 低 | 适合做成「网络诊断」卡片 |
+| 端口连通测试 | `port-test` | ✅ | 中 | 已接入统计页网络诊断，按需点击 |
+| 黑名单更新 / 数量 | `blocklist-update` | ✅ | 中 | 已接入数量与手动更新，不自动执行 |
+| 会话诊断 | `session-get` 的 DHT/PEX/LPD/uTP/加密/peer-port/rpc-version | ✅ | 低 | 已接入统计页网络诊断卡片 |
 | 带宽分组 | `group-get` / `group-set` | 🟡 | 中 | 版本相关；3.07 先探测，缺失则隐藏 |
 | 远程关闭 | `session-close` | ⛔ | 低 | 破坏性，除非明确要求，不放入 UI |
 | 表格格式 | `torrent-get format: "table"` | 🟡 | 低 | 4.x 优先；3.07 先探测，兼容对象格式 |
-| 增量更新 | `ids: "recently-active"` + `removed` | 🟡 | 中 | 任务多时收益大，但要处理删除/排序/详情缓存 |
+| 增量更新 | `ids: "recently-active"` + `removed` | ✅ | 中 | 已接入；每 20 次增量回退一次全量校准 |
 | 逐块状态 | 无（RPC 只到 piece 级） | 🔴 | — | 不能伪造 BiglyBT 的 block 请求状态 |
 | 分组 / MIME / 文件数 | `group` / `primary-mime-type` / `fileCount` | 🔴 | — | 3.07 返回 0；不要展示成 0 |
 | 顺序下载 | `sequentialDownload` | 🔴 | — | 3.07 返回 0；4.x 再接入 |
 
-### 推荐落地顺序
+### 已完成与后续
 
-1. **Tracker 高级信息**：先只读，按需展开，避免表格继续变宽。
-2. **网络诊断卡片**：端口测试、DHT/PEX/LPD/uTP、加密、黑名单，失败时给操作入口。
-3. **Web Seed 明细**：详情页独立列表，显示 URL、速率、状态。
-4. **增量轮询**：先做 feature detect，再按任务规模切换；保留全量轮询兜底。
-5. **端口/黑名单操作**：必须用户点击触发，并显示进度与结果。
+已完成：Tracker 高级列、Web Seed 列表、诊断元数据、网络诊断卡片、端口测试、黑名单更新、增量轮询。
+
+后续可选：
+
+1. **带宽分组**：先探测 `group-get`，3.07 缺失则隐藏。
+2. **表格格式**：探测 `format: "table"`，仅在 4.x 启用。
+3. **组件进一步拆解**：按 Phase 2–5 拆 store / Ribbon / Detail / Backstage。
 
 ---
 

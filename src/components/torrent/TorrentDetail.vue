@@ -265,6 +265,30 @@
               <span class="label">{{ t('detail.general.peerLimit') }}</span>
               <span class="value">{{ activeTorrent.maxConnectedPeers ?? activeTorrent.peerLimit ?? '—' }}</span>
             </div>
+            <div class="info-row" v-if="activeTorrent.dateCreated > 0">
+              <span class="label">{{ t('detail.general.createdDate') }}</span>
+              <span class="value">{{ formatDate(activeTorrent.dateCreated) }}</span>
+            </div>
+            <div class="info-row" v-if="activeTorrent.editDate && activeTorrent.editDate > 0">
+              <span class="label">{{ t('detail.general.editDate') }}</span>
+              <span class="value">{{ formatDate(activeTorrent.editDate) }}</span>
+            </div>
+            <div class="info-row" v-if="(activeTorrent.haveUnchecked || 0) > 0">
+              <span class="label">{{ t('detail.general.unchecked') }}</span>
+              <span class="value">{{ formatBytes(activeTorrent.haveUnchecked) }}</span>
+            </div>
+            <div class="info-row" v-if="(activeTorrent.desiredAvailable || 0) > 0">
+              <span class="label">{{ t('detail.general.desiredAvailable') }}</span>
+              <span class="value">{{ formatBytes(activeTorrent.desiredAvailable) }}</span>
+            </div>
+            <div class="info-row" v-if="activeTorrent.etaIdle !== undefined && activeTorrent.etaIdle >= 0">
+              <span class="label">{{ t('detail.general.etaIdle') }}</span>
+              <span class="value">{{ formatETA(activeTorrent.etaIdle) }}</span>
+            </div>
+            <div class="info-row" v-if="activeTorrent.torrentFile">
+              <span class="label">{{ t('detail.general.torrentFile') }}</span>
+              <span class="value selectable path-value" :title="activeTorrent.torrentFile">{{ activeTorrent.torrentFile }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -363,17 +387,22 @@
           <thead>
             <tr>
               <th>{{ t('detail.trackers.colTier') }}</th>
+              <th v-if="hasTrackerSitename">{{ t('detail.trackers.colSitename') }}</th>
               <th>{{ t('detail.trackers.colUrl') }}</th>
               <th>{{ t('detail.trackers.colStatus') }}</th>
               <th>{{ t('detail.trackers.colSeeders') }}</th>
               <th>{{ t('detail.trackers.colLeechers') }}</th>
               <th>{{ t('detail.trackers.colLastPeers') }}</th>
+              <th v-if="hasTrackerDownloaderCount">{{ t('detail.trackers.colDownloaders') }}</th>
+              <th>{{ t('detail.trackers.colLastAnnounce') }}</th>
+              <th>{{ t('detail.trackers.colNextAnnounce') }}</th>
               <th>{{ t('detail.trackers.colActions') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="tr in activeTorrent.trackerStats" :key="tr.id">
               <td>{{ t('detail.trackers.tier', { tier: tr.tier }) }}</td>
+              <td v-if="hasTrackerSitename">{{ tr.sitename || '—' }}</td>
               <td class="selectable font-sm">{{ tr.announce }}</td>
               <td>
                 <span
@@ -388,6 +417,9 @@
               <td>{{ tr.seederCount >= 0 ? tr.seederCount : '—' }}</td>
               <td>{{ tr.leecherCount >= 0 ? tr.leecherCount : '—' }}</td>
               <td>{{ tr.lastAnnouncePeerCount }}</td>
+              <td v-if="hasTrackerDownloaderCount">{{ tr.downloaderCount ?? '—' }}</td>
+              <td :title="formatDate(tr.lastAnnounceTime)">{{ formatTrackerClock(tr.lastAnnounceTime) }}</td>
+              <td :title="formatDate(tr.nextAnnounceTime)">{{ formatTrackerClock(tr.nextAnnounceTime) }}</td>
               <td>
                 <button class="remove-tr-btn" @click="removeTracker(tr.id)" :title="t('detail.trackers.removeTitle')">
                   <FluentIcon name="delete_outline" style="font-size: 14px;" />
@@ -400,6 +432,26 @@
           <FluentIcon name="alt_route" />
           <p>{{ t('detail.trackers.empty') }}</p>
         </div>
+
+        <div class="webseed-block" v-if="activeTorrent.webseeds && activeTorrent.webseeds.length > 0">
+          <div class="webseed-head">
+            <h4>{{ t('detail.trackers.webSeeds') }}</h4>
+            <span>{{ activeTorrent.webseeds.length }}</span>
+            <span class="webseed-active" v-if="(activeTorrent.webseedsSendingToUs || 0) > 0">
+              {{ t('detail.trackers.webSeedsActive', { count: activeTorrent.webseedsSendingToUs || 0 }) }}
+            </span>
+          </div>
+          <div class="webseed-list">
+            <a
+              v-for="url in activeTorrent.webseeds"
+              :key="url"
+              :href="url"
+              target="_blank"
+              rel="noreferrer noopener"
+              :title="url"
+            >{{ url }}</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -411,6 +463,7 @@ import {
   state,
   formatBytes,
   formatSpeed,
+  formatETA,
   openLocationDialog,
   openPrompt,
   openConfirm,
@@ -433,6 +486,14 @@ const activeTorrent = computed(() => {
     return state.activeTorrentDetail;
   }
   return state.torrents.find((t) => t.id === state.selectedId) || null;
+});
+
+const hasTrackerSitename = computed(() => {
+  return (activeTorrent.value?.trackerStats || []).some((tracker) => !!tracker.sitename);
+});
+
+const hasTrackerDownloaderCount = computed(() => {
+  return (activeTorrent.value?.trackerStats || []).some((tracker) => tracker.downloaderCount !== undefined);
 });
 
 const peerHasByteStats = computed(() => {
@@ -610,6 +671,11 @@ function formatDate(ts?: number): string {
   if (!ts || ts === 0) return '—';
   const d = new Date(ts * 1000);
   return d.toLocaleString();
+}
+
+function formatTrackerClock(ts?: number): string {
+  if (!ts || ts <= 0) return '—';
+  return new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function getPriorityText(p?: Priority): string {
@@ -1186,6 +1252,58 @@ function handleSetLocation() {
   font-size: 11.5px;
 }
 
+.webseed-block {
+  border-top: 1px solid var(--fluent-border-subtle);
+  padding: 10px 14px 12px;
+  background: var(--fluent-bg-canvas);
+}
+
+.webseed-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.webseed-head h4 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--md-text-primary);
+}
+
+.webseed-head > span {
+  font-size: 10px;
+  color: var(--md-text-secondary);
+}
+
+.webseed-head .webseed-active {
+  color: var(--fluent-accent);
+}
+
+.webseed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 96px;
+  overflow-y: auto;
+}
+
+.webseed-list a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fluent-accent);
+  text-decoration: none;
+}
+
+.webseed-list a:hover {
+  text-decoration: underline;
+}
+
 .trackers-pane .detail-table tbody tr:hover {
   background-color: rgba(0, 120, 212, 0.06);
 }
@@ -1312,5 +1430,14 @@ function handleSetLocation() {
   .general-grid {
     grid-template-columns: 1fr !important;
   }
+}
+
+.path-value {
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
 }
 </style>

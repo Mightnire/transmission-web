@@ -97,6 +97,8 @@ export interface TorrentTrackerStat {
   scrape: string;
   scrapeState: number;
   seederCount: number;
+  sitename?: string;
+  downloaderCount?: number;
   tier: number;
 }
 

@@ -254,19 +254,56 @@ function applyPendingState(list: Torrent[]): Torrent[] {
 }
 
 // 获取种子列表与刷新当前选中详情
+let hasFullTorrentSnapshot = false;
+let incrementalSupported = true;
+let incrementalPolls = 0;
+
+async function refreshActiveDetail() {
+  if (state.selectedId === null || !state.detailOpen) return;
+  const basic = state.torrents.find((t) => t.id === state.selectedId);
+  const detail = await rpc.getTorrentDetail(state.selectedId);
+  if (detail) {
+    state.activeTorrentDetail = { ...(basic || {}), ...detail };
+  }
+}
+
+async function fetchFullTorrents() {
+  const list = await rpc.getTorrents();
+  state.torrents = applyPendingState(list);
+  hasFullTorrentSnapshot = true;
+}
+
+async function fetchIncrementalTorrents() {
+  const response = await rpc.getTorrentsIncremental();
+  const byId = new Map(state.torrents.map((torrent) => [torrent.id, torrent]));
+
+  for (const update of response.torrents) {
+    const existing = byId.get(update.id);
+    if (existing) Object.assign(existing, update);
+    else byId.set(update.id, update);
+  }
+  for (const id of response.removed) byId.delete(id);
+
+  state.torrents = applyPendingState(Array.from(byId.values()));
+}
+
 export async function fetchTorrents() {
   try {
-    const list = await rpc.getTorrents();
-    state.torrents = applyPendingState(list);
-
-    // 如果选中了某个任务且详情面板打开，刷新其详细属性
-    if (state.selectedId !== null && state.detailOpen) {
-      const basic = state.torrents.find((t) => t.id === state.selectedId);
-      const detail = await rpc.getTorrentDetail(state.selectedId);
-      if (detail) {
-        state.activeTorrentDetail = { ...(basic || {}), ...detail };
+    const shouldFullFetch = !hasFullTorrentSnapshot || !incrementalSupported || incrementalPolls++ % 20 === 0;
+    if (shouldFullFetch) {
+      await fetchFullTorrents();
+    } else {
+      try {
+        await fetchIncrementalTorrents();
+      } catch (error) {
+        // 某些旧版本或代理会拒绝 recently-active；失败一次后回退全量。
+        incrementalSupported = false;
+        hasFullTorrentSnapshot = false;
+        await fetchFullTorrents();
       }
     }
+
+    await refreshActiveDetail();
   } catch (e) {
     console.warn('Failed to fetch torrents:', e);
   }
@@ -346,6 +383,8 @@ export function toggleDetailHeight() {
 export function restartPolling() {
   if (torrentTimer) clearInterval(torrentTimer);
   if (statsTimer) clearInterval(statsTimer);
+  hasFullTorrentSnapshot = false;
+  incrementalPolls = 0;
   state.isPolling = true;
 
   fetchTorrents();

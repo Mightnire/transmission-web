@@ -37,7 +37,7 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
   - 文件/目录支持右键菜单：重命名、标记下载、高/普通/低优先级、复制名称。
   - 高/低优先级文件会同时改变左侧色条、优先级下拉框和文件名颜色。
   - 支持对**当前选中**的文件批量设置优先级（点击行选择，Ctrl 可多选）。
-  - 详情页「扩展信息」展示元数据完成度、私有种子、传输停滞、文件数量与连接上限。
+  - 详情页「扩展信息」展示元数据完成度、私有种子、传输停滞、文件数量、连接上限，以及创建/修改时间、未校验数据、空闲 ETA、Torrent 文件路径等诊断字段。
 - **OneNote 风格单行 Ribbon**
   - 选项卡下方只保留一行命令，去掉了大按钮与分组标题，垂直空间更省。
   - 宽屏显示按钮文字；宽度不足时按断点逐级折叠为纯图标，`title` 提示保留。
@@ -49,11 +49,16 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
   - 悬停显示区块编号、完成状态、可用副本、区块大小与所属文件；底部附颜色图例。
 - **更多 RPC 信息**
   - 统计页通过 `free-space` 显示下载目录可用空间（Transmission 4.x 还会显示总容量与使用进度条）。
-  - 节点页按 Tracker / DHT / PEX / LPD / LTEP / 入站 / 缓存 / 打洞 展示 Peer 来源，并新增已下载/已上传/加密/入站方向列。
+  - 节点页按 Tracker / DHT / PEX / LPD / LTEP / 入站 / 缓存 / 打洞 展示 Peer 来源，并新增加密/入站方向列；服务端返回字节计数时再显示已下载/已上传。
   - 会话统计补充 `filesAdded` 与 `sessionCount`；种子表新增「元数据」「停滞」可选列。
+  - Tracker 表新增上次/下次宣告时间；4.x 若返回 `sitename` / `downloaderCount` 会额外显示对应列。
+  - Web Seed 以明细列表展示 URL 与活跃数量。
+  - 统计页新增「网络诊断」：DHT/PEX/LPD/uTP、加密、端口、黑名单，并支持按需测试端口与更新黑名单。
+  - 轮询优先使用 `recently-active` 增量更新（3.07 也支持），并周期性回退全量校准。
 - **Tracker 状态与校验**
   - Tracker 结果在本地解析并着色：成功绿色、连接失败/访问拒绝红色、HTTP 429 等限流黄色、等待宣告灰色。
   - 支持 `Could not connect to tracker`、`Connection failed`、`access denied`、`HTTP 401/403/429/5xx` 等常见结果。
+  - 显示每个 Tracker 的上次/下次宣告时间，悬停可查看完整本地时间。
   - 校验本地数据前增加 Fluent 确认框，避免误触暂停传输。
 - **完整 Fluent 对话框，零原生弹窗**
   - 添加、属性、首选项、重命名、移动目录、删除确认、统计、关于、批量标签、Tracker 增删全部为应用内对话框。
@@ -110,8 +115,8 @@ npm run build
 | 文件 | 原始 | gzip |
 | --- | --- | --- |
 | `index.html` | 1.1 kB | 0.6 kB |
-| `assets/index-*.css` | 108 kB | 16.3 kB |
-| `assets/index-*.js` | 378 kB | 114 kB |
+| `assets/index-*.css` | 111 kB | 16.6 kB |
+| `assets/index-*.js` | 387 kB | 116 kB |
 
 `base: './'` 使产物可以部署在任意子路径（如 `/transmission/web/`）下。
 

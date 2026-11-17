@@ -18,6 +18,22 @@ import {
   SeedIdleMode,
 } from './types';
 
+const TORRENT_LIST_FIELDS = [
+  'id', 'name', 'status', 'totalSize', 'sizeWhenDone', 'leftUntilDone',
+  'percentDone', 'downloadedEver', 'uploadedEver', 'corruptEver',
+  'uploadRatio', 'rateDownload', 'rateUpload', 'peersConnected',
+  'peersSendingToUs', 'peersGettingFromUs', 'eta', 'downloadDir',
+  'error', 'errorString', 'addedDate', 'doneDate', 'isFinished', 'labels',
+  'queuePosition', 'bandwidthPriority', 'recheckProgress',
+  'downloadLimit', 'downloadLimited', 'uploadLimit', 'uploadLimited',
+  'honorsSessionLimits', 'peer-limit', 'seedRatioLimit', 'seedRatioMode',
+  'seedIdleLimit', 'seedIdleMode', 'magnetLink', 'trackers',
+  'activityDate', 'comment', 'creator', 'haveValid',
+  'isPrivate', 'isStalled', 'metadataPercentComplete',
+  'secondsDownloading', 'secondsSeeding',
+  'webseedsSendingToUs', 'hashString'
+];
+
 export class TransmissionRPC {
   private endpoint = '/transmission/rpc';
   private sessionId = '';
@@ -182,23 +198,14 @@ export class TransmissionRPC {
 
   // 获取种子列表 (常用高频字段，优化带宽)
   public async getTorrents(ids?: number[] | string): Promise<Torrent[]> {
-    const fields = [
-      'id', 'name', 'status', 'totalSize', 'sizeWhenDone', 'leftUntilDone',
-      'percentDone', 'downloadedEver', 'uploadedEver', 'corruptEver',
-      'uploadRatio', 'rateDownload', 'rateUpload', 'peersConnected',
-      'peersSendingToUs', 'peersGettingFromUs', 'eta', 'downloadDir',
-      'error', 'errorString', 'addedDate', 'doneDate', 'isFinished', 'labels',
-      'queuePosition', 'bandwidthPriority', 'recheckProgress',
-      'downloadLimit', 'downloadLimited', 'uploadLimit', 'uploadLimited',
-      'honorsSessionLimits', 'peer-limit', 'seedRatioLimit', 'seedRatioMode',
-      'seedIdleLimit', 'seedIdleMode', 'magnetLink', 'trackers',
-      'activityDate', 'comment', 'creator', 'haveValid',
-      'isPrivate', 'isStalled', 'metadataPercentComplete',
-      'secondsDownloading', 'secondsSeeding',
-      'webseedsSendingToUs', 'hashString'
-    ];
-    const res = await this.torrentGet<Torrent>(fields, ids);
+    const res = await this.torrentGet<Torrent>(TORRENT_LIST_FIELDS, ids);
     return res.torrents;
+  }
+
+  // 只获取最近变化的任务；Transmission 3.07 也支持该模式。
+  public async getTorrentsIncremental(): Promise<{ torrents: Torrent[]; removed: number[] }> {
+    const res = await this.torrentGet<Torrent>(TORRENT_LIST_FIELDS, 'recently-active');
+    return { torrents: res.torrents || [], removed: res.removed || [] };
   }
 
   // 获取超详细单个种子完整信息 (包含完整文件树、节点、Tracker、区块)
