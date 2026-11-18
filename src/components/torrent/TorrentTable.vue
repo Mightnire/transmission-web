@@ -101,7 +101,7 @@
 
           <!-- 下载速度 -->
           <th
-            class="col-speed resizable-col"
+            class="col-downspeed resizable-col"
             v-if="isColVisible('downSpeed')"
             :style="{ width: `${getColWidth('downSpeed')}px` }"
             @click="handleSort('rateDownload')"
@@ -117,7 +117,7 @@
 
           <!-- 上传速度 -->
           <th
-            class="col-speed resizable-col"
+            class="col-upspeed resizable-col"
             v-if="isColVisible('upSpeed')"
             :style="{ width: `${getColWidth('upSpeed')}px` }"
             @click="handleSort('rateUpload')"
@@ -457,12 +457,12 @@
           </td>
 
           <!-- 下载速度 -->
-          <td class="col-speed down-val" v-if="isColVisible('downSpeed')">
+          <td class="col-downspeed down-val" v-if="isColVisible('downSpeed')">
             {{ torrent.rateDownload > 0 ? formatSpeed(torrent.rateDownload) : '—' }}
           </td>
 
           <!-- 上传速度 -->
-          <td class="col-speed up-val" v-if="isColVisible('upSpeed')">
+          <td class="col-upspeed up-val" v-if="isColVisible('upSpeed')">
             {{ torrent.rateUpload > 0 ? formatSpeed(torrent.rateUpload) : '—' }}
           </td>
 
@@ -633,10 +633,16 @@
       >
         <div class="cols-menu-header">{{ t('ribbon.colsMenuTitle') }}</div>
         <div class="cols-menu-list">
-          <label class="cols-menu-item" v-for="col in state.columns" :key="col.id">
-            <input type="checkbox" v-model="col.visible" @change="saveColumns" />
-            <span>{{ t(col.labelKey) }}</span>
-          </label>
+          <div class="cols-menu-item" v-for="(col, index) in state.columns" :key="col.id">
+            <label class="cols-menu-label">
+              <input type="checkbox" v-model="col.visible" @change="saveColumns" />
+              <span>{{ t(col.labelKey) }}</span>
+            </label>
+            <div class="cols-order-buttons">
+              <button class="cols-order-btn" :disabled="index === 0" @click.stop="moveColumn(index, -1)" :title="t('ribbon.moveColumnUp')">▲</button>
+              <button class="cols-order-btn" :disabled="index === state.columns.length - 1" @click.stop="moveColumn(index, 1)" :title="t('ribbon.moveColumnDown')">▼</button>
+            </div>
+          </div>
         </div>
         <div class="menu-divider"></div>
         <div class="menu-item" @click="handleResetColumns">
@@ -649,7 +655,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted } from 'vue';
+import { ref, computed, reactive, onMounted, onUnmounted, watchEffect } from 'vue';
 import {
   state,
   filteredTorrents,
@@ -700,6 +706,52 @@ const visibleColumnCount = computed(() => {
   count += state.columns.filter((c) => c.visible).length;
   return count;
 });
+
+const COLUMN_CLASS_MAP: Record<string, string> = {
+  status: 'col-status', name: 'col-name', size: 'col-size', progress: 'col-progress',
+  statustext: 'col-statustext', downSpeed: 'col-downspeed', upSpeed: 'col-upspeed',
+  eta: 'col-eta', ratio: 'col-ratio', peers: 'col-peers', corrupt: 'col-corrupt',
+  downloaded: 'col-downloaded', uploaded: 'col-uploaded', remaining: 'col-remaining',
+  haveValid: 'col-havevalid', sizeDone: 'col-sizedone', addedDate: 'col-addeddate',
+  doneDate: 'col-donedate', activityDate: 'col-activitydate', seedingTime: 'col-seedingtime',
+  downloadingTime: 'col-downloadingtime', peersDetail: 'col-peersdetail', webSeeds: 'col-webseeds',
+  priority: 'col-priority', metadata: 'col-metadata', stalled: 'col-stalled',
+  savePath: 'col-savepath', labels: 'col-labels', hash: 'col-hash', private: 'col-private',
+  recheck: 'col-recheck', downloadLimit: 'col-dlimit', uploadLimit: 'col-ulimit',
+  error: 'col-error', comment: 'col-comment', creator: 'col-creator',
+};
+
+const columnStyleEl = document.createElement('style');
+document.head.appendChild(columnStyleEl);
+
+watchEffect(() => {
+  const orderRules = state.columns.map((column, index) => {
+    const cls = COLUMN_CLASS_MAP[column.id] || `col-${column.id}`;
+    return `.fluent-desktop-table .${cls}{order:${index + 2};width:${column.width}px;min-width:${column.minWidth}px;}`;
+  }).join('\n');
+  columnStyleEl.textContent = `
+    .fluent-desktop-table { display: block !important; table-layout: auto !important; }
+    .fluent-desktop-table thead, .fluent-desktop-table tbody { display: block !important; }
+    .fluent-desktop-table tr { display: flex !important; align-items: center; }
+    .fluent-desktop-table th, .fluent-desktop-table td { flex: 0 0 auto !important; box-sizing: border-box; }
+    .fluent-desktop-table thead { position: sticky; top: 0; z-index: 5; background: var(--fluent-bg-subtle); }
+    .fluent-desktop-table .col-check { order: -2; width: 32px; min-width: 32px; }
+    .fluent-desktop-table .col-queue { order: -1; width: 44px; min-width: 44px; }
+    .fluent-desktop-table .empty-table-cell { flex: 1 1 auto !important; width: auto !important; }
+    ${orderRules}
+  `;
+});
+
+onUnmounted(() => { columnStyleEl.remove(); });
+
+function moveColumn(index: number, delta: number) {
+  const target = index + delta;
+  if (target < 0 || target >= state.columns.length) return;
+  const next = [...state.columns];
+  [next[index], next[target]] = [next[target], next[index]];
+  state.columns = next;
+  saveColumns();
+}
 
 function isColVisible(id: string): boolean {
   const col = state.columns.find((c) => c.id === id);
@@ -1141,21 +1193,49 @@ function getStatusBadgeClass(item: Torrent): string {
 .cols-menu-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
   padding: 4px 6px;
   font-size: 11px;
   border-radius: var(--fluent-radius);
-  cursor: pointer;
   transition: background-color 0.12s;
 }
 
-.cols-menu-item:hover {
-  background-color: var(--fluent-bg-hover);
+.cols-menu-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  cursor: pointer;
+  padding: 2px 0;
 }
 
-.cols-menu-item input[type="checkbox"] {
-  accent-color: var(--fluent-accent);
+.cols-order-buttons {
+  display: inline-flex;
+  gap: 1px;
+  opacity: 0.45;
 }
+
+.cols-menu-item:hover .cols-order-buttons { opacity: 1; }
+
+.cols-order-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 3px;
+  background: var(--fluent-bg-canvas);
+  color: var(--md-text-secondary);
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cols-order-btn:hover:not(:disabled) { border-color: var(--fluent-accent); color: var(--fluent-accent); }
+.cols-order-btn:disabled { opacity: 0.25; cursor: default; }
+
+.cols-menu-item:hover { background-color: var(--fluent-bg-hover); }
+.cols-menu-item input[type="checkbox"] { accent-color: var(--fluent-accent); }
 
 .sort-indicator {
   font-size: 9px;

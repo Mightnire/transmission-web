@@ -64,22 +64,30 @@ export function loadSavedColumns(): TableColumnConfig[] {
       const parsed: TableColumnConfig[] = JSON.parse(raw);
       const savedVersion = localStorage.getItem(COLUMNS_VERSION_KEY);
 
-      // 2.0 布局升级：保留用户选择的可见列，但重置为更紧凑的列宽，
-      // 避免旧版超宽列在 1280 屏幕上产生不必要的横向滚动。
-      if (savedVersion !== COLUMNS_LAYOUT_VERSION) {
-        const migrated = DEFAULT_COLUMNS.map((def) => {
-          const found = parsed.find((p) => p.id === def.id);
-          return found ? { ...def, visible: found.visible } : { ...def };
+      const resetWidths = savedVersion !== COLUMNS_LAYOUT_VERSION;
+      const merged: TableColumnConfig[] = [];
+      const seen = new Set<string>();
+
+      // 保留用户保存的列顺序；新版本新增的列追加到末尾。
+      for (const saved of parsed) {
+        const def = DEFAULT_COLUMNS.find((column) => column.id === saved.id);
+        if (!def || seen.has(def.id)) continue;
+        seen.add(def.id);
+        merged.push({
+          ...def,
+          visible: saved.visible,
+          ...(resetWidths ? {} : { width: saved.width }),
         });
-        localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(migrated));
-        localStorage.setItem(COLUMNS_VERSION_KEY, COLUMNS_LAYOUT_VERSION);
-        return migrated;
+      }
+      for (const def of DEFAULT_COLUMNS) {
+        if (!seen.has(def.id)) merged.push({ ...def });
       }
 
-      return DEFAULT_COLUMNS.map((def) => {
-        const found = parsed.find((p) => p.id === def.id);
-        return found ? { ...def, visible: found.visible, width: found.width } : { ...def };
-      });
+      if (resetWidths) {
+        localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(merged));
+        localStorage.setItem(COLUMNS_VERSION_KEY, COLUMNS_LAYOUT_VERSION);
+      }
+      return merged;
     }
   } catch (e) {
     console.warn('Failed to parse saved columns:', e);

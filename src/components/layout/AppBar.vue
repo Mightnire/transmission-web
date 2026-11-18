@@ -1005,10 +1005,16 @@
       >
         <div class="cols-menu-header">{{ t('ribbon.colsMenuTitle') }}</div>
         <div class="cols-menu-list">
-          <label class="cols-menu-item" v-for="col in state.columns" :key="col.id">
-            <input type="checkbox" v-model="col.visible" @change="saveColumns" />
-            <span>{{ t(col.labelKey) }}</span>
-          </label>
+          <div class="cols-menu-item" v-for="(col, index) in state.columns" :key="col.id">
+            <label class="cols-menu-label">
+              <input type="checkbox" v-model="col.visible" @change="saveColumns" />
+              <span>{{ t(col.labelKey) }}</span>
+            </label>
+            <div class="cols-order-buttons">
+              <button class="cols-order-btn" :disabled="index === 0" @click.stop="moveColumn(index, -1)" :title="t('ribbon.moveColumnUp')">▲</button>
+              <button class="cols-order-btn" :disabled="index === state.columns.length - 1" @click.stop="moveColumn(index, 1)" :title="t('ribbon.moveColumnDown')">▼</button>
+            </div>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -1093,6 +1099,15 @@ function toggleMenu(type: 'start' | 'stop' | 'delete' | 'lang' | 'columns', even
     }
   }
   menus[type] = !current;
+}
+
+function moveColumn(index: number, delta: number) {
+  const target = index + delta;
+  if (target < 0 || target >= state.columns.length) return;
+  const next = [...state.columns];
+  [next[index], next[target]] = [next[target], next[index]];
+  state.columns = next;
+  saveColumns();
 }
 
 function handleResetColumns() {
@@ -2348,6 +2363,8 @@ function toggleTheme() {
 }
 
 .selection-badge {
+  order: 99;
+  margin-left: auto;
   padding: 4px 8px;
   background-color: rgba(0, 120, 212, 0.1);
   border-radius: 4px;
@@ -2418,15 +2435,45 @@ function toggleTheme() {
 .cols-menu-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding: 4px 8px;
   font-size: 12px;
+}
+
+.cols-menu-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
   cursor: pointer;
 }
 
-.cols-menu-item:hover {
-  background-color: var(--fluent-bg-hover);
+.cols-order-buttons {
+  display: inline-flex;
+  gap: 1px;
+  opacity: 0.45;
 }
+
+.cols-menu-item:hover .cols-order-buttons { opacity: 1; }
+
+.cols-order-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 3px;
+  background: var(--fluent-bg-canvas);
+  color: var(--md-text-secondary);
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cols-order-btn:hover:not(:disabled) { border-color: var(--fluent-accent); color: var(--fluent-accent); }
+.cols-order-btn:disabled { opacity: 0.25; cursor: default; }
+
+.cols-menu-item:hover { background-color: var(--fluent-bg-hover); }
 
 /* 响应式断点 (支持小屏笔记本与窄窗自适应，绝不挤压 Tab 栏) */
 @media (min-width: 768px) {

@@ -14,7 +14,7 @@
             <TransmissionLogo :size="30" />
             <div class="brand-titles">
               <strong>Transmission</strong>
-              <span>Web UI</span>
+              <span>{{ state.session?.version || '—' }}</span>
             </div>
           </div>
 
@@ -305,7 +305,6 @@
                   </div>
                 </div>
 
-                <p class="about-offline">✓ {{ t('dialog.aboutOffline') }}</p>
                 <a class="repo-link" href="https://github.com/Mightnire/transmission-web" target="_blank" rel="noopener noreferrer">
                   <FluentIcon name="link" />
                   <span>{{ t('backstage.openRepo') }}</span>
@@ -1076,12 +1075,6 @@ onUnmounted(() => {
 
 .about-row strong {
   color: var(--md-text-primary);
-}
-
-.about-offline {
-  margin-top: 16px;
-  font-size: 12px;
-  color: #2e7d32;
 }
 
 .repo-link {

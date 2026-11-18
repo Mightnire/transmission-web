@@ -12,7 +12,7 @@
     </div>
 
     <div class="chart-canvas-wrap">
-      <svg class="chart-svg" :viewBox="`0 0 ${W} ${H}`" preserveAspectRatio="xMidYMid meet" role="img" :aria-label="t('backstage.chartTitle')">
+      <svg class="chart-svg" :viewBox="`0 0 ${W} ${H}`" preserveAspectRatio="none" role="img" :aria-label="t('backstage.chartTitle')">
         <defs>
           <linearGradient id="speedDownFill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#0078d4" stop-opacity="0.28" />
@@ -34,8 +34,8 @@
         <path v-if="downArea" :d="downArea" fill="url(#speedDownFill)" />
         <path v-if="upArea" :d="upArea" fill="url(#speedUpFill)" />
 
-        <polyline v-if="downLine" :points="downLine" class="series-line down-line" />
-        <polyline v-if="upLine" :points="upLine" class="series-line up-line" />
+        <polyline v-if="downLine" :points="downLine" class="series-line down-line" vector-effect="non-scaling-stroke" />
+        <polyline v-if="upLine" :points="upLine" class="series-line up-line" vector-effect="non-scaling-stroke" />
 
         <template v-if="points.length > 0">
           <circle :cx="lastX" :cy="lastDownY" r="3.5" class="series-dot down-dot" />
@@ -221,7 +221,7 @@ const upArea = computed(() => areaFor('up'));
 
 .series-line {
   fill: none;
-  stroke-width: 4;
+  stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
