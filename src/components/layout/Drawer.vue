@@ -442,7 +442,7 @@ function setStatusFilter(status: any) {
   state.filter.status = status;
   state.selectedTag = null;
   state.selectedTracker = null;
-  if (window.innerWidth < 768) {
+  if (window.innerWidth <= 1024) {
     state.sidebarOpen = false;
   }
 }
@@ -450,7 +450,7 @@ function setStatusFilter(status: any) {
 function toggleTag(tag: string) {
   state.selectedTag = state.selectedTag === tag ? null : tag;
   state.selectedTracker = null;
-  if (window.innerWidth < 768) {
+  if (window.innerWidth <= 1024) {
     state.sidebarOpen = false;
   }
 }
@@ -458,7 +458,7 @@ function toggleTag(tag: string) {
 function toggleTracker(host: string) {
   state.selectedTracker = state.selectedTracker === host ? null : host;
   state.selectedTag = null;
-  if (window.innerWidth < 768) {
+  if (window.innerWidth <= 1024) {
     state.sidebarOpen = false;
   }
 }
@@ -1062,7 +1062,7 @@ function getRatio(): string {
 }
 
 /* 移动端抽屉遮罩与侧边栏 */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .fluent-navigation-pane {
     position: fixed;
     top: 0;
@@ -1082,6 +1082,41 @@ function getRatio(): string {
     box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35);
     visibility: visible;
     pointer-events: auto;
+  }
+
+  /* 手机上不显示 48px 纯图标栏：抽屉始终展开显示文字与徽章 */
+  .fluent-navigation-pane.is-collapsed {
+    width: min(300px, 84vw);
+  }
+
+  .fluent-navigation-pane.is-collapsed .section-label,
+  .fluent-navigation-pane.is-collapsed .nav-label {
+    display: inline !important;
+  }
+
+  .fluent-navigation-pane.is-collapsed .nav-badge {
+    display: inline-flex !important;
+  }
+
+  .fluent-navigation-pane.is-collapsed .section-header-flex {
+    display: flex !important;
+  }
+
+  .fluent-navigation-pane.is-collapsed .footer-card {
+    display: block !important;
+  }
+
+  .fluent-navigation-pane.is-collapsed .nav-pane-inner {
+    padding: 8px 6px;
+  }
+
+  .fluent-navigation-pane.is-collapsed .fluent-nav-item {
+    padding: 0 12px;
+    justify-content: flex-start;
+  }
+
+  .fluent-navigation-pane.is-collapsed .fluent-divider {
+    margin: 4px 6px;
   }
 
   .mobile-drawer-header {

@@ -1027,7 +1027,7 @@ function selectLocale(loc: LocaleKey) {
 }
 
 function toggleSidebar() {
-  if (window.innerWidth >= 768) {
+  if (window.innerWidth > 1024) {
     state.sidebarCollapsed = !state.sidebarCollapsed;
     localStorage.setItem('sidebar_collapsed', String(state.sidebarCollapsed));
   } else {
