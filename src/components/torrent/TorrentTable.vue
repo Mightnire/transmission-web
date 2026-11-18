@@ -27,11 +27,12 @@
           </th>
 
           <th
-            v-for="col in visibleColumns"
+            v-for="(col, index) in visibleColumns"
             :key="col.id"
             :class="['resizable-col', columnClass(col.id), {
               'col-dragging': draggingColumnId === col.id,
-              'col-drop-target': dropTargetId === col.id,
+              'col-drop-before': dropBeforeId === col.id,
+              'col-drop-after': dropAfterLast && index === visibleColumns.length - 1,
             }]"
             :style="{ width: `${col.width}px` }"
             :data-col-id="col.id"
@@ -476,7 +477,8 @@ function columnSort(id: string) {
 }
 
 const draggingColumnId = ref<string | null>(null);
-const dropTargetId = ref<string | null>(null);
+const dropBeforeId = ref<string | null>(null);
+const dropAfterLast = ref(false);
 const dragGhost = ref<{ label: string; x: number; y: number } | null>(null);
 
 function columnLabel(id: string): string {
@@ -487,7 +489,8 @@ function columnLabel(id: string): string {
 
 function onColumnDragStart(event: DragEvent, id: string) {
   draggingColumnId.value = id;
-  dropTargetId.value = null;
+  dropBeforeId.value = null;
+  dropAfterLast.value = false;
   dragGhost.value = { label: columnLabel(id), x: event.clientX + 12, y: event.clientY + 12 };
   event.dataTransfer?.setData('text/plain', id);
   if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
@@ -500,19 +503,61 @@ function onColumnDragMove(event: DragEvent) {
 }
 
 function onColumnDragOver(event: DragEvent, id: string) {
-  dropTargetId.value = id;
+  const index = visibleColumns.value.findIndex((column) => column.id === id);
+  if (index < 0) return;
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  const after = event.clientX > rect.left + rect.width / 2;
+  const nextColumn = visibleColumns.value[index + 1];
+
+  dropAfterLast.value = false;
+  if (after && nextColumn) {
+    dropBeforeId.value = nextColumn.id;
+  } else if (after) {
+    dropBeforeId.value = null;
+    dropAfterLast.value = true;
+  } else {
+    dropBeforeId.value = id;
+  }
+
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
 }
 
-function onColumnDrop(event: DragEvent, targetId: string) {
+function onColumnDrop(event: DragEvent, _targetId: string) {
   const fromId = draggingColumnId.value || event.dataTransfer?.getData('text/plain');
-  if (fromId && targetId) reorderColumn(fromId, targetId);
+  if (!fromId) {
+    onColumnDragEnd();
+    return;
+  }
+
+  if (fromId === dropBeforeId.value) {
+    onColumnDragEnd();
+    return;
+  }
+
+  const next = [...state.columns];
+  const fromIndex = next.findIndex((column) => column.id === fromId);
+  if (fromIndex < 0) {
+    onColumnDragEnd();
+    return;
+  }
+
+  const [moved] = next.splice(fromIndex, 1);
+  if (dropBeforeId.value) {
+    const targetIndex = next.findIndex((column) => column.id === dropBeforeId.value);
+    next.splice(targetIndex < 0 ? next.length : targetIndex, 0, moved);
+  } else {
+    next.push(moved);
+  }
+
+  state.columns = next;
+  saveColumns();
   onColumnDragEnd();
 }
 
 function onColumnDragEnd() {
   draggingColumnId.value = null;
-  dropTargetId.value = null;
+  dropBeforeId.value = null;
+  dropAfterLast.value = false;
   dragGhost.value = null;
 }
 
