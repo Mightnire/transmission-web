@@ -175,7 +175,7 @@ import { rpc } from '../../api/rpc';
 
 const props = defineProps<{ torrent: Torrent }>();
 
-const BASE_CARD_COLUMNS = new Set(['status', 'name', 'size', 'progress', 'downSpeed', 'upSpeed', 'eta', 'ratio', 'peers']);
+const BASE_CARD_COLUMNS = new Set(['status', 'name', 'size', 'progress', 'statustext', 'downSpeed', 'upSpeed', 'eta', 'ratio', 'peers']);
 const extraColumns = computed(() => state.columns.filter((column) => column.visible && !BASE_CARD_COLUMNS.has(column.id)));
 
 function formatDate(value?: number): string {
