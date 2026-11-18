@@ -38,8 +38,8 @@
 | 会话诊断 | `session-get` 的 DHT/PEX/LPD/uTP/加密/peer-port/rpc-version | ✅ | 低 | 已接入统计页网络诊断卡片 |
 | 带宽分组 | `group-get` / `group-set` | 🟡 | 中 | 版本相关；3.07 先探测，缺失则隐藏 |
 | 远程关闭 | `session-close` | ⛔ | 低 | 破坏性，除非明确要求，不放入 UI |
-| 表格格式 | `torrent-get format: "table"` | 🟡 | 低 | 4.x 优先；3.07 先探测，兼容对象格式 |
-| 增量更新 | `ids: "recently-active"` + `removed` | ✅ | 中 | 已接入；每 20 次增量回退一次全量校准 |
+| 表格格式 | `torrent-get format: "table"` | ✅ | 低 | 3.07 实测支持，已用于列表/增量请求；失败自动回退对象格式 |
+| 增量更新 | `ids: "recently-active"` + `removed` | ✅ | 中 | 已接入；配合 table 格式，每 20 次回退全量校准 |
 | 逐块状态 | 无（RPC 只到 piece 级） | 🔴 | — | 不能伪造 BiglyBT 的 block 请求状态 |
 | 分组 / MIME / 文件数 | `group` / `primary-mime-type` / `fileCount` | 🔴 | — | 3.07 返回 0；不要展示成 0 |
 | 顺序下载 | `sequentialDownload` | 🔴 | — | 3.07 返回 0；4.x 再接入 |

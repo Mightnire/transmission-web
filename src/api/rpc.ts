@@ -34,6 +34,9 @@ const TORRENT_LIST_FIELDS = [
   'webseedsSendingToUs', 'hashString'
 ];
 
+type TableCell = string | number | boolean | null;
+let tableFormatSupported = true;
+
 export class TransmissionRPC {
   private endpoint = '/transmission/rpc';
   private sessionId = '';
@@ -196,14 +199,61 @@ export class TransmissionRPC {
     return this.request<{ torrents: T[]; removed?: number[] }>('torrent-get', args);
   }
 
+  // format: "table" 用数组返回结果，比对象数组更省传输与解析；
+  // 老服务端不支持时由调用方回退到对象格式。
+  public async torrentGetTable<T = Torrent>(
+    fields: string[],
+    ids?: number[] | string
+  ): Promise<{ torrents: T[]; removed: number[] }> {
+    const args: Record<string, any> = { fields, format: 'table' };
+    if (ids !== undefined) args.ids = ids;
+
+    const response = await this.request<{
+      torrents?: TableCell[][];
+      removed?: number[];
+    }>('torrent-get', args);
+
+    const rows = response.torrents || [];
+    if (rows.length === 0) {
+      return { torrents: [], removed: response.removed || [] };
+    }
+
+    const headers = rows[0].map(String);
+    const torrents = rows.slice(1).map((row) => {
+      const entry: Record<string, TableCell> = {};
+      headers.forEach((header, index) => {
+        entry[header] = row[index] ?? null;
+      });
+      return entry as T;
+    });
+
+    return { torrents, removed: response.removed || [] };
+  }
+
   // 获取种子列表 (常用高频字段，优化带宽)
   public async getTorrents(ids?: number[] | string): Promise<Torrent[]> {
+    if (tableFormatSupported) {
+      try {
+        const res = await this.torrentGetTable<Torrent>(TORRENT_LIST_FIELDS, ids);
+        return res.torrents;
+      } catch {
+        tableFormatSupported = false;
+      }
+    }
     const res = await this.torrentGet<Torrent>(TORRENT_LIST_FIELDS, ids);
     return res.torrents;
   }
 
   // 只获取最近变化的任务；Transmission 3.07 也支持该模式。
   public async getTorrentsIncremental(): Promise<{ torrents: Torrent[]; removed: number[] }> {
+    if (tableFormatSupported) {
+      try {
+        const res = await this.torrentGetTable<Torrent>(TORRENT_LIST_FIELDS, 'recently-active');
+        return { torrents: res.torrents, removed: res.removed };
+      } catch {
+        tableFormatSupported = false;
+      }
+    }
     const res = await this.torrentGet<Torrent>(TORRENT_LIST_FIELDS, 'recently-active');
     return { torrents: res.torrents || [], removed: res.removed || [] };
   }

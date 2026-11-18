@@ -54,7 +54,7 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
   - Tracker 表新增上次/下次宣告时间；4.x 若返回 `sitename` / `downloaderCount` 会额外显示对应列。
   - Web Seed 以明细列表展示 URL 与活跃数量。
   - 统计页新增「网络诊断」：DHT/PEX/LPD/uTP、加密、端口、黑名单，并支持按需测试端口与更新黑名单。
-  - 轮询优先使用 `recently-active` 增量更新（3.07 也支持），并周期性回退全量校准。
+  - 列表请求优先使用 `format: "table"`，并配合 `recently-active` 增量更新（3.07 均支持），周期性回退全量校准。
 - **Tracker 状态与校验**
   - Tracker 结果在本地解析并着色：成功绿色、连接失败/访问拒绝红色、HTTP 429 等限流黄色、等待宣告灰色。
   - 支持 `Could not connect to tracker`、`Connection failed`、`access denied`、`HTTP 401/403/429/5xx` 等常见结果。
