@@ -143,6 +143,7 @@ export default {
     about: 'About Transmission',
     batchTags: 'Batch Labels',
     selectAll: 'Select All',
+    moreActions: 'More Actions',
     selectedCount: '{count} selected',
     tabs: {
       tasks: 'Tasks',
@@ -232,6 +233,8 @@ export default {
     stats: 'Statistics',
     infoSubtitle: 'Session, transfer speed and shortcuts',
     statsSubtitle: 'Live speed, session totals and storage',
+    addSubtitle: 'Add a task from a magnet link, URL, or local .torrent file',
+    settingsSubtitle: 'Configure global speed, queue, network, and storage settings',
     add: 'Add Torrent',
     settings: 'Preferences',
     about: 'About',

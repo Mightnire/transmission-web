@@ -143,6 +143,7 @@ export default {
     about: 'О программе Transmission',
     batchTags: 'Пакетные метки',
     selectAll: 'Выбрать все',
+    moreActions: 'Ещё действия',
     selectedCount: 'Выбрано: {count}',
     tabs: {
       tasks: 'Торренты',
@@ -232,6 +233,8 @@ export default {
     stats: 'Статистика',
     infoSubtitle: 'Сеанс, скорость передачи и быстрые действия',
     statsSubtitle: 'Скорость, итоги сеанса и хранилище',
+    addSubtitle: 'Добавить задачу по magnet-ссылке, URL или локальному .torrent',
+    settingsSubtitle: 'Глобальные настройки скорости, очереди, сети и хранилища',
     add: 'Добавить торрент',
     settings: 'Настройки',
     about: 'О программе',

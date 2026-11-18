@@ -1379,6 +1379,8 @@ function handleSetLocation() {
     height: 75vh;
     max-height: 85vh;
     border-radius: 16px 16px 0 0;
+    border-top: none;
+    overflow: hidden;
     z-index: 999;
     box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.35);
     animation: sheetSlideUp 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
@@ -1401,6 +1403,10 @@ function handleSetLocation() {
 
   .sheet-drag-handle-bar {
     display: flex;
+    height: 12px;
+    padding-top: 3px;
+    background-color: var(--fluent-bg-subtle);
+    border-radius: 16px 16px 0 0;
   }
 
   .dock-header {

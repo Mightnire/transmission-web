@@ -826,6 +826,9 @@
             <FluentIcon name="close" />
           </button>
         </div>
+        <button class="fluent-btn-mobile" @click="mobileMenuOpen = true" :title="t('ribbon.moreActions')">
+          <FluentIcon name="more_vert" />
+        </button>
       </template>
 
       <!-- 模式 B：有选中任务时的批量选择工具条 -->
@@ -854,8 +857,78 @@
         <button class="fluent-btn-mobile clear-sel-btn" @click="clearSelection" :title="t('common.cancel')">
           <FluentIcon name="close" />
         </button>
+        <button class="fluent-btn-mobile" @click="mobileMenuOpen = true" :title="t('ribbon.moreActions')">
+          <FluentIcon name="more_vert" />
+        </button>
       </template>
     </div>
+
+    <!-- 移动端操作面板：把 Ribbon 的常用命令收进底部弹出层 -->
+    <Teleport to="body">
+      <div class="mobile-sheet-backdrop" v-if="mobileMenuOpen" @click="mobileMenuOpen = false"></div>
+      <div class="mobile-sheet" v-if="mobileMenuOpen" @click.stop>
+        <div class="mobile-sheet-handle"></div>
+        <div class="mobile-sheet-title">{{ t('ribbon.moreActions') }}</div>
+        <div class="mobile-sheet-grid">
+          <button class="mobile-sheet-action" @click="runMobile(() => (state.addDialogOpen = true))">
+            <FluentIcon name="add" />
+            <span>{{ t('toolbar.add') }}</span>
+          </button>
+          <button class="mobile-sheet-action" @click="runMobile(openFileMenu)">
+            <FluentIcon name="folder_open" />
+            <span>{{ t('backstage.title') }}</span>
+          </button>
+          <button class="mobile-sheet-action" @click="runMobile(handleStartAll)">
+            <FluentIcon name="fast_forward" />
+            <span>{{ t('toolbar.startAll') }}</span>
+          </button>
+          <button class="mobile-sheet-action" @click="runMobile(handleStopAll)">
+            <FluentIcon name="pause_circle_outline" />
+            <span>{{ t('toolbar.pauseAll') }}</span>
+          </button>
+          <button class="mobile-sheet-action" @click="runMobile(selectAllTorrents)">
+            <FluentIcon name="select_all" />
+            <span>{{ t('ribbon.selectAll') }}</span>
+          </button>
+          <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(() => (state.batchTagsDialogOpen = true))">
+            <FluentIcon name="local_offer" />
+            <span>{{ t('ribbon.batchTags') }}</span>
+          </button>
+          <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(openProps)">
+            <FluentIcon name="tune" />
+            <span>{{ t('ribbon.props') }}</span>
+          </button>
+          <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(handleRename)">
+            <FluentIcon name="edit" />
+            <span>{{ t('ribbon.rename') }}</span>
+          </button>
+          <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(openLocationDialog)">
+            <FluentIcon name="folder_open" />
+            <span>{{ t('ribbon.setLocation') }}</span>
+          </button>
+          <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(confirmVerifySelected)">
+            <FluentIcon name="check_circle_outline" />
+            <span>{{ t('common.verify') }}</span>
+          </button>
+          <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(reannounceSelected)">
+            <FluentIcon name="sync" />
+            <span>{{ t('ribbon.reannounce') }}</span>
+          </button>
+          <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(handleStart)">
+            <FluentIcon name="play_arrow" />
+            <span>{{ t('common.start') }}</span>
+          </button>
+          <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(handleStop)">
+            <FluentIcon name="pause" />
+            <span>{{ t('common.pause') }}</span>
+          </button>
+          <button class="mobile-sheet-action danger" v-if="hasSelection" @click="runMobile(() => handleRemove(false))">
+            <FluentIcon name="delete" />
+            <span>{{ t('common.delete') }}</span>
+          </button>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- 全局 Teleport 浮层下拉菜单：彻底逃离 Ribbon 裁剪与 z-index 层叠 -->
     <Teleport to="body">
@@ -980,6 +1053,7 @@ import { t, currentLocale, setLocale, LocaleKey } from '../../locales';
 const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark');
 const currentTab = ref<'tasks' | 'transfer' | 'tools' | 'view' | 'torrentProps'>('tasks');
 const isRibbonCollapsed = ref(localStorage.getItem('ribbon_collapsed') === 'true');
+const mobileMenuOpen = ref(false);
 
 // 下拉菜单浮层状态
 const menus = reactive({
@@ -991,6 +1065,11 @@ const menus = reactive({
 });
 
 const menuPos = reactive({ top: 0, left: 0 });
+
+function runMobile(action: () => void) {
+  mobileMenuOpen.value = false;
+  action();
+}
 
 function closeAllMenus() {
   menus.start = false;
@@ -2144,6 +2223,81 @@ function toggleTheme() {
 }
 
 /* 移动端紧凑工具条 */
+.mobile-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(2px);
+}
+
+.mobile-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1201;
+  padding: 8px 14px calc(18px + env(safe-area-inset-bottom));
+  border-radius: 16px 16px 0 0;
+  background: var(--fluent-bg-canvas);
+  box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.28);
+  animation: mobileSheetUp 0.2s ease-out;
+}
+
+.mobile-sheet-handle {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 10px;
+  border-radius: 2px;
+  background: var(--fluent-border-divider);
+}
+
+.mobile-sheet-title {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--md-text-primary);
+}
+
+.mobile-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.mobile-sheet-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 64px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--md-text-primary);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.mobile-sheet-action:hover {
+  background: var(--fluent-bg-hover);
+}
+
+.mobile-sheet-action .material-icons {
+  font-size: 22px;
+  color: var(--md-text-secondary);
+}
+
+.mobile-sheet-action.danger .material-icons {
+  color: #c62828;
+}
+
+@keyframes mobileSheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
 .mobile-compact-bar {
   display: flex;
   align-items: center;

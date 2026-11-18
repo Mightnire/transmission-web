@@ -1,7 +1,12 @@
 <template>
-  <div class="md-dialog-overlay" v-if="state.sessionDialogOpen" @click.self="state.sessionDialogOpen = false">
+  <div
+    class="md-dialog-overlay"
+    :class="{ embedded: props.embedded }"
+    v-if="props.embedded || state.sessionDialogOpen"
+    @click.self="!props.embedded && (state.sessionDialogOpen = false)"
+  >
     <div class="md-dialog session-dialog">
-      <div class="dialog-header">
+      <div class="dialog-header" v-if="!props.embedded">
         <div class="header-title-row">
           <FluentIcon name="settings" class="header-icon" />
           <h2 class="md-dialog-title">{{ t('session.title') }}</h2>
@@ -418,7 +423,7 @@
       </div>
 
       <div class="md-dialog-actions">
-        <button class="md-btn md-btn-flat" @click="state.sessionDialogOpen = false">
+        <button class="md-btn md-btn-flat" @click="props.embedded ? emit('done') : (state.sessionDialogOpen = false)">
           {{ t('common.cancel') }}
         </button>
         <button class="md-btn md-btn-raised" @click="saveSettings">
@@ -430,11 +435,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue';
+import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { state, fetchSession, formatBytes, showToast, describeError } from '../../stores/transmission';
 import { useEscapeKey } from '../../composables/useEscapeKey';
 import { t } from '../../locales';
 import { rpc } from '../../api/rpc';
+
+const props = defineProps<{ embedded?: boolean }>();
+const emit = defineEmits<{ (e: 'done'): void }>();
 
 const activeTab = ref<'speed' | 'queue' | 'network' | 'storage' | 'automation'>('speed');
 const testingPort = ref(false);
@@ -587,6 +595,25 @@ watch(
   { immediate: true }
 );
 
+let embeddedInitialized = false;
+
+function initEmbeddedForm(session: typeof state.session) {
+  if (!props.embedded || !session || embeddedInitialized) return;
+  initForm(session);
+  embeddedInitialized = true;
+}
+
+onMounted(() => {
+  initEmbeddedForm(state.session);
+});
+
+watch(
+  () => state.session,
+  (session) => {
+    initEmbeddedForm(session);
+  }
+);
+
 async function checkFreeSpace() {
   if (!form.downloadDir) return;
   try {
@@ -693,6 +720,7 @@ async function saveSettings() {
     }
     state.sessionDialogOpen = false;
     await fetchSession();
+    if (props.embedded) emit('done');
     showToast(t('toast.saved'), 'success');
   } catch (err: any) {
     showToast(t('common.failed', { error: describeError(err) }), 'error');
@@ -1061,5 +1089,31 @@ async function saveSettings() {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
+}
+
+/* 嵌入到 Backstage 时按页面内容排版，不再使用全屏遮罩 */
+.md-dialog-overlay.embedded {
+  position: static;
+  display: block;
+  padding: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.md-dialog-overlay.embedded .session-dialog {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.md-dialog-overlay.embedded .md-dialog-content {
+  padding: 0;
+  max-height: none;
+  overflow: visible;
 }
 </style>

@@ -143,6 +143,7 @@ export default {
     about: '关于 Transmission',
     batchTags: '批量设置标签',
     selectAll: '全选任务',
+    moreActions: '更多操作',
     selectedCount: '已选 {count} 项',
     tabs: {
       tasks: '任务',
@@ -232,6 +233,8 @@ export default {
     stats: '统计',
     infoSubtitle: '当前会话、传输速度与快捷操作',
     statsSubtitle: '实时速度、会话累计与存储状态',
+    addSubtitle: '通过磁力链、URL 或本地 .torrent 文件添加任务',
+    settingsSubtitle: '修改 Transmission 全局速度、队列、网络与存储设置',
     add: '添加任务',
     settings: '首选项',
     about: '关于',

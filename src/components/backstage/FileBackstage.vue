@@ -32,11 +32,11 @@
               <FluentIcon name="insights" />
               <span>{{ t('backstage.stats') }}</span>
             </button>
-            <button class="nav-item" @click="handleAdd">
+            <button class="nav-item" :class="{ active: activeTab === 'add' }" @click="activeTab = 'add'">
               <FluentIcon name="add_circle" />
               <span>{{ t('backstage.add') }}</span>
             </button>
-            <button class="nav-item" @click="handleSettings">
+            <button class="nav-item" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">
               <FluentIcon name="settings" />
               <span>{{ t('backstage.settings') }}</span>
             </button>
@@ -62,15 +62,6 @@
           <div class="backstage-body">
             <!-- 信息 / 仪表盘 -->
             <template v-if="activeTab === 'info'">
-              <div class="backstage-hero">
-                <div class="hero-brand">
-                  <TransmissionLogo :size="58" />
-                  <div>
-                    <h2>Transmission Web</h2>
-                  </div>
-                </div>
-              </div>
-
               <div class="stat-cards">
                 <div class="stat-card">
                   <FluentIcon name="cloud_download" class="stat-icon text-accent" />
@@ -88,21 +79,10 @@
                   <strong class="stat-value">{{ state.stats?.activeTorrentCount ?? counts.downloading + counts.seeding }}</strong>
                 </div>
                 <div class="stat-card">
-                  <FluentIcon name="check_circle" class="stat-icon text-success" />
-                  <span class="stat-label">{{ t('backstage.completed') }}</span>
-                  <strong class="stat-value">{{ counts.finished }}</strong>
+                  <FluentIcon name="schedule" class="stat-icon text-muted" />
+                  <span class="stat-label">{{ t('dialog.activeTime') }}</span>
+                  <strong class="stat-value">{{ formatDuration(state.stats?.['current-stats']?.secondsActive) }}</strong>
                 </div>
-              </div>
-
-              <div class="panel chart-panel">
-                <div class="panel-head">
-                  <div>
-                    <h3>{{ t('backstage.chartTitle') }}</h3>
-                    <p>{{ t('backstage.chartWindow') }}</p>
-                  </div>
-                  <FluentIcon name="insights" class="panel-icon text-accent" />
-                </div>
-                <SpeedChart :points="state.speedHistory" />
               </div>
 
               <div class="quick-actions-panel">
@@ -114,17 +94,13 @@
                     <FluentIcon name="add" />
                     <span>{{ t('backstage.add') }}</span>
                   </button>
-                  <button class="quick-action" @click="handleSettings">
+                  <button class="quick-action" @click="activeTab = 'settings'">
                     <FluentIcon name="settings" />
                     <span>{{ t('backstage.settings') }}</span>
                   </button>
                   <button class="quick-action" @click="refreshData">
                     <FluentIcon name="sync" />
                     <span>{{ t('backstage.refresh') }}</span>
-                  </button>
-                  <button class="quick-action" @click="activeTab = 'stats'">
-                    <FluentIcon name="insights" />
-                    <span>{{ t('backstage.stats') }}</span>
                   </button>
                 </div>
               </div>
@@ -236,7 +212,7 @@
               <div class="panel network-panel">
                 <div class="network-head">
                   <h3>{{ t('backstage.network') }}</h3>
-                  <button class="network-settings" @click="handleSettings">
+                  <button class="network-settings" @click="activeTab = 'settings'">
                     <FluentIcon name="settings" />
                     <span>{{ t('backstage.settings') }}</span>
                   </button>
@@ -291,6 +267,16 @@
                   </button>
                 </div>
               </div>
+            </template>
+
+            <!-- 添加任务（嵌入 Backstage，不再弹出独立窗口） -->
+            <template v-else-if="activeTab === 'add'">
+              <AddDialog embedded @done="activeTab = 'info'" />
+            </template>
+
+            <!-- 首选项（嵌入 Backstage，不再弹出独立窗口） -->
+            <template v-else-if="activeTab === 'settings'">
+              <SessionDialog embedded @done="activeTab = 'info'" />
             </template>
 
             <!-- 关于 -->
@@ -349,9 +335,11 @@ import { rpc } from '../../api/rpc';
 import { t } from '../../locales';
 import { useEscapeKey } from '../../composables/useEscapeKey';
 import SpeedChart from './SpeedChart.vue';
+import AddDialog from '../dialogs/AddDialog.vue';
+import SessionDialog from '../dialogs/SessionDialog.vue';
 
 const appVersion = __APP_VERSION__;
-type BackstageTab = 'info' | 'stats' | 'about';
+type BackstageTab = 'info' | 'stats' | 'add' | 'settings' | 'about';
 const activeTab = ref<BackstageTab>('info');
 
 const counts = computed(() => {
@@ -477,24 +465,26 @@ async function loadStorage() {
 
 const activeTabTitle = computed(() => {
   if (activeTab.value === 'stats') return t('backstage.stats');
+  if (activeTab.value === 'add') return t('backstage.add');
+  if (activeTab.value === 'settings') return t('backstage.settings');
   if (activeTab.value === 'about') return t('backstage.about');
   return t('backstage.info');
 });
 
 const activeTabSubtitle = computed(() => {
   if (activeTab.value === 'stats') return t('backstage.statsSubtitle');
+  if (activeTab.value === 'add') return t('backstage.addSubtitle');
+  if (activeTab.value === 'settings') return t('backstage.settingsSubtitle');
   if (activeTab.value === 'about') return t('backstage.aboutDesc');
   return t('backstage.infoSubtitle');
 });
 
 function handleAdd() {
-  closeFileMenu();
-  state.addDialogOpen = true;
+  activeTab.value = 'add';
 }
 
 function handleSettings() {
-  closeFileMenu();
-  state.sessionDialogOpen = true;
+  activeTab.value = 'settings';
 }
 
 async function refreshData() {

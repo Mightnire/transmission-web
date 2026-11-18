@@ -62,6 +62,7 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
   - 校验本地数据前增加 Fluent 确认框，避免误触暂停传输。
 - **完整 Fluent 对话框，零原生弹窗**
   - 添加、属性、首选项、重命名、移动目录、删除确认、统计、关于、批量标签、Tracker 增删全部为应用内对话框。
+  - 文件菜单内的「添加任务」「首选项」改为页面内嵌，不再从 Backstage 跳出独立窗口；工具栏入口的对话框仍然保留。
   - 支持 `Esc` 关闭、自动聚焦输入框、危险操作二次确认、成功/失败 Toast（不同图标与颜色）。
 - **全量离线图标**
   - 80+ 个 Microsoft Fluent System Icons 24 Regular 矢量路径内联在 `FluentIcon.vue` 中，**0 外部字体、0 外部图标、0 CDN 请求**。
@@ -70,6 +71,7 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
 - **桌面与移动端**
   - 桌面端为可排序、可拖拽列宽、可自定义显示列的表格，内置 30+ 个来自 Transmission RPC 的字段（已下载/上传、剩余、有效数据、添加/完成/活动时间、做种/下载时长、优先级、保存路径、标签、哈希、限速、错误信息等）。
   - 移动端/窄屏（≤1024px）自动切换为抽屉侧栏；侧栏始终显示文字与徽章，不再出现 48px 纯图标栏。
+  - 移动端工具条新增「更多操作」底部面板，收纳 Ribbon 常用命令。
   - 支持浅色 / 深色主题、轮询频率调节、会话统计、Tracker / 标签侧栏分组。
 - **轻量且无重型依赖**
   - 运行时仅依赖 Vue 3；无 UI 组件库、无图标库、无状态管理库。
@@ -115,8 +117,8 @@ npm run build
 | 文件 | 原始 | gzip |
 | --- | --- | --- |
 | `index.html` | 1.1 kB | 0.6 kB |
-| `assets/index-*.css` | 111 kB | 16.6 kB |
-| `assets/index-*.js` | 387 kB | 116 kB |
+| `assets/index-*.css` | 114 kB | 17.1 kB |
+| `assets/index-*.js` | 392 kB | 117 kB |
 
 `base: './'` 使产物可以部署在任意子路径（如 `/transmission/web/`）下。
 

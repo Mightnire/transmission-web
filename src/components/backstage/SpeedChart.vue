@@ -216,7 +216,7 @@ const upArea = computed(() => areaFor('up'));
 
 .chart-grid text {
   fill: var(--md-text-secondary);
-  font-size: 19px;
+  font-size: 11px;
 }
 
 .series-line {
@@ -270,7 +270,7 @@ const upArea = computed(() => areaFor('up'));
   }
 
   .chart-grid text {
-    font-size: 34px;
+    font-size: 12px;
   }
 }
 </style>
