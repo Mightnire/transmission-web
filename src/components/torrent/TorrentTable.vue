@@ -29,7 +29,10 @@
           <th
             v-for="col in visibleColumns"
             :key="col.id"
-            :class="['resizable-col', columnClass(col.id)]"
+            :class="['resizable-col', columnClass(col.id), {
+              'col-dragging': draggingColumnId === col.id,
+              'col-drop-target': dropTargetId === col.id,
+            }]"
             :style="{ width: `${col.width}px` }"
             :data-col-id="col.id"
             @mousedown="onHeaderPointerDown"
@@ -226,6 +229,17 @@
         </tr>
       </tbody>
     </table>
+
+    <Teleport to="body">
+      <div
+        class="column-drag-ghost"
+        v-if="dragGhost"
+        :style="{ left: `${dragGhost.x}px`, top: `${dragGhost.y}px` }"
+      >
+        <FluentIcon name="arrow_upward" />
+        <span>{{ dragGhost.label }}</span>
+      </div>
+    </Teleport>
 
     <!-- 右键上下文菜单 (Fluent Acrylic 风格) -->
     <div
@@ -457,6 +471,9 @@ function columnSort(id: string) {
 }
 
 let headerDrag: { id: string; startX: number; moved: boolean } | null = null;
+const draggingColumnId = ref<string | null>(null);
+const dropTargetId = ref<string | null>(null);
+const dragGhost = ref<{ label: string; x: number; y: number } | null>(null);
 
 function onHeaderPointerDown(event: MouseEvent) {
   if (event.button !== 0) return;
@@ -473,6 +490,13 @@ function onHeaderPointerMove(event: MouseEvent) {
   if (!headerDrag) return;
   if (Math.abs(event.clientX - headerDrag.startX) > 5) {
     headerDrag.moved = true;
+    draggingColumnId.value = headerDrag.id;
+    const column = state.columns.find((item) => item.id === headerDrag?.id);
+    const label = column ? (column.id === 'status' ? t('common.status') : t(column.labelKey)) : '';
+    dragGhost.value = { label, x: event.clientX + 12, y: event.clientY + 12 };
+    const th = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)
+      ?.closest<HTMLElement>('th[data-col-id]');
+    dropTargetId.value = th?.dataset.colId || null;
     document.body.style.cursor = 'grabbing';
   }
 }
@@ -481,6 +505,9 @@ function onHeaderPointerUp(event: MouseEvent) {
   window.removeEventListener('mousemove', onHeaderPointerMove);
   window.removeEventListener('mouseup', onHeaderPointerUp);
   document.body.style.cursor = '';
+  draggingColumnId.value = null;
+  dropTargetId.value = null;
+  dragGhost.value = null;
   const drag = headerDrag;
   headerDrag = null;
   if (!drag?.moved) return;
