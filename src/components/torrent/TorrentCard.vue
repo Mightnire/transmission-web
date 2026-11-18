@@ -104,6 +104,13 @@
         <span class="error-text">{{ torrent.errorString || t('sidebar.errors') }}</span>
       </div>
 
+      <div class="card-extra" v-if="extraColumns.length">
+        <div class="extra-item" v-for="col in extraColumns" :key="col.id">
+          <span>{{ t(col.labelKey) }}</span>
+          <strong>{{ extraValue(col.id) }}</strong>
+        </div>
+      </div>
+
       <!-- 4. 底部快捷操作栏 (Fluent 2 现代微质感按钮) -->
       <div class="card-action-bar" @click.stop>
         <!-- 开始 / 暂停 -->
@@ -167,6 +174,58 @@ import { t } from '../../locales';
 import { rpc } from '../../api/rpc';
 
 const props = defineProps<{ torrent: Torrent }>();
+
+const BASE_CARD_COLUMNS = new Set(['status', 'name', 'size', 'progress', 'downSpeed', 'upSpeed', 'eta', 'ratio', 'peers']);
+const extraColumns = computed(() => state.columns.filter((column) => column.visible && !BASE_CARD_COLUMNS.has(column.id)));
+
+function formatDate(value?: number): string {
+  if (!value) return '—';
+  return new Date(value * 1000).toLocaleDateString();
+}
+
+function formatDuration(seconds?: number): string {
+  if (!seconds || seconds <= 0) return '—';
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (days > 0) return `${days}${t('common.day')} ${hours}${t('common.hour')}`;
+  if (hours > 0) return `${hours}${t('common.hour')} ${minutes}${t('common.min')}`;
+  return `${minutes}${t('common.min')}`;
+}
+
+function extraValue(id: string): string {
+  const torrent = props.torrent;
+  switch (id) {
+    case 'statustext': return statusText.value;
+    case 'corrupt': return torrent.corruptEver > 0 ? formatBytes(torrent.corruptEver) : '—';
+    case 'downloaded': return formatBytes(torrent.downloadedEver);
+    case 'uploaded': return formatBytes(torrent.uploadedEver);
+    case 'remaining': return formatBytes(torrent.leftUntilDone);
+    case 'haveValid': return formatBytes(torrent.haveValid);
+    case 'sizeDone': return formatBytes(torrent.sizeWhenDone);
+    case 'addedDate': return formatDate(torrent.addedDate);
+    case 'doneDate': return formatDate(torrent.doneDate);
+    case 'activityDate': return formatDate(torrent.activityDate);
+    case 'seedingTime': return formatDuration(torrent.secondsSeeding);
+    case 'downloadingTime': return formatDuration(torrent.secondsDownloading);
+    case 'peersDetail': return `${torrent.peersSendingToUs} ↓ / ${torrent.peersGettingFromUs} ↑`;
+    case 'webSeeds': return String(torrent.webseedsSendingToUs ?? 0);
+    case 'priority': return torrent.bandwidthPriority === 1 ? t('props.high') : torrent.bandwidthPriority === -1 ? t('props.low') : t('props.normal');
+    case 'metadata': return `${((torrent.metadataPercentComplete ?? 1) * 100).toFixed(0)}%`;
+    case 'stalled': return torrent.isStalled ? t('tableCols.stalled') : '—';
+    case 'savePath': return torrent.downloadDir || '—';
+    case 'labels': return torrent.labels?.join(', ') || '—';
+    case 'hash': return torrent.hashString || '—';
+    case 'private': return torrent.isPrivate ? '✓' : '—';
+    case 'recheck': return `${((torrent.recheckProgress || 0) * 100).toFixed(1)}%`;
+    case 'downloadLimit': return torrent.downloadLimited ? `${torrent.downloadLimit} KB/s` : '—';
+    case 'uploadLimit': return torrent.uploadLimited ? `${torrent.uploadLimit} KB/s` : '—';
+    case 'error': return torrent.errorString || '—';
+    case 'comment': return torrent.comment || '—';
+    case 'creator': return torrent.creator || '—';
+    default: return '—';
+  }
+}
 
 const isSelected = computed(() => {
   return state.selectedIds.includes(props.torrent.id) || state.selectedId === props.torrent.id;
@@ -668,5 +727,37 @@ function removeTorrent() {
 
 .fluent-pill-btn.btn-danger:active {
   background-color: rgba(209, 52, 56, 0.12);
+}
+
+.card-extra {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--fluent-border-subtle);
+}
+
+.extra-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  font-size: 10.5px;
+  color: var(--md-text-secondary);
+}
+
+.extra-item span,
+.extra-item strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.extra-item strong {
+  color: var(--md-text-primary);
+  font-weight: 500;
+  text-align: right;
 }
 </style>

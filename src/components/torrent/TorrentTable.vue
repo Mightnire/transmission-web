@@ -1,9 +1,8 @@
 <template>
   <div class="fluent-table-workspace" @contextmenu.prevent>
-    <table class="fluent-desktop-table">
+    <table class="fluent-desktop-table" ref="tableRef">
       <thead @contextmenu.prevent.stop="openHeaderContextMenu($event)">
         <tr>
-          <!-- 全选/全不选 复选框列 (首列) -->
           <th class="col-check" @click.stop="toggleSelectAll">
             <input
               type="checkbox"
@@ -13,7 +12,6 @@
             />
           </th>
 
-          <!-- 队列序号 (#) 排序列：在“传输与网络”Tab 下显示，便于观察调度顺序 -->
           <th
             class="col-queue"
             v-if="state.ribbonTab === 'transfer'"
@@ -21,364 +19,31 @@
             :title="t('common.queue')"
           >
             <span>#</span>
-            <span class="sort-indicator" v-if="state.filter.sortBy === 'queuePosition'">
-              {{ state.filter.sortAsc ? '▲' : '▼' }}
-            </span>
+            <FluentIcon
+              v-if="state.filter.sortBy === 'queuePosition'"
+              :name="state.filter.sortAsc ? 'arrow_upward' : 'arrow_downward'"
+              class="sort-indicator-icon"
+            />
           </th>
 
-          <!-- 状态图标 -->
           <th
-            class="col-status resizable-col"
-            v-if="isColVisible('status')"
-            :style="{ width: `${getColWidth('status')}px` }"
-            @click="handleSort('status')"
+            v-for="col in visibleColumns"
+            :key="col.id"
+            :class="['resizable-col', columnClass(col.id)]"
+            :style="{ width: `${col.width}px` }"
+            :data-col-id="col.id"
+            @mousedown="onHeaderPointerDown"
+            @click="columnSort(col.id)"
           >
             <div class="th-content">
-              <FluentIcon name="swap_vert" class="sort-icon" />
+              <span>{{ headerLabel(col) }}</span>
+              <FluentIcon
+                v-if="sortKey(col.id) && state.filter.sortBy === sortKey(col.id)"
+                :name="state.filter.sortAsc ? 'arrow_upward' : 'arrow_downward'"
+                class="sort-indicator-icon"
+              />
             </div>
-            <div class="col-resizer" @mousedown.stop="startResize('status', $event)"></div>
-          </th>
-
-          <!-- 种子名称 -->
-          <th
-            class="col-name resizable-col"
-            v-if="isColVisible('name')"
-            :style="{ width: `${getColWidth('name')}px` }"
-            @click="handleSort('name')"
-          >
-            <div class="th-content">
-              <span>{{ t('common.name') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'name'">
-                {{ state.filter.sortAsc ? '▲' : '▼' }}
-              </span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('name', $event)"></div>
-          </th>
-
-          <!-- 大小 -->
-          <th
-            class="col-size resizable-col"
-            v-if="isColVisible('size')"
-            :style="{ width: `${getColWidth('size')}px` }"
-            @click="handleSort('totalSize')"
-          >
-            <div class="th-content">
-              <span>{{ t('common.size') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'totalSize'">
-                {{ state.filter.sortAsc ? '▲' : '▼' }}
-              </span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('size', $event)"></div>
-          </th>
-
-          <!-- 进度条 -->
-          <th
-            class="col-progress resizable-col"
-            v-if="isColVisible('progress')"
-            :style="{ width: `${getColWidth('progress')}px` }"
-            @click="handleSort('percentDone')"
-          >
-            <div class="th-content">
-              <span>{{ t('common.progress') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'percentDone'">
-                {{ state.filter.sortAsc ? '▲' : '▼' }}
-              </span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('progress', $event)"></div>
-          </th>
-
-          <!-- 状态文本 -->
-          <th
-            class="col-statustext resizable-col"
-            v-if="isColVisible('statustext')"
-            :style="{ width: `${getColWidth('statustext')}px` }"
-          >
-            <div class="th-content">
-              <span>{{ t('common.status') }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('statustext', $event)"></div>
-          </th>
-
-          <!-- 下载速度 -->
-          <th
-            class="col-downspeed resizable-col"
-            v-if="isColVisible('downSpeed')"
-            :style="{ width: `${getColWidth('downSpeed')}px` }"
-            @click="handleSort('rateDownload')"
-          >
-            <div class="th-content">
-              <span>{{ t('common.downSpeed') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'rateDownload'">
-                {{ state.filter.sortAsc ? '▲' : '▼' }}
-              </span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('downSpeed', $event)"></div>
-          </th>
-
-          <!-- 上传速度 -->
-          <th
-            class="col-upspeed resizable-col"
-            v-if="isColVisible('upSpeed')"
-            :style="{ width: `${getColWidth('upSpeed')}px` }"
-            @click="handleSort('rateUpload')"
-          >
-            <div class="th-content">
-              <span>{{ t('common.upSpeed') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'rateUpload'">
-                {{ state.filter.sortAsc ? '▲' : '▼' }}
-              </span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('upSpeed', $event)"></div>
-          </th>
-
-          <!-- 剩余时间 -->
-          <th
-            class="col-eta resizable-col"
-            v-if="isColVisible('eta')"
-            :style="{ width: `${getColWidth('eta')}px` }"
-          >
-            <div class="th-content">
-              <span>{{ t('common.eta') }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('eta', $event)"></div>
-          </th>
-
-          <!-- 分享率 -->
-          <th
-            class="col-ratio resizable-col"
-            v-if="isColVisible('ratio')"
-            :style="{ width: `${getColWidth('ratio')}px` }"
-            @click="handleSort('uploadRatio')"
-          >
-            <div class="th-content">
-              <span>{{ t('common.ratio') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'uploadRatio'">
-                {{ state.filter.sortAsc ? '▲' : '▼' }}
-              </span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('ratio', $event)"></div>
-          </th>
-
-          <!-- 节点数 -->
-          <th
-            class="col-peers resizable-col"
-            v-if="isColVisible('peers')"
-            :style="{ width: `${getColWidth('peers')}px` }"
-          >
-            <div class="th-content">
-              <span>{{ t('common.peers') }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('peers', $event)"></div>
-          </th>
-
-          <!-- 坏块损耗 -->
-          <th
-            class="col-corrupt resizable-col"
-            v-if="isColVisible('corrupt')"
-            :style="{ width: `${getColWidth('corrupt')}px` }"
-          >
-            <div class="th-content">
-              <span>{{ t('common.corrupt') }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('corrupt', $event)"></div>
-          </th>
-
-          <!-- 已下载 -->
-          <th class="col-downloaded resizable-col" v-if="isColVisible('downloaded')" :style="{ width: `${getColWidth('downloaded')}px` }" @click="handleSort('downloadedEver')">
-            <div class="th-content">
-              <span>{{ t('tableCols.downloaded') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'downloadedEver'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('downloaded', $event)"></div>
-          </th>
-
-          <!-- 已上传 -->
-          <th class="col-uploaded resizable-col" v-if="isColVisible('uploaded')" :style="{ width: `${getColWidth('uploaded')}px` }" @click="handleSort('uploadedEver')">
-            <div class="th-content">
-              <span>{{ t('tableCols.uploaded') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'uploadedEver'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('uploaded', $event)"></div>
-          </th>
-
-          <!-- 剩余 -->
-          <th class="col-remaining resizable-col" v-if="isColVisible('remaining')" :style="{ width: `${getColWidth('remaining')}px` }" @click="handleSort('leftUntilDone')">
-            <div class="th-content">
-              <span>{{ t('tableCols.remaining') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'leftUntilDone'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('remaining', $event)"></div>
-          </th>
-
-          <!-- 有效数据 -->
-          <th class="col-havevalid resizable-col" v-if="isColVisible('haveValid')" :style="{ width: `${getColWidth('haveValid')}px` }" @click="handleSort('haveValid')">
-            <div class="th-content">
-              <span>{{ t('tableCols.haveValid') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'haveValid'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('haveValid', $event)"></div>
-          </th>
-
-          <!-- 完成大小 -->
-          <th class="col-sizedone resizable-col" v-if="isColVisible('sizeDone')" :style="{ width: `${getColWidth('sizeDone')}px` }" @click="handleSort('sizeWhenDone')">
-            <div class="th-content">
-              <span>{{ t('tableCols.sizeDone') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'sizeWhenDone'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('sizeDone', $event)"></div>
-          </th>
-
-          <!-- 添加时间 -->
-          <th class="col-addeddate resizable-col" v-if="isColVisible('addedDate')" :style="{ width: `${getColWidth('addedDate')}px` }" @click="handleSort('addedDate')">
-            <div class="th-content">
-              <span>{{ t('tableCols.addedDate') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'addedDate'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('addedDate', $event)"></div>
-          </th>
-
-          <!-- 完成时间 -->
-          <th class="col-donedate resizable-col" v-if="isColVisible('doneDate')" :style="{ width: `${getColWidth('doneDate')}px` }" @click="handleSort('doneDate')">
-            <div class="th-content">
-              <span>{{ t('tableCols.doneDate') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'doneDate'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('doneDate', $event)"></div>
-          </th>
-
-          <!-- 最近活动 -->
-          <th class="col-activitydate resizable-col" v-if="isColVisible('activityDate')" :style="{ width: `${getColWidth('activityDate')}px` }" @click="handleSort('activityDate')">
-            <div class="th-content">
-              <span>{{ t('tableCols.activityDate') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'activityDate'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('activityDate', $event)"></div>
-          </th>
-
-          <!-- 做种时长 -->
-          <th class="col-seedingtime resizable-col" v-if="isColVisible('seedingTime')" :style="{ width: `${getColWidth('seedingTime')}px` }" @click="handleSort('secondsSeeding')">
-            <div class="th-content">
-              <span>{{ t('tableCols.seedingTime') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'secondsSeeding'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('seedingTime', $event)"></div>
-          </th>
-
-          <!-- 下载时长 -->
-          <th class="col-downloadingtime resizable-col" v-if="isColVisible('downloadingTime')" :style="{ width: `${getColWidth('downloadingTime')}px` }" @click="handleSort('secondsDownloading')">
-            <div class="th-content">
-              <span>{{ t('tableCols.downloadingTime') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'secondsDownloading'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('downloadingTime', $event)"></div>
-          </th>
-
-          <!-- 节点明细 -->
-          <th class="col-peersdetail resizable-col" v-if="isColVisible('peersDetail')" :style="{ width: `${getColWidth('peersDetail')}px` }" @click="handleSort('peersConnected')">
-            <div class="th-content">
-              <span>{{ t('tableCols.peersDetail') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'peersConnected'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('peersDetail', $event)"></div>
-          </th>
-
-          <!-- Web Seeds -->
-          <th class="col-webseeds resizable-col" v-if="isColVisible('webSeeds')" :style="{ width: `${getColWidth('webSeeds')}px` }" @click="handleSort('webseedsSendingToUs')">
-            <div class="th-content">
-              <span>{{ t('tableCols.webSeeds') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'webseedsSendingToUs'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('webSeeds', $event)"></div>
-          </th>
-
-          <!-- 优先级 -->
-          <th class="col-priority resizable-col" v-if="isColVisible('priority')" :style="{ width: `${getColWidth('priority')}px` }" @click="handleSort('bandwidthPriority')">
-            <div class="th-content">
-              <span>{{ t('tableCols.priority') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'bandwidthPriority'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('priority', $event)"></div>
-          </th>
-
-          <!-- 元数据完成度 -->
-          <th class="col-metadata resizable-col" v-if="isColVisible('metadata')" :style="{ width: `${getColWidth('metadata')}px` }" @click="handleSort('metadataPercentComplete')">
-            <div class="th-content">
-              <span>{{ t('tableCols.metadata') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'metadataPercentComplete'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('metadata', $event)"></div>
-          </th>
-
-          <!-- 停滞 -->
-          <th class="col-stalled resizable-col" v-if="isColVisible('stalled')" :style="{ width: `${getColWidth('stalled')}px` }" @click="handleSort('isStalled')">
-            <div class="th-content">
-              <span>{{ t('tableCols.stalled') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'isStalled'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('stalled', $event)"></div>
-          </th>
-
-          <!-- 保存路径 -->
-          <th class="col-savepath resizable-col" v-if="isColVisible('savePath')" :style="{ width: `${getColWidth('savePath')}px` }">
-            <div class="th-content"><span>{{ t('tableCols.savePath') }}</span></div>
-            <div class="col-resizer" @mousedown.stop="startResize('savePath', $event)"></div>
-          </th>
-
-          <!-- 标签 -->
-          <th class="col-labels resizable-col" v-if="isColVisible('labels')" :style="{ width: `${getColWidth('labels')}px` }">
-            <div class="th-content"><span>{{ t('tableCols.labels') }}</span></div>
-            <div class="col-resizer" @mousedown.stop="startResize('labels', $event)"></div>
-          </th>
-
-          <!-- 哈希 -->
-          <th class="col-hash resizable-col" v-if="isColVisible('hash')" :style="{ width: `${getColWidth('hash')}px` }">
-            <div class="th-content"><span>{{ t('tableCols.hash') }}</span></div>
-            <div class="col-resizer" @mousedown.stop="startResize('hash', $event)"></div>
-          </th>
-
-          <!-- 私有种子 -->
-          <th class="col-private resizable-col" v-if="isColVisible('private')" :style="{ width: `${getColWidth('private')}px` }">
-            <div class="th-content"><span>{{ t('tableCols.private') }}</span></div>
-            <div class="col-resizer" @mousedown.stop="startResize('private', $event)"></div>
-          </th>
-
-          <!-- 校验进度 -->
-          <th class="col-recheck resizable-col" v-if="isColVisible('recheck')" :style="{ width: `${getColWidth('recheck')}px` }" @click="handleSort('recheckProgress')">
-            <div class="th-content">
-              <span>{{ t('tableCols.recheck') }}</span>
-              <span class="sort-indicator" v-if="state.filter.sortBy === 'recheckProgress'">{{ state.filter.sortAsc ? '▲' : '▼' }}</span>
-            </div>
-            <div class="col-resizer" @mousedown.stop="startResize('recheck', $event)"></div>
-          </th>
-
-          <!-- 下载限速 -->
-          <th class="col-dlimit resizable-col" v-if="isColVisible('downloadLimit')" :style="{ width: `${getColWidth('downloadLimit')}px` }">
-            <div class="th-content"><span>{{ t('tableCols.downloadLimit') }}</span></div>
-            <div class="col-resizer" @mousedown.stop="startResize('downloadLimit', $event)"></div>
-          </th>
-
-          <!-- 上传限速 -->
-          <th class="col-ulimit resizable-col" v-if="isColVisible('uploadLimit')" :style="{ width: `${getColWidth('uploadLimit')}px` }">
-            <div class="th-content"><span>{{ t('tableCols.uploadLimit') }}</span></div>
-            <div class="col-resizer" @mousedown.stop="startResize('uploadLimit', $event)"></div>
-          </th>
-
-          <!-- 错误信息 -->
-          <th class="col-error resizable-col" v-if="isColVisible('error')" :style="{ width: `${getColWidth('error')}px` }">
-            <div class="th-content"><span>{{ t('tableCols.error') }}</span></div>
-            <div class="col-resizer" @mousedown.stop="startResize('error', $event)"></div>
-          </th>
-
-          <!-- 注释 -->
-          <th class="col-comment resizable-col" v-if="isColVisible('comment')" :style="{ width: `${getColWidth('comment')}px` }">
-            <div class="th-content"><span>{{ t('tableCols.comment') }}</span></div>
-            <div class="col-resizer" @mousedown.stop="startResize('comment', $event)"></div>
-          </th>
-
-          <!-- 创建者 -->
-          <th class="col-creator resizable-col" v-if="isColVisible('creator')" :style="{ width: `${getColWidth('creator')}px` }">
-            <div class="th-content"><span>{{ t('tableCols.creator') }}</span></div>
-            <div class="col-resizer" @mousedown.stop="startResize('creator', $event)"></div>
+            <div class="col-resizer" @mousedown.stop="startResize(col.id, $event)"></div>
           </th>
         </tr>
       </thead>
@@ -396,7 +61,6 @@
           @dblclick="onRowDblClick(torrent.id)"
           @contextmenu.prevent="openContextMenu($event, torrent.id)"
         >
-          <!-- 首列复选框：点整个单元格即触发选择 -->
           <td class="col-check" @click.stop="toggleRowSelection(torrent.id)">
             <input
               type="checkbox"
@@ -405,7 +69,6 @@
             />
           </td>
 
-          <!-- 队列顺序号 (#)：在“传输与网络”Tab 下显示 -->
           <td class="col-queue" v-if="state.ribbonTab === 'transfer'">
             <span
               class="queue-cell-badge"
@@ -416,119 +79,142 @@
             </span>
           </td>
 
-          <!-- 状态图标 -->
-          <td class="col-status" v-if="isColVisible('status')">
-            <FluentIcon :name="getStatusIcon(torrent)" class="status-ico" :class="getStatusIconClass(torrent)" />
-          </td>
+          <td
+            v-for="col in visibleColumns"
+            :key="col.id"
+            :class="[columnClass(col.id), {
+              'down-val': col.id === 'downSpeed',
+              'up-val': col.id === 'upSpeed',
+              'monospace': col.id === 'hash',
+            }]"
+          >
+            <template v-if="col.id === 'status'">
+              <FluentIcon :name="getStatusIcon(torrent)" class="status-ico" :class="getStatusIconClass(torrent)" />
+            </template>
 
-          <!-- 种子名称 -->
-          <td class="col-name" v-if="isColVisible('name')" :title="torrent.errorString ? `${torrent.name}\n\n[${t('status.error')}] ${torrent.errorString}` : torrent.name">
-            <div class="name-text">{{ torrent.name }}</div>
-            <div class="fluent-error-pill" v-if="torrent.error !== 0 || torrent.errorString" :title="torrent.errorString">
-              <FluentIcon name="error_outline" class="pill-icon" />
-              <span class="pill-text">{{ torrent.errorString || t('status.error') }}</span>
-            </div>
-          </td>
-
-          <!-- 大小 -->
-          <td class="col-size" v-if="isColVisible('size')">{{ formatBytes(torrent.totalSize) }}</td>
-
-          <!-- 进度条 + 百分比 (Fluent 胶囊进度条) -->
-          <td class="col-progress" v-if="isColVisible('progress')">
-            <div class="fluent-progress-cell">
-              <div class="fluent-progress-track">
-                <div
-                  class="fluent-progress-fill"
-                  :class="getProgressFillClass(torrent)"
-                  :style="{ width: `${Math.min(100, Math.max(0, getDisplayPercent(torrent)))}%` }"
-                ></div>
+            <template v-else-if="col.id === 'name'">
+              <div
+                class="name-text"
+                :title="torrent.errorString ? `${torrent.name}\n\n[${t('status.error')}] ${torrent.errorString}` : torrent.name"
+              >{{ torrent.name }}</div>
+              <div class="fluent-error-pill" v-if="torrent.error !== 0 || torrent.errorString" :title="torrent.errorString">
+                <FluentIcon name="error_outline" class="pill-icon" />
+                <span class="pill-text">{{ torrent.errorString || t('status.error') }}</span>
               </div>
-              <span class="progress-val-text" :class="{ 'text-checking': isChecking(torrent) }">
-                {{ getDisplayPercent(torrent).toFixed(1) }}%
+            </template>
+
+            <template v-else-if="col.id === 'size'">{{ formatBytes(torrent.totalSize) }}</template>
+
+            <template v-else-if="col.id === 'progress'">
+              <div class="fluent-progress-cell">
+                <div class="fluent-progress-track">
+                  <div
+                    class="fluent-progress-fill"
+                    :class="getProgressFillClass(torrent)"
+                    :style="{ width: `${Math.min(100, Math.max(0, getDisplayPercent(torrent)))}%` }"
+                  ></div>
+                </div>
+                <span class="progress-val-text" :class="{ 'text-checking': isChecking(torrent) }">
+                  {{ getDisplayPercent(torrent).toFixed(1) }}%
+                </span>
+              </div>
+            </template>
+
+            <template v-else-if="col.id === 'statustext'">
+              <span class="fluent-status-badge" :class="getStatusBadgeClass(torrent)" :title="torrent.errorString || ''">
+                {{ getStatusDisplayText(torrent) }}
               </span>
-            </div>
+            </template>
+
+            <template v-else-if="col.id === 'downSpeed'">
+              {{ torrent.rateDownload > 0 ? formatSpeed(torrent.rateDownload) : '—' }}
+            </template>
+
+            <template v-else-if="col.id === 'upSpeed'">
+              {{ torrent.rateUpload > 0 ? formatSpeed(torrent.rateUpload) : '—' }}
+            </template>
+
+            <template v-else-if="col.id === 'eta'">{{ formatETA(torrent.eta) }}</template>
+
+            <template v-else-if="col.id === 'ratio'">
+              {{ torrent.uploadRatio >= 0 ? torrent.uploadRatio.toFixed(2) : '0.00' }}
+            </template>
+
+            <template v-else-if="col.id === 'peers'">
+              {{ torrent.peersSendingToUs > 0 ? `${torrent.peersSendingToUs}/` : '' }}{{ torrent.peersConnected }}
+            </template>
+
+            <template v-else-if="col.id === 'corrupt'">
+              <span class="corrupt-tag" v-if="torrent.corruptEver > 0" :title="t('table.corruptTitle', { size: formatBytes(torrent.corruptEver) })">
+                {{ formatBytes(torrent.corruptEver) }}
+              </span>
+              <span v-else class="text-muted">—</span>
+            </template>
+
+            <template v-else-if="col.id === 'downloaded'">{{ formatBytes(torrent.downloadedEver) }}</template>
+            <template v-else-if="col.id === 'uploaded'">{{ formatBytes(torrent.uploadedEver) }}</template>
+            <template v-else-if="col.id === 'remaining'">{{ formatBytes(torrent.leftUntilDone) }}</template>
+            <template v-else-if="col.id === 'haveValid'">{{ formatBytes(torrent.haveValid) }}</template>
+            <template v-else-if="col.id === 'sizeDone'">{{ formatBytes(torrent.sizeWhenDone) }}</template>
+            <template v-else-if="col.id === 'addedDate'">{{ formatDate(torrent.addedDate) }}</template>
+            <template v-else-if="col.id === 'doneDate'">{{ formatDate(torrent.doneDate) }}</template>
+            <template v-else-if="col.id === 'activityDate'">{{ formatDate(torrent.activityDate) }}</template>
+            <template v-else-if="col.id === 'seedingTime'">{{ formatDuration(torrent.secondsSeeding) }}</template>
+            <template v-else-if="col.id === 'downloadingTime'">{{ formatDuration(torrent.secondsDownloading) }}</template>
+
+            <template v-else-if="col.id === 'peersDetail'">
+              <span class="text-success">↓{{ torrent.peersSendingToUs || 0 }}</span>
+              <span class="peers-sep">/</span>
+              <span class="text-warning">↑{{ torrent.peersGettingFromUs || 0 }}</span>
+            </template>
+
+            <template v-else-if="col.id === 'webSeeds'">{{ torrent.webseedsSendingToUs ?? 0 }}</template>
+
+            <template v-else-if="col.id === 'priority'">
+              <span class="priority-tag" :class="getPriorityClass(torrent.bandwidthPriority)">
+                {{ formatPriority(torrent.bandwidthPriority) }}
+              </span>
+            </template>
+
+            <template v-else-if="col.id === 'metadata'">
+              {{ (torrent.metadataPercentComplete ?? 1) < 1 ? `${((torrent.metadataPercentComplete || 0) * 100).toFixed(0)}%` : '—' }}
+            </template>
+
+            <template v-else-if="col.id === 'stalled'">
+              <span v-if="torrent.isStalled" class="stalled-tag">{{ t('tableCols.stalled') }}</span>
+              <span v-else class="text-muted">—</span>
+            </template>
+
+            <template v-else-if="col.id === 'savePath'">
+              <span :title="torrent.downloadDir">{{ torrent.downloadDir || '—' }}</span>
+            </template>
+
+            <template v-else-if="col.id === 'labels'">
+              <span :title="torrent.labels?.join(', ')">{{ torrent.labels && torrent.labels.length > 0 ? torrent.labels.join(', ') : '—' }}</span>
+            </template>
+
+            <template v-else-if="col.id === 'hash'">
+              <span :title="torrent.hashString">{{ torrent.hashString || '—' }}</span>
+            </template>
+
+            <template v-else-if="col.id === 'private'">{{ torrent.isPrivate ? '✓' : '—' }}</template>
+            <template v-else-if="col.id === 'recheck'">{{ isChecking(torrent) ? `${((torrent.recheckProgress || 0) * 100).toFixed(1)}%` : '—' }}</template>
+            <template v-else-if="col.id === 'downloadLimit'">{{ formatLimit(torrent.downloadLimited, torrent.downloadLimit) }}</template>
+            <template v-else-if="col.id === 'uploadLimit'">{{ formatLimit(torrent.uploadLimited, torrent.uploadLimit) }}</template>
+
+            <template v-else-if="col.id === 'error'">
+              <span :class="torrent.errorString ? 'text-danger' : 'text-muted'">{{ torrent.errorString || '—' }}</span>
+            </template>
+
+            <template v-else-if="col.id === 'comment'">
+              <span :title="torrent.comment">{{ torrent.comment || '—' }}</span>
+            </template>
+
+            <template v-else-if="col.id === 'creator'">
+              <span :title="torrent.creator">{{ torrent.creator || '—' }}</span>
+            </template>
           </td>
 
-          <!-- 状态徽章 -->
-          <td class="col-statustext" v-if="isColVisible('statustext')">
-            <span class="fluent-status-badge" :class="getStatusBadgeClass(torrent)" :title="torrent.errorString || ''">
-              {{ getStatusDisplayText(torrent) }}
-            </span>
-          </td>
-
-          <!-- 下载速度 -->
-          <td class="col-downspeed down-val" v-if="isColVisible('downSpeed')">
-            {{ torrent.rateDownload > 0 ? formatSpeed(torrent.rateDownload) : '—' }}
-          </td>
-
-          <!-- 上传速度 -->
-          <td class="col-upspeed up-val" v-if="isColVisible('upSpeed')">
-            {{ torrent.rateUpload > 0 ? formatSpeed(torrent.rateUpload) : '—' }}
-          </td>
-
-          <!-- 剩余时间 -->
-          <td class="col-eta" v-if="isColVisible('eta')">{{ formatETA(torrent.eta) }}</td>
-
-          <!-- 分享率 -->
-          <td class="col-ratio" v-if="isColVisible('ratio')">{{ torrent.uploadRatio >= 0 ? torrent.uploadRatio.toFixed(2) : '0.00' }}</td>
-
-          <!-- 节点数 -->
-          <td class="col-peers" v-if="isColVisible('peers')">
-            {{ torrent.peersSendingToUs > 0 ? `${torrent.peersSendingToUs}/` : '' }}{{ torrent.peersConnected }}
-          </td>
-
-          <!-- 坏块损耗 -->
-          <td class="col-corrupt" v-if="isColVisible('corrupt')">
-            <span class="corrupt-tag" v-if="torrent.corruptEver > 0" :title="t('table.corruptTitle', { size: formatBytes(torrent.corruptEver) })">
-              {{ formatBytes(torrent.corruptEver) }}
-            </span>
-            <span v-else class="text-muted">—</span>
-          </td>
-
-          <td class="col-downloaded" v-if="isColVisible('downloaded')">{{ formatBytes(torrent.downloadedEver) }}</td>
-          <td class="col-uploaded" v-if="isColVisible('uploaded')">{{ formatBytes(torrent.uploadedEver) }}</td>
-          <td class="col-remaining" v-if="isColVisible('remaining')">{{ formatBytes(torrent.leftUntilDone) }}</td>
-          <td class="col-havevalid" v-if="isColVisible('haveValid')">{{ formatBytes(torrent.haveValid) }}</td>
-          <td class="col-sizedone" v-if="isColVisible('sizeDone')">{{ formatBytes(torrent.sizeWhenDone) }}</td>
-          <td class="col-addeddate" v-if="isColVisible('addedDate')">{{ formatDate(torrent.addedDate) }}</td>
-          <td class="col-donedate" v-if="isColVisible('doneDate')">{{ formatDate(torrent.doneDate) }}</td>
-          <td class="col-activitydate" v-if="isColVisible('activityDate')">{{ formatDate(torrent.activityDate) }}</td>
-          <td class="col-seedingtime" v-if="isColVisible('seedingTime')">{{ formatDuration(torrent.secondsSeeding) }}</td>
-          <td class="col-downloadingtime" v-if="isColVisible('downloadingTime')">{{ formatDuration(torrent.secondsDownloading) }}</td>
-          <td class="col-peersdetail" v-if="isColVisible('peersDetail')">
-            <span class="text-success">↓{{ torrent.peersSendingToUs || 0 }}</span>
-            <span class="peers-sep">/</span>
-            <span class="text-warning">↑{{ torrent.peersGettingFromUs || 0 }}</span>
-          </td>
-          <td class="col-webseeds" v-if="isColVisible('webSeeds')">{{ torrent.webseedsSendingToUs ?? 0 }}</td>
-          <td class="col-priority" v-if="isColVisible('priority')">
-            <span class="priority-tag" :class="getPriorityClass(torrent.bandwidthPriority)">
-              {{ formatPriority(torrent.bandwidthPriority) }}
-            </span>
-          </td>
-          <td class="col-metadata" v-if="isColVisible('metadata')">
-            {{ (torrent.metadataPercentComplete ?? 1) < 1 ? `${((torrent.metadataPercentComplete || 0) * 100).toFixed(0)}%` : '—' }}
-          </td>
-          <td class="col-stalled" v-if="isColVisible('stalled')">
-            <span v-if="torrent.isStalled" class="stalled-tag">{{ t('tableCols.stalled') }}</span>
-            <span v-else class="text-muted">—</span>
-          </td>
-          <td class="col-savepath" v-if="isColVisible('savePath')" :title="torrent.downloadDir">{{ torrent.downloadDir || '—' }}</td>
-          <td class="col-labels" v-if="isColVisible('labels')" :title="torrent.labels?.join(', ')">
-            {{ torrent.labels && torrent.labels.length > 0 ? torrent.labels.join(', ') : '—' }}
-          </td>
-          <td class="col-hash monospace" v-if="isColVisible('hash')" :title="torrent.hashString">{{ torrent.hashString || '—' }}</td>
-          <td class="col-private" v-if="isColVisible('private')">{{ torrent.isPrivate ? '✓' : '—' }}</td>
-          <td class="col-recheck" v-if="isColVisible('recheck')">
-            {{ isChecking(torrent) ? `${((torrent.recheckProgress || 0) * 100).toFixed(1)}%` : '—' }}
-          </td>
-          <td class="col-dlimit" v-if="isColVisible('downloadLimit')">{{ formatLimit(torrent.downloadLimited, torrent.downloadLimit) }}</td>
-          <td class="col-ulimit" v-if="isColVisible('uploadLimit')">{{ formatLimit(torrent.uploadLimited, torrent.uploadLimit) }}</td>
-          <td class="col-error" v-if="isColVisible('error')" :title="torrent.errorString">
-            <span :class="torrent.errorString ? 'text-danger' : 'text-muted'">{{ torrent.errorString || '—' }}</span>
-          </td>
-          <td class="col-comment" v-if="isColVisible('comment')" :title="torrent.comment">{{ torrent.comment || '—' }}</td>
-          <td class="col-creator" v-if="isColVisible('creator')" :title="torrent.creator">{{ torrent.creator || '—' }}</td>
         </tr>
 
         <!-- 空数据提示 -->
@@ -639,8 +325,8 @@
               <span>{{ t(col.labelKey) }}</span>
             </label>
             <div class="cols-order-buttons">
-              <button class="cols-order-btn" :disabled="index === 0" @click.stop="moveColumn(index, -1)" :title="t('ribbon.moveColumnUp')">▲</button>
-              <button class="cols-order-btn" :disabled="index === state.columns.length - 1" @click.stop="moveColumn(index, 1)" :title="t('ribbon.moveColumnDown')">▼</button>
+              <button class="cols-order-btn" :disabled="index === 0" @click.stop="moveColumn(index, -1)" :title="t('ribbon.moveColumnUp')"><FluentIcon name="arrow_upward" /></button>
+              <button class="cols-order-btn" :disabled="index === state.columns.length - 1" @click.stop="moveColumn(index, 1)" :title="t('ribbon.moveColumnDown')"><FluentIcon name="arrow_downward" /></button>
             </div>
           </div>
         </div>
@@ -655,7 +341,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted, watchEffect } from 'vue';
+import { ref, computed, reactive, onMounted, onUnmounted } from 'vue';
 import {
   state,
   filteredTorrents,
@@ -721,28 +407,89 @@ const COLUMN_CLASS_MAP: Record<string, string> = {
   error: 'col-error', comment: 'col-comment', creator: 'col-creator',
 };
 
-const columnStyleEl = document.createElement('style');
-document.head.appendChild(columnStyleEl);
+const visibleColumns = computed(() => state.columns.filter((column) => column.visible));
 
-watchEffect(() => {
-  const orderRules = state.columns.map((column, index) => {
-    const cls = COLUMN_CLASS_MAP[column.id] || `col-${column.id}`;
-    return `.fluent-desktop-table .${cls}{order:${index + 2};width:${column.width}px;min-width:${column.minWidth}px;}`;
-  }).join('\n');
-  columnStyleEl.textContent = `
-    .fluent-desktop-table { display: block !important; table-layout: auto !important; }
-    .fluent-desktop-table thead, .fluent-desktop-table tbody { display: block !important; }
-    .fluent-desktop-table tr { display: flex !important; align-items: center; }
-    .fluent-desktop-table th, .fluent-desktop-table td { flex: 0 0 auto !important; box-sizing: border-box; }
-    .fluent-desktop-table thead { position: sticky; top: 0; z-index: 5; background: var(--fluent-bg-subtle); }
-    .fluent-desktop-table .col-check { order: -2; width: 32px; min-width: 32px; }
-    .fluent-desktop-table .col-queue { order: -1; width: 44px; min-width: 44px; }
-    .fluent-desktop-table .empty-table-cell { flex: 1 1 auto !important; width: auto !important; }
-    ${orderRules}
-  `;
-});
+const COLUMN_SORT_KEYS: Record<string, string> = {
+  name: 'name', size: 'totalSize', progress: 'percentDone',
+  downSpeed: 'rateDownload', upSpeed: 'rateUpload', ratio: 'uploadRatio',
+  peers: 'peersConnected', downloaded: 'downloadedEver', uploaded: 'uploadedEver',
+  remaining: 'leftUntilDone', haveValid: 'haveValid', sizeDone: 'sizeWhenDone',
+  addedDate: 'addedDate', doneDate: 'doneDate', activityDate: 'activityDate',
+  seedingTime: 'secondsSeeding', downloadingTime: 'secondsDownloading',
+  peersDetail: 'peersConnected', webSeeds: 'webseedsSendingToUs',
+  priority: 'bandwidthPriority', metadata: 'metadataPercentComplete',
+  stalled: 'isStalled', recheck: 'recheckProgress',
+};
 
-onUnmounted(() => { columnStyleEl.remove(); });
+function columnClass(id: string): string {
+  return COLUMN_CLASS_MAP[id] || `col-${id}`;
+}
+
+function headerLabel(column: { id: string; labelKey: string }): string {
+  if (column.id === 'status') return '';
+  if (column.id === 'statustext') return t('common.status');
+  return t(column.labelKey);
+}
+
+function sortKey(id: string): string | undefined {
+  return COLUMN_SORT_KEYS[id];
+}
+
+const tableRef = ref<HTMLTableElement | null>(null);
+let suppressHeaderClick = false;
+
+function reorderColumn(fromId: string, targetId: string) {
+  if (!fromId || !targetId || fromId === targetId) return;
+  const next = [...state.columns];
+  const fromIndex = next.findIndex((column) => column.id === fromId);
+  if (fromIndex < 0) return;
+  const [moved] = next.splice(fromIndex, 1);
+  const targetIndex = next.findIndex((column) => column.id === targetId);
+  next.splice(targetIndex < 0 ? next.length : targetIndex, 0, moved);
+  state.columns = next;
+  saveColumns();
+}
+
+function columnSort(id: string) {
+  if (suppressHeaderClick) return;
+  const key = COLUMN_SORT_KEYS[id];
+  if (key) handleSort(key as any);
+}
+
+let headerDrag: { id: string; startX: number; moved: boolean } | null = null;
+
+function onHeaderPointerDown(event: MouseEvent) {
+  if (event.button !== 0) return;
+  const target = event.target as HTMLElement;
+  if (target.closest('.col-resizer')) return;
+  const th = target.closest<HTMLElement>('th[data-col-id]');
+  if (!th?.dataset.colId) return;
+  headerDrag = { id: th.dataset.colId, startX: event.clientX, moved: false };
+  window.addEventListener('mousemove', onHeaderPointerMove);
+  window.addEventListener('mouseup', onHeaderPointerUp);
+}
+
+function onHeaderPointerMove(event: MouseEvent) {
+  if (!headerDrag) return;
+  if (Math.abs(event.clientX - headerDrag.startX) > 5) {
+    headerDrag.moved = true;
+    document.body.style.cursor = 'grabbing';
+  }
+}
+
+function onHeaderPointerUp(event: MouseEvent) {
+  window.removeEventListener('mousemove', onHeaderPointerMove);
+  window.removeEventListener('mouseup', onHeaderPointerUp);
+  document.body.style.cursor = '';
+  const drag = headerDrag;
+  headerDrag = null;
+  if (!drag?.moved) return;
+  const th = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)
+    ?.closest<HTMLElement>('th[data-col-id]');
+  if (th?.dataset.colId) reorderColumn(drag.id, th.dataset.colId);
+  suppressHeaderClick = true;
+  window.setTimeout(() => { suppressHeaderClick = false; }, 0);
+}
 
 function moveColumn(index: number, delta: number) {
   const target = index + delta;
@@ -1230,6 +977,8 @@ function getStatusBadgeClass(item: Torrent): string {
   line-height: 1;
   cursor: pointer;
 }
+
+.cols-order-btn .material-icons { font-size: 14px; }
 
 .cols-order-btn:hover:not(:disabled) { border-color: var(--fluent-accent); color: var(--fluent-accent); }
 .cols-order-btn:disabled { opacity: 0.25; cursor: default; }

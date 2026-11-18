@@ -60,6 +60,7 @@
           </header>
 
           <div class="backstage-body">
+            <div class="backstage-page" :key="activeTab">
             <!-- 信息 / 仪表盘 -->
             <template v-if="activeTab === 'info'">
               <div class="stat-cards">
@@ -311,6 +312,7 @@
                 </a>
               </div>
             </template>
+            </div>
           </div>
         </section>
       </div>
@@ -672,6 +674,15 @@ onUnmounted(() => {
 .header-close:hover {
   background: var(--fluent-bg-hover);
   color: var(--md-text-primary);
+}
+
+.backstage-page {
+  animation: backstagePageIn 0.18s ease-out;
+}
+
+@keyframes backstagePageIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .backstage-body {

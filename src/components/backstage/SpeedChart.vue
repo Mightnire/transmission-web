@@ -11,7 +11,7 @@
       </span>
     </div>
 
-    <div class="chart-canvas-wrap">
+    <div class="chart-canvas-wrap" ref="chartWrap">
       <svg class="chart-svg" :viewBox="`0 0 ${W} ${H}`" preserveAspectRatio="none" role="img" :aria-label="t('backstage.chartTitle')">
         <defs>
           <linearGradient id="speedDownFill" x1="0" y1="0" x2="0" y2="1">
@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { formatSpeed, type SpeedSample } from '../../stores/transmission';
 import { t } from '../../locales';
 
@@ -61,14 +61,14 @@ const props = defineProps<{
   points: SpeedSample[];
 }>();
 
-const W = 1000;
-const H = 260;
+const W = ref(1000);
+const H = ref(260);
 const PL = 64;
 const PR = 16;
 const PT = 14;
 const PB = 16;
-const plotW = W - PL - PR;
-const plotH = H - PT - PB;
+const plotW = computed(() => W.value - PL - PR);
+const plotH = computed(() => H.value - PT - PB);
 
 const lastDown = computed(() => props.points[props.points.length - 1]?.down || 0);
 const lastUp = computed(() => props.points[props.points.length - 1]?.up || 0);
@@ -113,12 +113,12 @@ const yAxis = computed(() => {
 const maxValue = computed(() => yAxis.value.max);
 
 function xAt(index: number): number {
-  if (props.points.length <= 1) return PL + plotW;
-  return PL + (index / (props.points.length - 1)) * plotW;
+  if (props.points.length <= 1) return PL + plotW.value;
+  return PL + (index / (props.points.length - 1)) * plotW.value;
 }
 
 function yAt(value: number): number {
-  return PT + plotH - (Math.max(0, value) / maxValue.value) * plotH;
+  return PT + plotH.value - (Math.max(0, value) / maxValue.value) * plotH.value;
 }
 
 const lastX = computed(() => xAt(props.points.length - 1));
@@ -128,7 +128,7 @@ const lastUpY = computed(() => yAt(lastUp.value));
 const gridLines = computed(() => {
   const { unit, step } = yAxis.value;
   return [0, 1, 2, 3, 4].map((index) => ({
-    y: PT + plotH - (index / 4) * plotH,
+    y: PT + plotH.value - (index / 4) * plotH.value,
     label: index === 0 ? '0 B/s' : `${step * index} ${unit.label}`,
   }));
 });
@@ -142,13 +142,33 @@ const upLine = computed(() => polylineFor('up'));
 
 function areaFor(key: 'down' | 'up'): string {
   if (props.points.length === 0) return '';
-  const baseY = PT + plotH;
+  const baseY = PT + plotH.value;
   const pointsPart = props.points.map((point, index) => `L ${xAt(index)} ${yAt(point[key])}`).join(' ');
   return `M ${xAt(0)} ${baseY} ${pointsPart} L ${lastX.value} ${baseY} Z`;
 }
 
 const downArea = computed(() => areaFor('down'));
 const upArea = computed(() => areaFor('up'));
+
+
+const chartWrap = ref<HTMLElement | null>(null);
+let chartResizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  if (!chartWrap.value) return;
+  chartResizeObserver = new ResizeObserver((entries) => {
+    const rect = entries[0]?.contentRect;
+    if (!rect) return;
+    W.value = Math.max(320, Math.round(rect.width));
+    H.value = Math.max(180, Math.round(rect.height));
+  });
+  chartResizeObserver.observe(chartWrap.value);
+});
+
+onUnmounted(() => {
+  chartResizeObserver?.disconnect();
+  chartResizeObserver = null;
+});
 
 </script>
 

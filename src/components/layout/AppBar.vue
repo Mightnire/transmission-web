@@ -1011,8 +1011,8 @@
               <span>{{ t(col.labelKey) }}</span>
             </label>
             <div class="cols-order-buttons">
-              <button class="cols-order-btn" :disabled="index === 0" @click.stop="moveColumn(index, -1)" :title="t('ribbon.moveColumnUp')">▲</button>
-              <button class="cols-order-btn" :disabled="index === state.columns.length - 1" @click.stop="moveColumn(index, 1)" :title="t('ribbon.moveColumnDown')">▼</button>
+              <button class="cols-order-btn" :disabled="index === 0" @click.stop="moveColumn(index, -1)" :title="t('ribbon.moveColumnUp')"><FluentIcon name="arrow_upward" /></button>
+              <button class="cols-order-btn" :disabled="index === state.columns.length - 1" @click.stop="moveColumn(index, 1)" :title="t('ribbon.moveColumnDown')"><FluentIcon name="arrow_downward" /></button>
             </div>
           </div>
         </div>
@@ -2365,7 +2365,12 @@ function toggleTheme() {
 .selection-badge {
   order: 99;
   margin-left: auto;
-  padding: 4px 8px;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  line-height: 1;
+  padding: 0 8px;
   background-color: rgba(0, 120, 212, 0.1);
   border-radius: 4px;
   font-size: 11px;
@@ -2469,6 +2474,8 @@ function toggleTheme() {
   line-height: 1;
   cursor: pointer;
 }
+
+.cols-order-btn .material-icons { font-size: 14px; }
 
 .cols-order-btn:hover:not(:disabled) { border-color: var(--fluent-accent); color: var(--fluent-accent); }
 .cols-order-btn:disabled { opacity: 0.25; cursor: default; }
