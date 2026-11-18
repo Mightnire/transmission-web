@@ -35,7 +35,12 @@
             }]"
             :style="{ width: `${col.width}px` }"
             :data-col-id="col.id"
-            @mousedown="onHeaderPointerDown"
+            draggable="true"
+            @dragstart="onColumnDragStart($event, col.id)"
+            @drag="onColumnDragMove"
+            @dragover.prevent="onColumnDragOver($event, col.id)"
+            @drop.prevent="onColumnDrop($event, col.id)"
+            @dragend="onColumnDragEnd"
             @click="columnSort(col.id)"
           >
             <div class="th-content">
@@ -470,52 +475,45 @@ function columnSort(id: string) {
   if (key) handleSort(key as any);
 }
 
-let headerDrag: { id: string; startX: number; moved: boolean } | null = null;
 const draggingColumnId = ref<string | null>(null);
 const dropTargetId = ref<string | null>(null);
 const dragGhost = ref<{ label: string; x: number; y: number } | null>(null);
 
-function onHeaderPointerDown(event: MouseEvent) {
-  if (event.button !== 0) return;
-  const target = event.target as HTMLElement;
-  if (target.closest('.col-resizer')) return;
-  const th = target.closest<HTMLElement>('th[data-col-id]');
-  if (!th?.dataset.colId) return;
-  headerDrag = { id: th.dataset.colId, startX: event.clientX, moved: false };
-  window.addEventListener('mousemove', onHeaderPointerMove);
-  window.addEventListener('mouseup', onHeaderPointerUp);
+function columnLabel(id: string): string {
+  const column = state.columns.find((item) => item.id === id);
+  if (!column) return '';
+  return column.id === 'status' ? t('common.status') : t(column.labelKey);
 }
 
-function onHeaderPointerMove(event: MouseEvent) {
-  if (!headerDrag) return;
-  if (Math.abs(event.clientX - headerDrag.startX) > 5) {
-    headerDrag.moved = true;
-    draggingColumnId.value = headerDrag.id;
-    const column = state.columns.find((item) => item.id === headerDrag?.id);
-    const label = column ? (column.id === 'status' ? t('common.status') : t(column.labelKey)) : '';
-    dragGhost.value = { label, x: event.clientX + 12, y: event.clientY + 12 };
-    const th = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)
-      ?.closest<HTMLElement>('th[data-col-id]');
-    dropTargetId.value = th?.dataset.colId || null;
-    document.body.style.cursor = 'grabbing';
+function onColumnDragStart(event: DragEvent, id: string) {
+  draggingColumnId.value = id;
+  dropTargetId.value = null;
+  dragGhost.value = { label: columnLabel(id), x: event.clientX + 12, y: event.clientY + 12 };
+  event.dataTransfer?.setData('text/plain', id);
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+}
+
+function onColumnDragMove(event: DragEvent) {
+  if (dragGhost.value) {
+    dragGhost.value = { ...dragGhost.value, x: event.clientX + 12, y: event.clientY + 12 };
   }
 }
 
-function onHeaderPointerUp(event: MouseEvent) {
-  window.removeEventListener('mousemove', onHeaderPointerMove);
-  window.removeEventListener('mouseup', onHeaderPointerUp);
-  document.body.style.cursor = '';
+function onColumnDragOver(event: DragEvent, id: string) {
+  dropTargetId.value = id;
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+}
+
+function onColumnDrop(event: DragEvent, targetId: string) {
+  const fromId = draggingColumnId.value || event.dataTransfer?.getData('text/plain');
+  if (fromId && targetId) reorderColumn(fromId, targetId);
+  onColumnDragEnd();
+}
+
+function onColumnDragEnd() {
   draggingColumnId.value = null;
   dropTargetId.value = null;
   dragGhost.value = null;
-  const drag = headerDrag;
-  headerDrag = null;
-  if (!drag?.moved) return;
-  const th = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)
-    ?.closest<HTMLElement>('th[data-col-id]');
-  if (th?.dataset.colId) reorderColumn(drag.id, th.dataset.colId);
-  suppressHeaderClick = true;
-  window.setTimeout(() => { suppressHeaderClick = false; }, 0);
 }
 
 function moveColumn(index: number, delta: number) {

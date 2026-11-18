@@ -2625,7 +2625,7 @@ function toggleTheme() {
   min-height: 42px;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
   .fluent-ribbon-root .ribbon-body .btn-caption {
     display: none;
   }
@@ -2635,7 +2635,7 @@ function toggleTheme() {
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1000px) {
   .fluent-ribbon-root .ribbon-body .fluent-btn-small span,
   .fluent-ribbon-root .ribbon-body .btn-stack-2row span,
   .fluent-ribbon-root .ribbon-body .ribbon-toggle-btn span {
@@ -2647,7 +2647,7 @@ function toggleTheme() {
   }
 }
 
-@media (max-width: 860px) {
+@media (max-width: 800px) {
   .fluent-ribbon-root .ribbon-body .input-prefix-label {
     display: none;
   }
