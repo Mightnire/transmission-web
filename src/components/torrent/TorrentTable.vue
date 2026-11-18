@@ -1358,4 +1358,39 @@ function getStatusBadgeClass(item: Torrent): string {
     height: 36px;
   }
 }
+
+/* 列拖拽反馈 */
+.fluent-desktop-table thead th.col-dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+
+.fluent-desktop-table thead th.col-drop-before {
+  box-shadow: inset 3px 0 0 var(--fluent-accent);
+}
+
+.fluent-desktop-table thead th.col-drop-after {
+  box-shadow: inset -3px 0 0 var(--fluent-accent);
+}
+
+.column-drag-ghost {
+  position: fixed;
+  z-index: 10000;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--fluent-border-divider);
+  border-radius: 4px;
+  background: var(--fluent-bg-canvas);
+  color: var(--md-text-primary);
+  font-size: 11px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+}
+
+.column-drag-ghost .material-icons {
+  font-size: 14px;
+  color: var(--fluent-accent);
+}
 </style>
