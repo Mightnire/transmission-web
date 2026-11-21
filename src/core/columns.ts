@@ -12,6 +12,7 @@ export interface TableColumnConfig {
 
 export const DEFAULT_COLUMNS: TableColumnConfig[] = [
   { id: 'status', labelKey: 'common.status', visible: true, width: 38, minWidth: 30 },
+  { id: 'queuePosition', labelKey: 'common.queue', visible: false, width: 44, minWidth: 36 },
   { id: 'name', labelKey: 'common.name', visible: true, width: 300, minWidth: 160 },
   { id: 'size', labelKey: 'common.size', visible: true, width: 72, minWidth: 60 },
   { id: 'progress', labelKey: 'common.progress', visible: true, width: 120, minWidth: 90 },

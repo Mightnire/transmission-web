@@ -15,6 +15,9 @@
       </main>
     </div>
 
+    <!-- Office 2016 纯平状态栏 (桌面端专享) -->
+    <StatusBar />
+
     <!-- Office 2016 全屏文件菜单 (Backstage) -->
     <FileBackstage />
 
@@ -49,6 +52,7 @@ import TorrentPropsDialog from './components/dialogs/TorrentPropsDialog.vue';
 import BatchTagsDialog from './components/dialogs/BatchTagsDialog.vue';
 import FluentActionDialogs from './components/dialogs/FluentActionDialogs.vue';
 import FileBackstage from './components/backstage/FileBackstage.vue';
+import StatusBar from './components/layout/StatusBar.vue';
 
 onMounted(() => {
   // 恢复保存的主题

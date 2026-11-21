@@ -22,7 +22,7 @@
         <button
           class="ribbon-file-btn"
           :class="{ active: state.fileMenuOpen }"
-          @click.stop="openFileMenu"
+          @click.stop="openFileMenu()"
         >
           <span>{{ t('ribbon.file') }}</span>
         </button>
@@ -74,29 +74,29 @@
         </button>
       </nav>
 
-      <!-- 右侧：系统状态与快捷工具 -->
+      <!-- Office 365 风格顶栏居中常驻搜索框 (全局可用，不随 Tab 切换消失) -->
+      <div class="top-search-wrap desktop-only" :class="{ 'has-value': !!state.filter.search }">
+        <FluentIcon name="search" class="top-search-icon" />
+        <input
+          type="text"
+          v-model="state.filter.search"
+          :placeholder="t('app.searchPlaceholder')"
+          class="top-search-input"
+        />
+        <button
+          class="top-search-clear"
+          v-if="state.filter.search"
+          @click="state.filter.search = ''"
+          :title="t('common.close')"
+        >
+          <FluentIcon name="close" />
+        </button>
+      </div>
+
+      <!-- 右侧：全局通用设置与快捷工具 (去重后保留核心项) -->
       <div class="ribbon-sys-tools">
-        <!-- 视图切换 (卡片 / 表格) -->
-        <button
-          class="fluent-tool-btn"
-          @click="toggleViewMode"
-          :title="state.viewMode === 'table' ? t('common.cardsView') : t('common.tableView')"
-        >
-          <FluentIcon :name="state.viewMode === 'table' ? 'view_agenda' : 'table_chart'" />
-        </button>
-
-        <!-- 乌龟临时限速开关 -->
-        <button
-          class="fluent-tool-btn"
-          :class="{ 'btn-active-turtle': state.session?.['alt-speed-enabled'] }"
-          @click="toggleTurtleMode"
-          :title="t('toolbar.turtle')"
-        >
-          <FluentIcon name="speed" />
-        </button>
-
         <!-- 全局首选项 -->
-        <button class="fluent-tool-btn" @click="state.sessionDialogOpen = true" :title="t('toolbar.settings')">
+        <button class="fluent-tool-btn" @click="openFileMenu('settings')" :title="t('toolbar.settings')">
           <FluentIcon name="settings" />
         </button>
 
@@ -135,7 +135,7 @@
         <div class="ribbon-group">
           <div class="ribbon-controls">
             <!-- 添加任务 (大按钮) -->
-            <button class="fluent-btn-large primary-btn" @click="state.addDialogOpen = true" :title="t('toolbar.addTitle')">
+            <button class="fluent-btn-large primary-btn" @click="openFileMenu('add')" :title="t('toolbar.addTitle')">
               <FluentIcon name="add_circle" class="large-icon" />
               <span class="btn-caption">{{ t('toolbar.add') }}</span>
             </button>
@@ -202,7 +202,7 @@
           </div>
           <div class="group-footer">
             <span class="group-title">{{ t('ribbon.groups.basic') }}</span>
-            <button class="dialog-launcher-btn" @click="state.addDialogOpen = true" :title="t('toolbar.addTitle')">
+            <button class="dialog-launcher-btn" @click="openFileMenu('add')" :title="t('toolbar.addTitle')">
               <FluentIcon name="dialog_launcher" size="10" />
             </button>
           </div>
@@ -261,8 +261,8 @@
           </div>
         </div>
 
-        <!-- 检索与视图组 -->
-        <div class="ribbon-group search-group">
+        <!-- 详情视图组 -->
+        <div class="ribbon-group">
           <div class="ribbon-controls">
             <button
               class="fluent-btn-large"
@@ -273,28 +273,9 @@
               <FluentIcon name="tune" class="large-icon" />
               <span class="btn-caption">{{ t('ribbon.props') }}</span>
             </button>
-
-            <div class="search-box-wrap">
-              <div class="fluent-search-input">
-                <FluentIcon name="search" class="search-ico" />
-                <input
-                  type="text"
-                  v-model="state.filter.search"
-                  :placeholder="t('app.searchPlaceholder')"
-                  class="search-native-input"
-                />
-                <button
-                  class="search-clear-btn"
-                  v-if="state.filter.search"
-                  @click="state.filter.search = ''"
-                >
-                  <FluentIcon name="close" />
-                </button>
-              </div>
-            </div>
           </div>
           <div class="group-footer">
-            <span class="group-title">{{ t('ribbon.groups.find') }}</span>
+            <span class="group-title">{{ t('toolbar.detail') }}</span>
           </div>
         </div>
       </div>
@@ -528,7 +509,7 @@
               @click="toggleCompactDensity"
               :title="t('ribbon.compactDensityHint')"
             >
-              <FluentIcon name="view_agenda" />
+              <FluentIcon name="format_line_spacing" />
               <span>{{ t('ribbon.compactDensity') }}</span>
             </button>
           </div>
@@ -659,6 +640,40 @@
           </div>
         </div>
 
+        <!-- 属性与操作 (更改路径、重命名、复制磁链、属性) -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls">
+            <div class="btn-matrix-2x2">
+              <div class="btn-stack-2row">
+                <button class="fluent-btn-small" @click="handleSetLocation" :title="t('ribbon.setLocation')">
+                  <FluentIcon name="folder_open" />
+                  <span>{{ t('ribbon.setLocation') }}</span>
+                </button>
+                <button class="fluent-btn-small" @click="handleRename" :title="t('ribbon.rename')">
+                  <FluentIcon name="edit" />
+                  <span>{{ t('ribbon.rename') }}</span>
+                </button>
+              </div>
+              <div class="btn-stack-2row">
+                <button class="fluent-btn-small" @click="copyMagnet" :title="t('detail.general.copyMagnet')">
+                  <FluentIcon name="content_copy" />
+                  <span>{{ t('detail.general.copyMagnet') }}</span>
+                </button>
+                <button class="fluent-btn-small primary" @click="openProps" :title="t('ribbon.props')">
+                  <FluentIcon name="tune" />
+                  <span>{{ t('ribbon.props') }}...</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.torrentMeta') }}</span>
+            <button class="dialog-launcher-btn" @click="openProps" :title="t('ribbon.props')">
+              <FluentIcon name="dialog_launcher" size="10" />
+            </button>
+          </div>
+        </div>
+
         <!-- 独立限速 (Down/Up) -->
         <div class="ribbon-group">
           <div class="ribbon-controls limits-col">
@@ -757,40 +772,6 @@
             <span class="group-title">{{ t('ribbon.groups.torrentSeed') }}</span>
           </div>
         </div>
-
-        <!-- 属性与操作 (2x2 双行矩阵) -->
-        <div class="ribbon-group">
-          <div class="ribbon-controls">
-            <div class="btn-matrix-2x2">
-              <div class="btn-stack-2row">
-                <button class="fluent-btn-small" @click="handleSetLocation" :title="t('ribbon.setLocation')">
-                  <FluentIcon name="folder_open" />
-                  <span>{{ t('ribbon.setLocation') }}</span>
-                </button>
-                <button class="fluent-btn-small" @click="handleRename" :title="t('ribbon.rename')">
-                  <FluentIcon name="edit" />
-                  <span>{{ t('ribbon.rename') }}</span>
-                </button>
-              </div>
-              <div class="btn-stack-2row">
-                <button class="fluent-btn-small" @click="copyMagnet" :title="t('detail.general.copyMagnet')">
-                  <FluentIcon name="content_copy" />
-                  <span>{{ t('detail.general.copyMagnet') }}</span>
-                </button>
-                <button class="fluent-btn-small primary" @click="openProps" :title="t('ribbon.props')">
-                  <FluentIcon name="tune" />
-                  <span>{{ t('ribbon.props') }}...</span>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="group-footer">
-            <span class="group-title">{{ t('ribbon.groups.torrentMeta') }}</span>
-            <button class="dialog-launcher-btn" @click="openProps" :title="t('ribbon.props')">
-              <FluentIcon name="dialog_launcher" size="10" />
-            </button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -798,7 +779,7 @@
     <div class="mobile-compact-bar mobile-only">
       <!-- 模式 A：无选中任务时的常规工具条 -->
       <template v-if="!hasSelection">
-        <button class="fluent-btn-mobile btn-primary" @click="state.addDialogOpen = true" :title="t('toolbar.add')">
+        <button class="fluent-btn-mobile btn-primary" @click="openFileMenu('add')" :title="t('toolbar.add')">
           <FluentIcon name="add" />
         </button>
         <button class="fluent-btn-mobile" @click="handleStartAll" :title="t('toolbar.startAll')">
@@ -870,11 +851,11 @@
         <div class="mobile-sheet-handle"></div>
         <div class="mobile-sheet-title">{{ t('ribbon.moreActions') }}</div>
         <div class="mobile-sheet-grid">
-          <button class="mobile-sheet-action" @click="runMobile(() => (state.addDialogOpen = true))">
+          <button class="mobile-sheet-action" @click="runMobile(() => openFileMenu('add'))">
             <FluentIcon name="add" />
             <span>{{ t('toolbar.add') }}</span>
           </button>
-          <button class="mobile-sheet-action" @click="runMobile(openFileMenu)">
+          <button class="mobile-sheet-action" @click="runMobile(() => openFileMenu())">
             <FluentIcon name="folder_open" />
             <span>{{ t('backstage.title') }}</span>
           </button>
@@ -1425,11 +1406,12 @@ function toggleTheme() {
   z-index: 200;
   box-shadow: none !important;
   flex-shrink: 0;
+  height: auto !important;
 }
 
 .fluent-ribbon-root.compact-density .ribbon-body {
-  height: 84px;
-  min-height: 84px;
+  height: 38px;
+  min-height: 38px;
   padding: 2px 8px;
 }
 
@@ -1613,6 +1595,71 @@ function toggleTheme() {
 
 .tab-icon {
   font-size: 15px;
+}
+
+/* Office 365 顶栏常驻居中搜索框 */
+.top-search-wrap {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  position: relative;
+  width: 140px;
+  max-width: 380px;
+  height: 26px;
+  background-color: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 4px;
+  padding: 0 8px;
+  margin: 0 auto;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: width 0.22s cubic-bezier(0.1, 0.9, 0.2, 1), border-color 0.15s, box-shadow 0.15s;
+}
+
+.top-search-wrap:focus-within,
+.top-search-wrap.has-value {
+  width: 260px;
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1px var(--fluent-accent), 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.top-search-icon {
+  font-size: 14px;
+  color: var(--md-text-secondary);
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.top-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 11.5px;
+  font-family: inherit;
+  color: var(--md-text-primary);
+}
+
+.top-search-input::placeholder {
+  color: var(--md-text-secondary);
+  font-size: 11px;
+}
+
+.top-search-clear {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-text-secondary);
+  font-size: 13px;
+  margin-left: 4px;
+}
+
+.top-search-clear:hover {
+  color: var(--md-text-primary);
 }
 
 /* 右侧系统工具 */
@@ -2620,10 +2667,6 @@ function toggleTheme() {
   display: none;
 }
 
-.fluent-ribbon-root.compact-density .ribbon-body {
-  height: 42px;
-  min-height: 42px;
-}
 
 @media (max-width: 900px) {
   .fluent-ribbon-root .ribbon-body .btn-caption {

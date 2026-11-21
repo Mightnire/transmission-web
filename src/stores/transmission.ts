@@ -129,6 +129,7 @@ export const state = reactive<{
   promptDialog: PromptDialogOptions | null;
   confirmDialog: ConfirmDialogOptions | null;
   fileMenuOpen: boolean;
+  fileMenuTab: 'info' | 'stats' | 'add' | 'settings' | 'about';
   detailHeight: number;
   speedHistory: SpeedSample[];
   isPolling: boolean;
@@ -172,6 +173,7 @@ export const state = reactive<{
   promptDialog: null,
   confirmDialog: null,
   fileMenuOpen: false,
+  fileMenuTab: 'info',
   detailHeight: loadDetailHeight(),
   speedHistory: [],
   isPolling: false,
@@ -179,6 +181,10 @@ export const state = reactive<{
     (typeof window !== 'undefined' && window.innerWidth < 768 ? 'cards' : 'table'),
   compactDensity: typeof window !== 'undefined' && localStorage.getItem('compact_density') === 'true',
 });
+
+if (typeof window !== 'undefined') {
+  (window as any).__APP_STATE__ = state;
+}
 
 export function saveColumns() {
   saveColumnsToStorage(state.columns);
@@ -348,7 +354,12 @@ function recordSpeedSample(stats: SessionStats) {
   }
 }
 
-export function openFileMenu() {
+export function openFileMenu(tab?: 'info' | 'stats' | 'add' | 'settings' | 'about') {
+  if (typeof tab === 'string') {
+    state.fileMenuTab = tab;
+  } else {
+    state.fileMenuTab = 'info';
+  }
   state.fileMenuOpen = true;
 }
 

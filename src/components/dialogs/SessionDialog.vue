@@ -5,7 +5,8 @@
     v-if="props.embedded || state.sessionDialogOpen"
     @click.self="!props.embedded && (state.sessionDialogOpen = false)"
   >
-    <div class="md-dialog session-dialog">
+    <div class="md-dialog session-dialog chrome-settings-root">
+      <!-- 独立弹窗模式头部 -->
       <div class="dialog-header" v-if="!props.embedded">
         <div class="header-title-row">
           <FluentIcon name="settings" class="header-icon" />
@@ -16,414 +17,424 @@
         </button>
       </div>
 
-      <div class="md-dialog-content">
-        <!-- 标签页导航 -->
-        <div class="session-tabs">
+      <!-- Chrome 风格一长页设置：左侧分类锚点导航 + 右侧连续滚动卡片流 -->
+      <div class="chrome-settings-layout">
+        <!-- 左侧分类锚点 (Sticky Section Nav) -->
+        <nav class="chrome-nav" role="navigation" aria-label="Settings Categories">
           <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'speed' }"
-            @click="activeTab = 'speed'"
+            v-for="item in navSections"
+            :key="item.id"
+            class="chrome-nav-btn"
+            :class="{ active: currentSection === item.id }"
+            @click="scrollToSection(item.id)"
           >
-            {{ t('session.tabs.speed') }}
+            <FluentIcon :name="item.icon" class="chrome-nav-icon" />
+            <span class="chrome-nav-text">{{ item.label }}</span>
           </button>
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'queue' }"
-            @click="activeTab = 'queue'"
-          >
-            {{ t('session.tabs.queue') }}
-          </button>
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'network' }"
-            @click="activeTab = 'network'"
-          >
-            {{ t('session.tabs.network') }}
-          </button>
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'storage' }"
-            @click="activeTab = 'storage'"
-          >
-            {{ t('session.tabs.storage') }}
-          </button>
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'automation' }"
-            @click="activeTab = 'automation'"
-          >
-            {{ t('session.tabs.automation') }}
-          </button>
-        </div>
+        </nav>
 
-        <!-- 1. 速度与计划 (包含定时计划限速) -->
-        <div v-if="activeTab === 'speed'" class="tab-body">
-          <h4 class="sub-title">{{ t('session.speed.normal') }}</h4>
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.speedLimitDownEnabled" />
-              <span>{{ t('session.speed.downLimit') }}</span>
-            </label>
-            <div class="unit-group">
-              <input
-                type="number"
-                class="num-input"
-                v-model.number="form.speedLimitDown"
-                :disabled="!form.speedLimitDownEnabled"
-              />
-              <span class="unit-label">KB/s</span>
-            </div>
-          </div>
+        <!-- 右侧连续滚动长页 (Continuous Scroll Content) -->
+        <div class="chrome-scroll-container" ref="scrollContainer" @scroll.passive="onScroll">
+          <!-- 1. 速度与计划 (包含常规限速与计划任务) -->
+          <section id="settings-sec-speed" class="chrome-section">
+            <header class="section-title">
+              <FluentIcon name="speed" class="sec-icon" />
+              <h3>{{ t('session.tabs.speed') }}</h3>
+            </header>
+            <div class="section-card">
+              <h4 class="sub-title">{{ t('session.speed.normal') }}</h4>
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.speedLimitDownEnabled" />
+                  <span>{{ t('session.speed.downLimit') }}</span>
+                </label>
+                <div class="unit-group">
+                  <input
+                    type="number"
+                    class="num-input"
+                    v-model.number="form.speedLimitDown"
+                    :disabled="!form.speedLimitDownEnabled"
+                  />
+                  <span class="unit-label">KB/s</span>
+                </div>
+              </div>
 
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.speedLimitUpEnabled" />
-              <span>{{ t('session.speed.upLimit') }}</span>
-            </label>
-            <div class="unit-group">
-              <input
-                type="number"
-                class="num-input"
-                v-model.number="form.speedLimitUp"
-                :disabled="!form.speedLimitUpEnabled"
-              />
-              <span class="unit-label">KB/s</span>
-            </div>
-          </div>
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.speedLimitUpEnabled" />
+                  <span>{{ t('session.speed.upLimit') }}</span>
+                </label>
+                <div class="unit-group">
+                  <input
+                    type="number"
+                    class="num-input"
+                    v-model.number="form.speedLimitUp"
+                    :disabled="!form.speedLimitUpEnabled"
+                  />
+                  <span class="unit-label">KB/s</span>
+                </div>
+              </div>
 
-          <div class="divider"></div>
+              <div class="divider"></div>
 
-          <h4 class="sub-title">{{ t('session.speed.turtle') }}</h4>
-          <div class="form-row">
-            <span>{{ t('session.speed.turtleDown') }}</span>
-            <div class="unit-group">
-              <input type="number" class="num-input" v-model.number="form.altSpeedDown" />
-              <span class="unit-label">KB/s</span>
-            </div>
-          </div>
-          <div class="form-row">
-            <span>{{ t('session.speed.turtleUp') }}</span>
-            <div class="unit-group">
-              <input type="number" class="num-input" v-model.number="form.altSpeedUp" />
-              <span class="unit-label">KB/s</span>
-            </div>
-          </div>
+              <h4 class="sub-title">{{ t('session.speed.turtle') }}</h4>
+              <div class="form-row">
+                <span>{{ t('session.speed.turtleDown') }}</span>
+                <div class="unit-group">
+                  <input type="number" class="num-input" v-model.number="form.altSpeedDown" />
+                  <span class="unit-label">KB/s</span>
+                </div>
+              </div>
+              <div class="form-row">
+                <span>{{ t('session.speed.turtleUp') }}</span>
+                <div class="unit-group">
+                  <input type="number" class="num-input" v-model.number="form.altSpeedUp" />
+                  <span class="unit-label">KB/s</span>
+                </div>
+              </div>
 
-          <div class="form-row mt-2">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.altSpeedTimeEnabled" />
-              <span class="font-bold">{{ t('session.speed.scheduleEnable') }}</span>
-            </label>
-          </div>
+              <div class="form-row mt-2">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.altSpeedTimeEnabled" />
+                  <span class="font-bold">{{ t('session.speed.scheduleEnable') }}</span>
+                </label>
+              </div>
 
-          <div class="sub-box" v-if="form.altSpeedTimeEnabled">
-            <div class="form-row">
-              <span>{{ t('session.speed.scheduleTime') }}</span>
-              <div class="time-range-group">
-                <input type="time" class="time-input" v-model="timeBeginStr" />
-                <span>{{ t('session.speed.to') }}</span>
-                <input type="time" class="time-input" v-model="timeEndStr" />
+              <div class="sub-box" v-if="form.altSpeedTimeEnabled">
+                <div class="form-row">
+                  <span>{{ t('session.speed.scheduleTime') }}</span>
+                  <div class="time-range-group">
+                    <input type="time" class="time-input" v-model="timeBeginStr" />
+                    <span>{{ t('session.speed.to') }}</span>
+                    <input type="time" class="time-input" v-model="timeEndStr" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <span>{{ t('session.speed.days') }}</span>
+                  <select class="select-input" v-model.number="form.altSpeedTimeDay">
+                    <option :value="127">{{ t('session.speed.daysAll') }}</option>
+                    <option :value="62">{{ t('session.speed.daysWork') }}</option>
+                    <option :value="65">{{ t('session.speed.daysWeekend') }}</option>
+                  </select>
+                </div>
               </div>
             </div>
+          </section>
 
-            <div class="form-row">
-              <span>{{ t('session.speed.days') }}</span>
-              <select class="select-input" v-model.number="form.altSpeedTimeDay">
-                <option :value="127">{{ t('session.speed.daysAll') }}</option>
-                <option :value="62">{{ t('session.speed.daysWork') }}</option>
-                <option :value="65">{{ t('session.speed.daysWeekend') }}</option>
-              </select>
+          <!-- 2. 队列与调度 (并发限制与停滞时间) -->
+          <section id="settings-sec-queue" class="chrome-section">
+            <header class="section-title">
+              <FluentIcon name="low_priority" class="sec-icon" />
+              <h3>{{ t('session.tabs.queue') }}</h3>
+            </header>
+            <div class="section-card">
+              <h4 class="sub-title">{{ t('session.queue.concurrency') }}</h4>
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.downloadQueueEnabled" />
+                  <span>{{ t('session.queue.downQueue') }}</span>
+                </label>
+                <input
+                  type="number"
+                  class="num-input"
+                  v-model.number="form.downloadQueueSize"
+                  :disabled="!form.downloadQueueEnabled"
+                />
+              </div>
+
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.seedQueueEnabled" />
+                  <span>{{ t('session.queue.seedQueue') }}</span>
+                </label>
+                <input
+                  type="number"
+                  class="num-input"
+                  v-model.number="form.seedQueueSize"
+                  :disabled="!form.seedQueueEnabled"
+                />
+              </div>
+
+              <div class="divider"></div>
+
+              <h4 class="sub-title">{{ t('session.queue.stalled') }}</h4>
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.queueStalledEnabled" />
+                  <span>{{ t('session.queue.stalledEnable') }}</span>
+                </label>
+              </div>
+              <div class="form-row">
+                <span style="padding-left: 24px;">{{ t('session.queue.stalledTime') }}</span>
+                <div class="unit-group">
+                  <input
+                    type="number"
+                    class="num-input"
+                    v-model.number="form.queueStalledMinutes"
+                    :disabled="!form.queueStalledEnabled"
+                  />
+                  <span class="unit-label">{{ t('session.queue.minutes') }}</span>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <h4 class="sub-title">{{ t('session.queue.seedRules') }}</h4>
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.seedRatioLimited" />
+                  <span>{{ t('session.queue.ratioLimit') }}</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  class="num-input"
+                  v-model.number="form.seedRatioLimit"
+                  :disabled="!form.seedRatioLimited"
+                />
+              </div>
+
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.idleSeedingLimitEnabled" />
+                  <span>{{ t('session.queue.idleLimit') }}</span>
+                </label>
+                <div class="unit-group">
+                  <input
+                    type="number"
+                    class="num-input"
+                    v-model.number="form.idleSeedingLimit"
+                    :disabled="!form.idleSeedingLimitEnabled"
+                  />
+                  <span class="unit-label">{{ t('session.queue.minutes') }}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </section>
 
-        <!-- 2. 队列与调度 (并发限制与停滞时间) -->
-        <div v-else-if="activeTab === 'queue'" class="tab-body">
-          <h4 class="sub-title">{{ t('session.queue.concurrency') }}</h4>
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.downloadQueueEnabled" />
-              <span>{{ t('session.queue.downQueue') }}</span>
-            </label>
-            <input
-              type="number"
-              class="num-input"
-              v-model.number="form.downloadQueueSize"
-              :disabled="!form.downloadQueueEnabled"
-            />
-          </div>
+          <!-- 3. 网络与协议 (P2P协议、端口与加密) -->
+          <section id="settings-sec-network" class="chrome-section">
+            <header class="section-title">
+              <FluentIcon name="lan" class="sec-icon" />
+              <h3>{{ t('session.tabs.network') }}</h3>
+            </header>
+            <div class="section-card">
+              <h4 class="sub-title">{{ t('session.network.peerPort') }}</h4>
+              <div class="form-row">
+                <span>{{ t('session.network.portLabel') }}</span>
+                <div class="port-input-group">
+                  <input type="number" class="num-input" v-model.number="form.peerPort" />
+                  <button class="md-btn md-btn-flat btn-sm" @click="testPort" :disabled="testingPort">
+                    <FluentIcon :name="testingPort ? 'sync' : 'network_check'" style="font-size: 16px;" />
+                    {{ testingPort ? t('session.network.portTesting') : t('session.network.testPort') }}
+                  </button>
+                </div>
+              </div>
 
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.seedQueueEnabled" />
-              <span>{{ t('session.queue.seedQueue') }}</span>
-            </label>
-            <input
-              type="number"
-              class="num-input"
-              v-model.number="form.seedQueueSize"
-              :disabled="!form.seedQueueEnabled"
-            />
-          </div>
+              <div class="port-status-box" v-if="portStatus !== null">
+                <FluentIcon :name="portStatus ? 'check_circle' : 'cancel'" :style="{ color: portStatus ? 'var(--md-success)' : 'var(--md-error)' }" />
+                <span>{{ portStatus ? t('session.network.portOpen') : t('session.network.portClosed') }}</span>
+              </div>
 
-          <div class="divider"></div>
+              <div class="form-row mt-2">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.peerPortRandomOnStart" />
+                  <span>{{ t('session.network.randomPort') }}</span>
+                </label>
+              </div>
 
-          <h4 class="sub-title">{{ t('session.queue.stalled') }}</h4>
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.queueStalledEnabled" />
-              <span>{{ t('session.queue.stalledEnable') }}</span>
-            </label>
-          </div>
-          <div class="form-row">
-            <span style="padding-left: 24px;">{{ t('session.queue.stalledTime') }}</span>
-            <div class="unit-group">
-              <input
-                type="number"
-                class="num-input"
-                v-model.number="form.queueStalledMinutes"
-                :disabled="!form.queueStalledEnabled"
-              />
-              <span class="unit-label">{{ t('session.queue.minutes') }}</span>
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.portForwardingEnabled" />
+                  <span>{{ t('session.network.upnp') }}</span>
+                </label>
+              </div>
+
+              <div class="divider"></div>
+
+              <h4 class="sub-title">{{ t('session.network.protocols') }}</h4>
+              <div class="form-vertical-switches">
+                <div class="form-row">
+                  <label class="form-check">
+                    <input type="checkbox" v-model="form.dhtEnabled" />
+                    <span>{{ t('session.network.dht') }}</span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <label class="form-check">
+                    <input type="checkbox" v-model="form.pexEnabled" />
+                    <span>{{ t('session.network.pex') }}</span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <label class="form-check">
+                    <input type="checkbox" v-model="form.lpdEnabled" />
+                    <span>{{ t('session.network.lpd') }}</span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <label class="form-check">
+                    <input type="checkbox" v-model="form.utpEnabled" />
+                    <span>{{ t('session.network.utp') }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <h4 class="sub-title">{{ t('session.network.encryption') }}</h4>
+              <div class="form-row">
+                <span>{{ t('session.network.encPolicy') }}</span>
+                <select class="select-input" v-model="form.encryption">
+                  <option value="tolerated">{{ t('session.network.encTolerated') }}</option>
+                  <option value="preferred">{{ t('session.network.encPreferred') }}</option>
+                  <option value="required">{{ t('session.network.encRequired') }}</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <span>{{ t('session.network.peerGlobal') }}</span>
+                <input type="number" class="num-input" v-model.number="form.peerLimitGlobal" />
+              </div>
+              <div class="form-row">
+                <span>{{ t('session.network.peerPerTorrent') }}</span>
+                <input type="number" class="num-input" v-model.number="form.peerLimitPerTorrent" />
+              </div>
             </div>
-          </div>
+          </section>
 
-          <div class="divider"></div>
+          <!-- 4. 存储与缓存 (目录、可用空间、写缓存调节) -->
+          <section id="settings-sec-storage" class="chrome-section">
+            <header class="section-title">
+              <FluentIcon name="hard_drive" class="sec-icon" />
+              <h3>{{ t('session.tabs.storage') }}</h3>
+            </header>
+            <div class="section-card">
+              <h4 class="sub-title">{{ t('session.storage.dirs') }}</h4>
+              <div class="form-group">
+                <label class="form-label">{{ t('session.storage.downloadDir') }}</label>
+                <input type="text" class="text-input" v-model="form.downloadDir" @blur="checkFreeSpace" />
+              </div>
 
-          <h4 class="sub-title">{{ t('session.queue.seedRules') }}</h4>
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.seedRatioLimited" />
-              <span>{{ t('session.queue.ratioLimit') }}</span>
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              class="num-input"
-              v-model.number="form.seedRatioLimit"
-              :disabled="!form.seedRatioLimited"
-            />
-          </div>
+              <div class="free-space-badge" v-if="freeSpaceBytes !== null">
+                <FluentIcon name="storage" />
+                <span>{{ t('session.storage.freeSpace', { size: formatBytes(freeSpaceBytes) }) }}</span>
+              </div>
 
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.idleSeedingLimitEnabled" />
-              <span>{{ t('session.queue.idleLimit') }}</span>
-            </label>
-            <div class="unit-group">
-              <input
-                type="number"
-                class="num-input"
-                v-model.number="form.idleSeedingLimit"
-                :disabled="!form.idleSeedingLimitEnabled"
-              />
-              <span class="unit-label">{{ t('session.queue.minutes') }}</span>
+              <div class="form-group mt-2">
+                <div class="form-row">
+                  <label class="form-check">
+                    <input type="checkbox" v-model="form.incompleteDirEnabled" />
+                    <span>{{ t('session.storage.incompleteDir') }}</span>
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  class="text-input mt-1"
+                  v-model="form.incompleteDir"
+                  :disabled="!form.incompleteDirEnabled"
+                />
+              </div>
+
+              <div class="divider"></div>
+
+              <h4 class="sub-title">{{ t('session.storage.cacheTitle') }}</h4>
+              <div class="form-row">
+                <div>
+                  <span>{{ t('session.storage.cacheSize') }}</span>
+                  <div class="form-hint">{{ t('session.storage.cacheHint') }}</div>
+                </div>
+                <div class="unit-group">
+                  <input type="number" class="num-input" v-model.number="form.cacheSizeMb" min="1" max="64" />
+                  <span class="unit-label">MB</span>
+                </div>
+              </div>
+
+              <div class="form-row mt-2">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.renamePartialFiles" />
+                  <span>{{ t('session.storage.renamePartial') }}</span>
+                </label>
+              </div>
+
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.trashOriginalTorrentFiles" />
+                  <span>{{ t('session.storage.trashTorrent') }}</span>
+                </label>
+              </div>
             </div>
-          </div>
-        </div>
+          </section>
 
-        <!-- 3. 网络与协议 (P2P协议、端口与加密) -->
-        <div v-else-if="activeTab === 'network'" class="tab-body">
-          <h4 class="sub-title">{{ t('session.network.peerPort') }}</h4>
-          <div class="form-row">
-            <span>{{ t('session.network.portLabel') }}</span>
-            <div class="port-input-group">
-              <input type="number" class="num-input" v-model.number="form.peerPort" />
-              <button class="md-btn md-btn-flat btn-sm" @click="testPort" :disabled="testingPort">
-                <FluentIcon :name="testingPort ? 'sync' : 'network_check'" style="font-size: 16px;" />
-                {{ testingPort ? t('session.network.portTesting') : t('session.network.testPort') }}
-              </button>
+          <!-- 5. 安全与自动化 (黑名单、默认Tracker、完成脚本) -->
+          <section id="settings-sec-automation" class="chrome-section">
+            <header class="section-title">
+              <FluentIcon name="security" class="sec-icon" />
+              <h3>{{ t('session.tabs.automation') }}</h3>
+            </header>
+            <div class="section-card">
+              <h4 class="sub-title">{{ t('session.automation.blocklist') }}</h4>
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.blocklistEnabled" />
+                  <span>{{ t('session.automation.blocklistEnable') }}</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="form-label">{{ t('session.automation.blocklistUrl') }}</label>
+                <input type="text" class="text-input" v-model="form.blocklistUrl" :disabled="!form.blocklistEnabled" />
+              </div>
+              <div class="blocklist-action-row">
+                <button class="md-btn md-btn-flat" @click="updateBlocklist" :disabled="updatingBlocklist || !form.blocklistEnabled">
+                  <FluentIcon name="security" />
+                  {{ updatingBlocklist ? t('session.automation.blocklistUpdating') : t('session.automation.blocklistUpdate') }}
+                </button>
+                <span class="blocklist-size" v-if="state.session?.['blocklist-size']">
+                  {{ t('session.automation.blocklistRules', { count: state.session['blocklist-size'] }) }}
+                </span>
+              </div>
+
+              <div class="divider"></div>
+
+              <h4 class="sub-title">{{ t('session.automation.defaultTrackers') }}</h4>
+              <div class="form-group">
+                <label class="form-label">{{ t('session.automation.defaultTrackersHint') }}</label>
+                <textarea
+                  class="textarea-input"
+                  rows="3"
+                  v-model="form.defaultTrackers"
+                  placeholder="udp://tracker.opentrackr.org:1337/announce&#10;http://tracker.openbittorrent.com:80/announce"
+                ></textarea>
+              </div>
+
+              <div class="divider"></div>
+
+              <h4 class="sub-title">{{ t('session.automation.doneScript') }}</h4>
+              <div class="form-row">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.scriptTorrentDoneEnabled" />
+                  <span>{{ t('session.automation.doneScriptEnable') }}</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="form-label">{{ t('session.automation.doneScriptPath') }}</label>
+                <input
+                  type="text"
+                  class="text-input"
+                  v-model="form.scriptTorrentDoneFilename"
+                  :disabled="!form.scriptTorrentDoneEnabled"
+                  placeholder="/etc/storage/torrent_done.sh"
+                />
+              </div>
             </div>
-          </div>
-
-          <div class="port-status-box" v-if="portStatus !== null">
-            <FluentIcon :name="portStatus ? 'check_circle' : 'cancel'" :style="{ color: portStatus ? 'var(--md-success)' : 'var(--md-error)' }" />
-            <span>{{ portStatus ? t('session.network.portOpen') : t('session.network.portClosed') }}</span>
-          </div>
-
-          <div class="form-row mt-2">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.peerPortRandomOnStart" />
-              <span>{{ t('session.network.randomPort') }}</span>
-            </label>
-          </div>
-
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.portForwardingEnabled" />
-              <span>{{ t('session.network.upnp') }}</span>
-            </label>
-          </div>
-
-          <div class="divider"></div>
-
-          <h4 class="sub-title">{{ t('session.network.protocols') }}</h4>
-          <div class="form-vertical-switches">
-            <div class="form-row">
-              <label class="form-check">
-                <input type="checkbox" v-model="form.dhtEnabled" />
-                <span>{{ t('session.network.dht') }}</span>
-              </label>
-            </div>
-            <div class="form-row">
-              <label class="form-check">
-                <input type="checkbox" v-model="form.pexEnabled" />
-                <span>{{ t('session.network.pex') }}</span>
-              </label>
-            </div>
-            <div class="form-row">
-              <label class="form-check">
-                <input type="checkbox" v-model="form.lpdEnabled" />
-                <span>{{ t('session.network.lpd') }}</span>
-              </label>
-            </div>
-            <div class="form-row">
-              <label class="form-check">
-                <input type="checkbox" v-model="form.utpEnabled" />
-                <span>{{ t('session.network.utp') }}</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <h4 class="sub-title">{{ t('session.network.encryption') }}</h4>
-          <div class="form-row">
-            <span>{{ t('session.network.encPolicy') }}</span>
-            <select class="select-input" v-model="form.encryption">
-              <option value="tolerated">{{ t('session.network.encTolerated') }}</option>
-              <option value="preferred">{{ t('session.network.encPreferred') }}</option>
-              <option value="required">{{ t('session.network.encRequired') }}</option>
-            </select>
-          </div>
-
-          <div class="form-row">
-            <span>{{ t('session.network.peerGlobal') }}</span>
-            <input type="number" class="num-input" v-model.number="form.peerLimitGlobal" />
-          </div>
-          <div class="form-row">
-            <span>{{ t('session.network.peerPerTorrent') }}</span>
-            <input type="number" class="num-input" v-model.number="form.peerLimitPerTorrent" />
-          </div>
-        </div>
-
-        <!-- 4. 存储与缓存 (目录、可用空间、写缓存调节) -->
-        <div v-else-if="activeTab === 'storage'" class="tab-body">
-          <h4 class="sub-title">{{ t('session.storage.dirs') }}</h4>
-          <div class="form-group">
-            <label class="form-label">{{ t('session.storage.downloadDir') }}</label>
-            <input type="text" class="text-input" v-model="form.downloadDir" @blur="checkFreeSpace" />
-          </div>
-
-          <div class="free-space-badge" v-if="freeSpaceBytes !== null">
-            <FluentIcon name="storage" />
-            <span>{{ t('session.storage.freeSpace', { size: formatBytes(freeSpaceBytes) }) }}</span>
-          </div>
-
-          <div class="form-group mt-2">
-            <div class="form-row">
-              <label class="form-check">
-                <input type="checkbox" v-model="form.incompleteDirEnabled" />
-                <span>{{ t('session.storage.incompleteDir') }}</span>
-              </label>
-            </div>
-            <input
-              type="text"
-              class="text-input mt-1"
-              v-model="form.incompleteDir"
-              :disabled="!form.incompleteDirEnabled"
-            />
-          </div>
-
-          <div class="divider"></div>
-
-          <h4 class="sub-title">{{ t('session.storage.cacheTitle') }}</h4>
-          <div class="form-row">
-            <div>
-              <span>{{ t('session.storage.cacheSize') }}</span>
-              <div class="form-hint">{{ t('session.storage.cacheHint') }}</div>
-            </div>
-            <div class="unit-group">
-              <input type="number" class="num-input" v-model.number="form.cacheSizeMb" min="1" max="64" />
-              <span class="unit-label">MB</span>
-            </div>
-          </div>
-
-          <div class="form-row mt-2">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.renamePartialFiles" />
-              <span>{{ t('session.storage.renamePartial') }}</span>
-            </label>
-          </div>
-
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.trashOriginalTorrentFiles" />
-              <span>{{ t('session.storage.trashTorrent') }}</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- 5. 安全与自动化 (黑名单、默认Tracker、完成脚本) -->
-        <div v-else-if="activeTab === 'automation'" class="tab-body">
-          <h4 class="sub-title">{{ t('session.automation.blocklist') }}</h4>
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.blocklistEnabled" />
-              <span>{{ t('session.automation.blocklistEnable') }}</span>
-            </label>
-          </div>
-          <div class="form-group">
-            <label class="form-label">{{ t('session.automation.blocklistUrl') }}</label>
-            <input type="text" class="text-input" v-model="form.blocklistUrl" :disabled="!form.blocklistEnabled" />
-          </div>
-          <div class="blocklist-action-row">
-            <button class="md-btn md-btn-flat" @click="updateBlocklist" :disabled="updatingBlocklist || !form.blocklistEnabled">
-              <FluentIcon name="security" />
-              {{ updatingBlocklist ? t('session.automation.blocklistUpdating') : t('session.automation.blocklistUpdate') }}
-            </button>
-            <span class="blocklist-size" v-if="state.session?.['blocklist-size']">
-              {{ t('session.automation.blocklistRules', { count: state.session['blocklist-size'] }) }}
-            </span>
-          </div>
-
-          <div class="divider"></div>
-
-          <h4 class="sub-title">{{ t('session.automation.defaultTrackers') }}</h4>
-          <div class="form-group">
-            <label class="form-label">{{ t('session.automation.defaultTrackersHint') }}</label>
-            <textarea
-              class="textarea-input"
-              rows="3"
-              v-model="form.defaultTrackers"
-              placeholder="udp://tracker.opentrackr.org:1337/announce&#10;http://tracker.openbittorrent.com:80/announce"
-            ></textarea>
-          </div>
-
-          <div class="divider"></div>
-
-          <h4 class="sub-title">{{ t('session.automation.doneScript') }}</h4>
-          <div class="form-row">
-            <label class="form-check">
-              <input type="checkbox" v-model="form.scriptTorrentDoneEnabled" />
-              <span>{{ t('session.automation.doneScriptEnable') }}</span>
-            </label>
-          </div>
-          <div class="form-group">
-            <label class="form-label">{{ t('session.automation.doneScriptPath') }}</label>
-            <input
-              type="text"
-              class="text-input"
-              v-model="form.scriptTorrentDoneFilename"
-              :disabled="!form.scriptTorrentDoneEnabled"
-              placeholder="/etc/storage/torrent_done.sh"
-            />
-          </div>
+          </section>
         </div>
       </div>
 
-      <div class="md-dialog-actions">
-        <button class="md-btn md-btn-flat" @click="props.embedded ? emit('done') : (state.sessionDialogOpen = false)">
+      <!-- 底部保存/取消操作条 -->
+      <div class="chrome-actions-bar">
+        <button class="md-btn md-btn-flat" @click="handleCancel">
           {{ t('common.cancel') }}
         </button>
         <button class="md-btn md-btn-raised" @click="saveSettings">
@@ -440,36 +451,99 @@ import { state, fetchSession, formatBytes, showToast, describeError } from '../.
 import { useEscapeKey } from '../../composables/useEscapeKey';
 import { t } from '../../locales';
 import { rpc } from '../../api/rpc';
+import FluentIcon from '../common/FluentIcon.vue';
 
 const props = defineProps<{ embedded?: boolean }>();
 const emit = defineEmits<{ (e: 'done'): void }>();
 
-const activeTab = ref<'speed' | 'queue' | 'network' | 'storage' | 'automation'>('speed');
+type SectionId = 'speed' | 'queue' | 'network' | 'storage' | 'automation';
+const currentSection = ref<SectionId>('speed');
+const scrollContainer = ref<HTMLElement | null>(null);
+let isManualScroll = false;
+
+const navSections = computed(() => [
+  { id: 'speed' as SectionId, label: t('session.tabs.speed'), icon: 'speed' },
+  { id: 'queue' as SectionId, label: t('session.tabs.queue'), icon: 'low_priority' },
+  { id: 'network' as SectionId, label: t('session.tabs.network'), icon: 'lan' },
+  { id: 'storage' as SectionId, label: t('session.tabs.storage'), icon: 'hard_drive' },
+  { id: 'automation' as SectionId, label: t('session.tabs.automation'), icon: 'security' },
+]);
+
+function scrollToSection(id: SectionId) {
+  currentSection.value = id;
+  const container = scrollContainer.value;
+  const target = document.getElementById(`settings-sec-${id}`);
+  if (!container || !target) return;
+
+  isManualScroll = true;
+  const containerTop = container.getBoundingClientRect().top;
+  const targetTop = target.getBoundingClientRect().top;
+  const scrollOffset = targetTop - containerTop + container.scrollTop - 10;
+
+  container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' });
+  setTimeout(() => {
+    isManualScroll = false;
+  }, 500);
+}
+
+function onScroll() {
+  if (isManualScroll) return;
+  const container = scrollContainer.value;
+  if (!container) return;
+
+  const sections: SectionId[] = ['speed', 'queue', 'network', 'storage', 'automation'];
+
+  // 接近底部时直接高亮最后一项
+  if (container.scrollHeight - container.scrollTop - container.clientHeight < 24) {
+    currentSection.value = sections[sections.length - 1];
+    return;
+  }
+
+  const containerTop = container.getBoundingClientRect().top;
+
+  for (let i = sections.length - 1; i >= 0; i--) {
+    const s = sections[i];
+    const el = document.getElementById(`settings-sec-${s}`);
+    if (el) {
+      const elTop = el.getBoundingClientRect().top;
+      if (elTop - containerTop <= 90) {
+        currentSection.value = s;
+        break;
+      }
+    }
+  }
+}
+
+function handleCancel() {
+  if (props.embedded) {
+    emit('done');
+  } else {
+    state.sessionDialogOpen = false;
+  }
+}
+
 const testingPort = ref(false);
 const portStatus = ref<boolean | null>(null);
 const freeSpaceBytes = ref<number | null>(null);
 const updatingBlocklist = ref(false);
 
-useEscapeKey(() => {
-  if (state.sessionDialogOpen) state.sessionDialogOpen = false;
-});
+const timeBeginStr = ref('00:00');
+const timeEndStr = ref('00:00');
 
 const form = reactive({
-  // 速度
-  speedLimitDown: 0,
   speedLimitDownEnabled: false,
-  speedLimitUp: 0,
+  speedLimitDown: 0,
   speedLimitUpEnabled: false,
+  speedLimitUp: 0,
   altSpeedDown: 50,
   altSpeedUp: 50,
   altSpeedTimeEnabled: false,
-  altSpeedTimeBegin: 540,
-  altSpeedTimeEnd: 1020,
+  altSpeedTimeBegin: 0,
+  altSpeedTimeEnd: 0,
   altSpeedTimeDay: 127,
-  // 队列
-  downloadQueueEnabled: true,
-  downloadQueueSize: 3,
-  seedQueueEnabled: true,
+  downloadQueueEnabled: false,
+  downloadQueueSize: 5,
+  seedQueueEnabled: false,
   seedQueueSize: 5,
   queueStalledEnabled: true,
   queueStalledMinutes: 30,
@@ -477,25 +551,22 @@ const form = reactive({
   seedRatioLimit: 2.0,
   idleSeedingLimitEnabled: false,
   idleSeedingLimit: 30,
-  // 网络
   peerPort: 51413,
   peerPortRandomOnStart: false,
-  portForwardingEnabled: false,
+  portForwardingEnabled: true,
   dhtEnabled: true,
   pexEnabled: true,
   lpdEnabled: false,
-  utpEnabled: false,
-  encryption: 'tolerated' as 'required' | 'preferred' | 'tolerated',
-  peerLimitGlobal: 90,
-  peerLimitPerTorrent: 30,
-  // 存储与缓存
+  utpEnabled: true,
+  encryption: 'preferred',
+  peerLimitGlobal: 200,
+  peerLimitPerTorrent: 50,
   downloadDir: '',
   incompleteDirEnabled: false,
   incompleteDir: '',
-  cacheSizeMb: 2,
+  cacheSizeMb: 16,
   renamePartialFiles: true,
   trashOriginalTorrentFiles: false,
-  // 安全与脚本
   blocklistEnabled: false,
   blocklistUrl: '',
   defaultTrackers: '',
@@ -504,72 +575,102 @@ const form = reactive({
 });
 
 // 时间分秒换算
-const timeBeginStr = computed({
-  get() {
-    const h = Math.floor(form.altSpeedTimeBegin / 60).toString().padStart(2, '0');
-    const m = (form.altSpeedTimeBegin % 60).toString().padStart(2, '0');
-    return `${h}:${m}`;
-  },
-  set(val: string) {
-    if (!val) return;
-    const [h, m] = val.split(':').map(Number);
-    form.altSpeedTimeBegin = h * 60 + m;
-  },
+watch(timeBeginStr, (val) => {
+  if (!val) return;
+  const [h, m] = val.split(':').map(Number);
+  form.altSpeedTimeBegin = (h || 0) * 60 + (m || 0);
 });
 
-const timeEndStr = computed({
-  get() {
-    const h = Math.floor(form.altSpeedTimeEnd / 60).toString().padStart(2, '0');
-    const m = (form.altSpeedTimeEnd % 60).toString().padStart(2, '0');
-    return `${h}:${m}`;
-  },
-  set(val: string) {
-    if (!val) return;
-    const [h, m] = val.split(':').map(Number);
-    form.altSpeedTimeEnd = h * 60 + m;
-  },
+watch(timeEndStr, (val) => {
+  if (!val) return;
+  const [h, m] = val.split(':').map(Number);
+  form.altSpeedTimeEnd = (h || 0) * 60 + (m || 0);
 });
+
+function minsToTimeStr(mins = 0) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+async function testPort() {
+  testingPort.value = true;
+  portStatus.value = null;
+  try {
+    const res = await rpc.portTest();
+    portStatus.value = res['port-is-open'];
+  } catch {
+    portStatus.value = false;
+  } finally {
+    testingPort.value = false;
+  }
+}
+
+async function checkFreeSpace() {
+  if (!form.downloadDir) return;
+  try {
+    const res = await rpc.freeSpace(form.downloadDir);
+    freeSpaceBytes.value = res['size-bytes'];
+  } catch {
+    freeSpaceBytes.value = null;
+  }
+}
+
+async function updateBlocklist() {
+  updatingBlocklist.value = true;
+  try {
+    const res = await rpc.blocklistUpdate();
+    showToast(t('session.automation.blocklistSuccess', { count: res['blocklist-size'] }), 'success');
+    await fetchSession();
+  } catch (err: any) {
+    showToast(t('session.automation.blocklistFailed', { error: describeError(err) }), 'error');
+  } finally {
+    updatingBlocklist.value = false;
+  }
+}
 
 function initForm(s: any) {
-  if (!s) return;
-  form.speedLimitDown = s['speed-limit-down'] || 0;
   form.speedLimitDownEnabled = s['speed-limit-down-enabled'] || false;
-  form.speedLimitUp = s['speed-limit-up'] || 0;
+  form.speedLimitDown = s['speed-limit-down'] || 0;
   form.speedLimitUpEnabled = s['speed-limit-up-enabled'] || false;
+  form.speedLimitUp = s['speed-limit-up'] || 0;
   form.altSpeedDown = s['alt-speed-down'] || 50;
   form.altSpeedUp = s['alt-speed-up'] || 50;
   form.altSpeedTimeEnabled = s['alt-speed-time-enabled'] || false;
-  form.altSpeedTimeBegin = s['alt-speed-time-begin'] !== undefined ? s['alt-speed-time-begin'] : 540;
-  form.altSpeedTimeEnd = s['alt-speed-time-end'] !== undefined ? s['alt-speed-time-end'] : 1020;
-  form.altSpeedTimeDay = s['alt-speed-time-day'] !== undefined ? s['alt-speed-time-day'] : 127;
+  form.altSpeedTimeBegin = s['alt-speed-time-begin'] || 0;
+  form.altSpeedTimeEnd = s['alt-speed-time-end'] || 0;
+  form.altSpeedTimeDay = s['alt-speed-time-day'] ?? 127;
 
-  form.downloadQueueEnabled = s['download-queue-enabled'] !== undefined ? s['download-queue-enabled'] : true;
-  form.downloadQueueSize = s['download-queue-size'] || 3;
-  form.seedQueueEnabled = s['seed-queue-enabled'] !== undefined ? s['seed-queue-enabled'] : true;
+  timeBeginStr.value = minsToTimeStr(form.altSpeedTimeBegin);
+  timeEndStr.value = minsToTimeStr(form.altSpeedTimeEnd);
+
+  form.downloadQueueEnabled = s['download-queue-enabled'] || false;
+  form.downloadQueueSize = s['download-queue-size'] || 5;
+  form.seedQueueEnabled = s['seed-queue-enabled'] || false;
   form.seedQueueSize = s['seed-queue-size'] || 5;
-  form.queueStalledEnabled = s['queue-stalled-enabled'] !== undefined ? s['queue-stalled-enabled'] : true;
+  form.queueStalledEnabled = s['queue-stalled-enabled'] ?? true;
   form.queueStalledMinutes = s['queue-stalled-minutes'] || 30;
   form.seedRatioLimited = s['seedRatioLimited'] || false;
-  form.seedRatioLimit = s['seedRatioLimit'] || 2.0;
+  form.seedRatioLimit = s['seedRatioLimit'] ?? 2.0;
   form.idleSeedingLimitEnabled = s['idle-seeding-limit-enabled'] || false;
   form.idleSeedingLimit = s['idle-seeding-limit'] || 30;
 
   form.peerPort = s['peer-port'] || 51413;
   form.peerPortRandomOnStart = s['peer-port-random-on-start'] || false;
-  form.portForwardingEnabled = s['port-forwarding-enabled'] || false;
-  form.dhtEnabled = s['dht-enabled'] !== undefined ? s['dht-enabled'] : true;
-  form.pexEnabled = s['pex-enabled'] !== undefined ? s['pex-enabled'] : true;
+  form.portForwardingEnabled = s['port-forwarding-enabled'] ?? true;
+  form.dhtEnabled = s['dht-enabled'] ?? true;
+  form.pexEnabled = s['pex-enabled'] ?? true;
   form.lpdEnabled = s['lpd-enabled'] || false;
-  form.utpEnabled = s['utp-enabled'] || false;
-  form.encryption = s['encryption'] || 'tolerated';
-  form.peerLimitGlobal = s['peer-limit-global'] || 90;
-  form.peerLimitPerTorrent = s['peer-limit-per-torrent'] || 30;
+  form.utpEnabled = s['utp-enabled'] ?? true;
+  form.encryption = s['encryption'] || 'preferred';
+  form.peerLimitGlobal = s['peer-limit-global'] || 200;
+  form.peerLimitPerTorrent = s['peer-limit-per-torrent'] || 50;
 
   form.downloadDir = s['download-dir'] || '';
   form.incompleteDirEnabled = s['incomplete-dir-enabled'] || false;
   form.incompleteDir = s['incomplete-dir'] || '';
-  form.cacheSizeMb = (s as any)['cache-size-mb'] || 2;
-  form.renamePartialFiles = s['rename-partial-files'] !== undefined ? s['rename-partial-files'] : true;
+  form.cacheSizeMb = s['cache-size-mb'] || 16;
+  form.renamePartialFiles = s['rename-partial-files'] ?? true;
   form.trashOriginalTorrentFiles = s['trash-original-torrent-files'] || false;
 
   form.blocklistEnabled = s['blocklist-enabled'] || false;
@@ -584,21 +685,18 @@ function initForm(s: any) {
 }
 
 // 核心修复：仅在用户打开弹窗的一瞬间根据当前 session 同步一次表单！
-// 弹窗处于编辑状态期间，严禁后台 3s 轮询覆盖用户正在修改的表单内容！
 watch(
   () => state.sessionDialogOpen,
   (open) => {
     if (open && state.session) {
       initForm(state.session);
     }
-  },
-  { immediate: true }
+  }
 );
 
 let embeddedInitialized = false;
-
-function initEmbeddedForm(session: typeof state.session) {
-  if (!props.embedded || !session || embeddedInitialized) return;
+function initEmbeddedForm(session: any) {
+  if (!props.embedded || embeddedInitialized || !session) return;
   initForm(session);
   embeddedInitialized = true;
 }
@@ -614,68 +712,36 @@ watch(
   }
 );
 
-async function checkFreeSpace() {
-  if (!form.downloadDir) return;
-  try {
-    const res = await rpc.freeSpace(form.downloadDir);
-    if (res && res['size-bytes'] !== undefined) {
-      freeSpaceBytes.value = res['size-bytes'];
-    }
-  } catch (e) {
-    console.warn('Free space check failed:', e);
-  }
-}
-
-async function testPort() {
-  testingPort.value = true;
-  portStatus.value = null;
-  try {
-    const res = await rpc.portTest();
-    portStatus.value = res['port-is-open'];
-  } catch (e) {
-    portStatus.value = false;
-  } finally {
-    testingPort.value = false;
-  }
-}
-
-async function updateBlocklist() {
-  updatingBlocklist.value = true;
-  try {
-    const res = await rpc.blocklistUpdate();
-    showToast(t('session.automation.blocklistSuccess', { count: res['blocklist-size'] }), 'success');
-    await fetchSession();
-  } catch (e) {
-    showToast(t('session.automation.blocklistFailed'), 'error');
-  } finally {
-    updatingBlocklist.value = false;
-  }
+function isSafeAbsolutePath(pathStr: string): boolean {
+  if (!pathStr) return false;
+  const p = pathStr.trim();
+  if (p.startsWith('/') && !p.startsWith('//')) return true;
+  if (/^[a-zA-Z]:[\\/]/.test(p)) return true;
+  return false;
 }
 
 async function saveSettings() {
-  const payload: Record<string, any> = {
-    'speed-limit-down': form.speedLimitDown,
+  const payload: any = {
     'speed-limit-down-enabled': form.speedLimitDownEnabled,
-    'speed-limit-up': form.speedLimitUp,
+    'speed-limit-down': form.speedLimitDown,
     'speed-limit-up-enabled': form.speedLimitUpEnabled,
+    'speed-limit-up': form.speedLimitUp,
     'alt-speed-down': form.altSpeedDown,
     'alt-speed-up': form.altSpeedUp,
     'alt-speed-time-enabled': form.altSpeedTimeEnabled,
     'alt-speed-time-begin': form.altSpeedTimeBegin,
     'alt-speed-time-end': form.altSpeedTimeEnd,
     'alt-speed-time-day': form.altSpeedTimeDay,
-
     'download-queue-enabled': form.downloadQueueEnabled,
     'download-queue-size': form.downloadQueueSize,
     'seed-queue-enabled': form.seedQueueEnabled,
     'seed-queue-size': form.seedQueueSize,
     'queue-stalled-enabled': form.queueStalledEnabled,
     'queue-stalled-minutes': form.queueStalledMinutes,
-    'seedRatioLimited': form.seedRatioLimited,
-    'seedRatioLimit': form.seedRatioLimit,
+    seedRatioLimited: form.seedRatioLimited,
+    seedRatioLimit: form.seedRatioLimit,
     'idle-seeding-limit-enabled': form.idleSeedingLimitEnabled,
     'idle-seeding-limit': form.idleSeedingLimit,
-
     'peer-port': form.peerPort,
     'peer-port-random-on-start': form.peerPortRandomOnStart,
     'port-forwarding-enabled': form.portForwardingEnabled,
@@ -686,7 +752,6 @@ async function saveSettings() {
     encryption: form.encryption,
     'peer-limit-global': form.peerLimitGlobal,
     'peer-limit-per-torrent': form.peerLimitPerTorrent,
-
     'cache-size-mb': form.cacheSizeMb,
     'rename-partial-files': form.renamePartialFiles,
     'trash-original-torrent-files': form.trashOriginalTorrentFiles,
@@ -695,14 +760,28 @@ async function saveSettings() {
     'script-torrent-done-enabled': form.scriptTorrentDoneEnabled,
   };
 
-  // 严格安全校验与防错处理：防止发送非法/相对路径触发 Transmission RPC 错误！
+  // 路径合法性校验
   if (form.downloadDir && form.downloadDir.trim()) {
-    payload['download-dir'] = form.downloadDir.trim();
+    const trimmed = form.downloadDir.trim();
+    if (isSafeAbsolutePath(trimmed)) {
+      payload['download-dir'] = trimmed;
+    } else {
+      showToast(t('common.failed', { error: '下载保存路径必须为合法的绝对路径！' }), 'error');
+      return;
+    }
   }
-  if (form.incompleteDirEnabled && form.incompleteDir && form.incompleteDir.trim().startsWith('/')) {
-    payload['incomplete-dir'] = form.incompleteDir.trim();
+
+  if (form.incompleteDirEnabled && form.incompleteDir && form.incompleteDir.trim()) {
+    const trimmed = form.incompleteDir.trim();
+    if (isSafeAbsolutePath(trimmed)) {
+      payload['incomplete-dir'] = trimmed;
+    } else {
+      showToast(t('common.failed', { error: '未完成目录必须为合法的绝对路径！' }), 'error');
+      return;
+    }
   }
-  if (form.blocklistUrl && form.blocklistUrl.trim()) {
+
+  if (form.blocklistEnabled && form.blocklistUrl && form.blocklistUrl.trim()) {
     payload['blocklist-url'] = form.blocklistUrl.trim();
   }
   if (form.defaultTrackers && form.defaultTrackers.trim()) {
@@ -713,8 +792,7 @@ async function saveSettings() {
   }
 
   try {
-    await rpc.sessionSet(payload as any);
-    // 立即乐观同步本地 state.session，彻底杜绝异步回读延迟闪烁
+    await rpc.setSession(payload);
     if (state.session) {
       Object.assign(state.session, payload);
     }
@@ -726,16 +804,27 @@ async function saveSettings() {
     showToast(t('common.failed', { error: describeError(err) }), 'error');
   }
 }
+
+useEscapeKey(() => {
+  if (state.sessionDialogOpen && !props.embedded) {
+    state.sessionDialogOpen = false;
+  }
+});
 </script>
 
 <style scoped>
 .session-dialog {
-  width: 660px;
+  width: 820px;
   max-width: 95vw;
+  height: 82vh;
+  max-height: 850px;
   background-color: var(--fluent-bg-canvas);
   border: 1px solid var(--fluent-border-subtle);
   border-radius: 8px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .dialog-header {
@@ -744,6 +833,7 @@ async function saveSettings() {
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--fluent-border-subtle);
+  flex-shrink: 0;
 }
 
 .header-title-row {
@@ -764,60 +854,132 @@ async function saveSettings() {
   color: var(--md-text-primary);
 }
 
-.session-tabs {
+/* Chrome 风格双栏布局：左侧导航 + 右侧连续滚动 */
+.chrome-settings-layout {
   display: flex;
-  background-color: var(--fluent-bg-subtle);
-  border-radius: 6px;
-  padding: 3px;
-  gap: 2px;
-  margin: 12px 0 16px;
-  border: 1px solid var(--fluent-border-subtle);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.tab-btn {
-  flex: 1;
-  padding: 6px 0;
-  background: transparent;
+.chrome-nav {
+  width: 176px;
+  flex-shrink: 0;
+  padding: 14px 8px;
+  background-color: var(--fluent-bg-subtle);
+  border-right: 1px solid var(--fluent-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  height: 100%;
+}
+
+.chrome-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
   border: none;
+  background: transparent;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   color: var(--md-text-secondary);
-  border-radius: 4px;
   cursor: pointer;
+  text-align: left;
   transition: all 0.15s ease;
-  text-align: center;
 }
 
-.tab-btn:hover {
+.chrome-nav-btn:hover {
   color: var(--md-text-primary);
   background-color: var(--fluent-bg-hover);
 }
 
-.tab-btn.active {
-  background-color: var(--fluent-bg-canvas);
+.chrome-nav-btn.active {
   color: var(--fluent-accent);
+  background-color: var(--fluent-bg-canvas);
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.sub-title {
-  font-size: 11px;
+.chrome-nav-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.chrome-nav-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 右侧连续滚动内容区 */
+.chrome-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 26px 40px;
+  scroll-behavior: smooth;
+}
+
+.chrome-section {
+  margin-bottom: 28px;
+  scroll-margin-top: 10px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+}
+
+.section-title h3 {
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--fluent-accent);
+  margin: 0;
+}
+
+.sec-icon {
+  font-size: 18px;
+  color: var(--fluent-accent);
+}
+
+.section-card {
+  background-color: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 6px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.sub-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--md-text-primary);
   margin: 14px 0 8px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+}
+
+.sub-title:first-child {
+  margin-top: 0;
 }
 
 .form-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-size: 12px;
 }
 
 .form-group {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .form-label {
@@ -844,13 +1006,7 @@ async function saveSettings() {
 .form-vertical-switches {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 6px;
 }
 
 .form-hint {
@@ -862,7 +1018,7 @@ async function saveSettings() {
 .unit-group {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .unit-label {
@@ -994,10 +1150,6 @@ async function saveSettings() {
   color: var(--fluent-accent);
 }
 
-.free-space-badge .material-icons {
-  font-size: 15px;
-}
-
 .sub-box {
   background-color: var(--fluent-bg-subtle);
   border: 1px solid var(--fluent-border-subtle);
@@ -1024,12 +1176,11 @@ async function saveSettings() {
 .divider {
   height: 1px;
   background-color: var(--fluent-border-subtle);
-  margin: 12px 0;
+  margin: 14px 0;
 }
 
 .mt-1 { margin-top: 4px; }
 .mt-2 { margin-top: 8px; }
-
 .font-bold { font-weight: 600; }
 
 .blocklist-action-row {
@@ -1044,30 +1195,84 @@ async function saveSettings() {
   color: var(--md-text-secondary);
 }
 
-/* 移动端弹窗响应式适配 */
-@media (max-width: 600px) {
+.chrome-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 20px;
+  border-top: 1px solid var(--fluent-border-subtle);
+  background: var(--fluent-bg-canvas);
+  flex-shrink: 0;
+}
+
+/* 嵌入 Backstage 时的样式 */
+.md-dialog-overlay.embedded {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+.md-dialog-overlay.embedded .chrome-settings-root {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+  animation: none !important;
+  transform: none !important;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.md-dialog-overlay.embedded .chrome-scroll-container {
+  padding: 16px 28px 48px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
   .session-dialog {
     width: calc(100vw - 16px);
-    max-height: 92vh;
+    height: 92vh;
     margin: 8px;
   }
 
-  .session-tabs {
+  .chrome-settings-layout {
+    flex-direction: column;
+  }
+
+  .chrome-nav {
+    width: 100%;
+    flex-direction: row;
     overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--fluent-border-subtle);
+    padding: 6px 8px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .chrome-nav-btn {
     white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    flex-wrap: nowrap;
-    padding: 3px;
-  }
-
-  .session-tabs::-webkit-scrollbar {
-    display: none;
-  }
-
-  .tab-btn {
-    flex: 0 0 auto;
-    padding: 6px 14px;
+    padding: 6px 10px;
     font-size: 11.5px;
+  }
+
+  .chrome-scroll-container {
+    padding: 12px 14px 28px;
   }
 
   .form-row {
@@ -1078,42 +1283,5 @@ async function saveSettings() {
   .unit-group {
     margin-left: auto;
   }
-
-  .dialog-header {
-    padding: 10px 14px;
-  }
-
-  .md-dialog-content {
-    padding: 0 14px 14px;
-    max-height: calc(92vh - 110px);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* 嵌入到 Backstage 时按页面内容排版，不再使用全屏遮罩 */
-.md-dialog-overlay.embedded {
-  position: static;
-  display: block;
-  padding: 0;
-  background: transparent;
-  overflow: visible;
-}
-
-.md-dialog-overlay.embedded .session-dialog {
-  width: 100%;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-  background: transparent;
-}
-
-.md-dialog-overlay.embedded .md-dialog-content {
-  padding: 0;
-  max-height: none;
-  overflow: visible;
 }
 </style>

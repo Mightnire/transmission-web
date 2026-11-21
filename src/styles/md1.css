@@ -383,6 +383,20 @@ body {
   color: var(--md-text-primary);
 }
 
+/* 嵌入式页面（例如 Backstage 中直接承载）取消弹窗缩放动效与居中阴影，保持整页过渡一致 */
+.embedded .md-dialog,
+.embedded.md-dialog {
+  animation: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+}
+
 .md-dialog-title {
   padding: 14px 18px;
   font-size: 15px;
@@ -415,12 +429,36 @@ body {
   to { transform: scale(1); opacity: 1; }
 }
 
+/* 嵌入 Backstage 时彻底禁用弹窗缩放放大动画与位移 */
+.md-dialog-overlay.embedded .md-dialog {
+  animation: none !important;
+  transform: none !important;
+}
+
 /* Compact density (optional): keep the Office ribbon but reclaim vertical space. */
+.compact-density .fluent-desktop-table thead th {
+  height: 28px !important;
+  font-size: 11px !important;
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+}
+
 .compact-density .fluent-desktop-table tbody tr {
-  height: 30px !important;
+  height: 28px !important;
 }
 
 .compact-density .fluent-desktop-table tbody td {
-  padding-top: 2px;
-  padding-bottom: 2px;
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+  font-size: 11px !important;
+}
+
+.compact-density .app-status-bar {
+  height: 22px !important;
+  font-size: 10.5px !important;
+}
+
+.compact-density .app-status-bar .status-btn {
+  height: 18px !important;
+  padding: 0 4px !important;
 }

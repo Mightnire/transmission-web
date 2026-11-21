@@ -10,7 +10,8 @@
 
   <aside
     class="fluent-navigation-pane"
-    :class="{ 'mobile-open': state.sidebarOpen, 'is-collapsed': state.sidebarCollapsed }"
+    :class="{ 'mobile-open': state.sidebarOpen, 'is-collapsed': state.sidebarCollapsed, 'is-resizing': isResizing }"
+    :style="sidebarStyle"
   >
     <!-- 移动端专属侧边栏头部 (带品牌与关闭按钮) -->
     <div class="mobile-drawer-header mobile-only">
@@ -219,105 +220,67 @@
       </template>
     </div>
 
-    <!-- 底部固定悬浮会话磁贴卡片 (默认悬浮在底部显示，不随列表滚动) -->
-    <div class="nav-footer" v-if="state.stats">
-      <div class="footer-card" :class="{ collapsed: statsCollapsed }">
-        <div class="footer-card-header">
-          <div class="header-left">
-            <FluentIcon name="insights" class="card-icon" />
-            <span class="card-title">{{ t('sidebar.stats') }}</span>
-          </div>
-          <button
-            class="collapse-card-btn"
-            @click.stop="statsCollapsed = !statsCollapsed"
-            :title="statsCollapsed ? t('ribbon.expand') : t('ribbon.collapse')"
-          >
-            <FluentIcon :name="statsCollapsed ? 'expand_less' : 'expand_more'" />
-          </button>
-        </div>
-
-        <!-- 实时双向速度行 (固定宽度，防跳动；点击弹出快捷限速) -->
-        <div class="stat-speeds-row">
-          <div
-            class="speed-box down"
-            @click.stop="toggleSpeedFlyout('down')"
-            :title="t('sidebar.speedLimitFlyout')"
-          >
-            <FluentIcon name="arrow_downward" class="speed-icon" />
-            <span class="speed-fixed-val">{{ formatSpeed(state.stats?.downloadSpeed) }}</span>
-          </div>
-          <div
-            class="speed-box up"
-            @click.stop="toggleSpeedFlyout('up')"
-            :title="t('sidebar.speedLimitFlyout')"
-          >
-            <FluentIcon name="arrow_upward" class="speed-icon" />
-            <span class="speed-fixed-val">{{ formatSpeed(state.stats?.uploadSpeed) }}</span>
-          </div>
-        </div>
-
-        <!-- 展开时显示的累计统计项 -->
-        <div class="stat-grid" v-show="!statsCollapsed">
-          <div class="stat-item">
-            <span class="stat-k">{{ t('sidebar.downloaded') }}</span>
-            <span class="stat-v">{{ formatBytes(state.stats['current-stats'].downloadedBytes) }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-k">{{ t('sidebar.uploaded') }}</span>
-            <span class="stat-v">{{ formatBytes(state.stats['current-stats'].uploadedBytes) }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-k">{{ t('sidebar.ratio') }}</span>
-            <span class="stat-v stat-accent">{{ getRatio() }}</span>
-          </div>
-        </div>
-
-        <!-- 快捷限速微型 Flyout 气泡 (朝上弹出，严格限定在侧边栏内部) -->
-        <div class="speed-flyout" v-if="speedFlyout.open" @click.stop>
-          <div class="flyout-header">
-            <span>{{ speedFlyout.type === 'down' ? t('sidebar.downLimit') : t('sidebar.upLimit') }}</span>
-            <button class="flyout-close-btn" @click="speedFlyout.open = false">
-              <FluentIcon name="close" />
-            </button>
-          </div>
-          <div class="flyout-body">
-            <label class="fluent-check-label">
-              <input type="checkbox" v-model="speedFlyout.enabled" />
-              <span>{{ t('common.enabled') }}</span>
-            </label>
-            <div class="flyout-input-row">
-              <input
-                type="number"
-                class="num-input flyout-num"
-                v-model.number="speedFlyout.limit"
-                :disabled="!speedFlyout.enabled"
-                min="0"
-                step="50"
-              />
-              <span class="unit-txt">KB/s</span>
-            </div>
-          </div>
-          <div class="flyout-footer">
-            <button class="md-btn md-btn-flat mini" @click="speedFlyout.open = false">
-              {{ t('common.cancel') }}
-            </button>
-            <button class="md-btn md-btn-raised mini" @click="saveSpeedLimit">
-              {{ t('common.save') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- 侧边栏拖拽调宽手柄 (桌面端可用) -->
+    <div
+      class="sidebar-resize-handle desktop-only"
+      v-if="!state.sidebarCollapsed"
+      @mousedown="startResize"
+      :title="t('sidebar.resizeTip')"
+    ></div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue';
-import { state, formatBytes, formatSpeed } from '../../stores/transmission';
+import { ref, computed, watch } from 'vue';
+import { state } from '../../stores/transmission';
 import { useEscapeKey } from '../../composables/useEscapeKey';
-import { rpc } from '../../api/rpc';
 import { TorrentStatus } from '../../api/types';
 import { t } from '../../locales';
+
+const DEFAULT_SIDEBAR_WIDTH = 220;
+const MIN_SIDEBAR_WIDTH = 160;
+const MAX_SIDEBAR_WIDTH = 480;
+
+function loadSavedSidebarWidth(): number {
+  if (typeof window === 'undefined') return DEFAULT_SIDEBAR_WIDTH;
+  const saved = Number(localStorage.getItem('sidebar_width'));
+  if (Number.isFinite(saved) && saved >= MIN_SIDEBAR_WIDTH && saved <= MAX_SIDEBAR_WIDTH) {
+    return saved;
+  }
+  return DEFAULT_SIDEBAR_WIDTH;
+}
+
+const sidebarWidth = ref(loadSavedSidebarWidth());
+const isResizing = ref(false);
+
+const sidebarStyle = computed(() => {
+  if (state.sidebarCollapsed) return {};
+  return { width: `${sidebarWidth.value}px` };
+});
+
+function startResize(e: MouseEvent) {
+  if (state.sidebarCollapsed) return;
+  e.preventDefault();
+  isResizing.value = true;
+  const startX = e.clientX;
+  const startWidth = sidebarWidth.value;
+
+  function onMouseMove(moveEvent: MouseEvent) {
+    const delta = moveEvent.clientX - startX;
+    const nextWidth = Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, startWidth + delta));
+    sidebarWidth.value = nextWidth;
+  }
+
+  function onMouseUp() {
+    isResizing.value = false;
+    localStorage.setItem('sidebar_width', String(Math.round(sidebarWidth.value)));
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
+  }
+
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mouseup', onMouseUp);
+}
 
 const filterCollapsed = ref(localStorage.getItem('filter_collapsed') === 'true');
 
@@ -337,50 +300,6 @@ const trackerCollapsed = ref(localStorage.getItem('tracker_collapsed') === 'true
 watch(trackerCollapsed, (val) => {
   localStorage.setItem('tracker_collapsed', String(val));
 });
-
-const statsCollapsed = ref(localStorage.getItem('stats_collapsed') === 'true');
-watch(statsCollapsed, (val) => {
-  localStorage.setItem('stats_collapsed', String(val));
-});
-
-const speedFlyout = reactive({
-  open: false,
-  type: 'down' as 'down' | 'up',
-  enabled: false,
-  limit: 0,
-});
-
-function toggleSpeedFlyout(type: 'down' | 'up') {
-  if (speedFlyout.open && speedFlyout.type === type) {
-    speedFlyout.open = false;
-    return;
-  }
-  speedFlyout.type = type;
-  if (type === 'down') {
-    speedFlyout.enabled = !!state.session?.['speed-limit-down-enabled'];
-    speedFlyout.limit = state.session?.['speed-limit-down'] ?? 100;
-  } else {
-    speedFlyout.enabled = !!state.session?.['speed-limit-up-enabled'];
-    speedFlyout.limit = state.session?.['speed-limit-up'] ?? 100;
-  }
-  speedFlyout.open = true;
-}
-
-async function saveSpeedLimit() {
-  const args: any = {};
-  if (speedFlyout.type === 'down') {
-    args['speed-limit-down-enabled'] = speedFlyout.enabled;
-    args['speed-limit-down'] = speedFlyout.limit;
-  } else {
-    args['speed-limit-up-enabled'] = speedFlyout.enabled;
-    args['speed-limit-up'] = speedFlyout.limit;
-  }
-  if (state.session) {
-    Object.assign(state.session, args);
-  }
-  await rpc.setSession(args);
-  speedFlyout.open = false;
-}
 
 const counts = computed(() => {
   const c = {
@@ -467,14 +386,6 @@ function clearGroupFilter() {
   state.selectedTag = null;
   state.selectedTracker = null;
 }
-
-function getRatio(): string {
-  if (!state.stats) return '0.00';
-  const down = state.stats['current-stats'].downloadedBytes;
-  const up = state.stats['current-stats'].uploadedBytes;
-  if (!down || down === 0) return up > 0 ? '∞' : '0.00';
-  return (up / down).toFixed(2);
-}
 </script>
 
 <style scoped>
@@ -501,8 +412,7 @@ function getRatio(): string {
 .fluent-navigation-pane.is-collapsed .section-label,
 .fluent-navigation-pane.is-collapsed .nav-label,
 .fluent-navigation-pane.is-collapsed .nav-badge,
-.fluent-navigation-pane.is-collapsed .section-header-flex,
-.fluent-navigation-pane.is-collapsed .footer-card {
+.fluent-navigation-pane.is-collapsed .section-header-flex {
   display: none !important;
 }
 
@@ -770,224 +680,27 @@ function getRatio(): string {
   text-overflow: ellipsis;
 }
 
-/* 底部系统会话磁贴卡片 (常驻悬浮于侧栏底部) */
-.nav-footer {
-  margin-top: auto;
-  flex-shrink: 0;
-  padding: 6px;
-  position: relative;
-  background-color: var(--fluent-bg-subtle);
-  border-top: 1px solid var(--fluent-border-subtle);
-}
-
-.footer-card {
-  background-color: var(--fluent-bg-canvas);
-  border: 1px solid var(--fluent-border-subtle);
-  border-radius: 6px;
-  padding: 8px 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.footer-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.card-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--fluent-accent);
-}
-
-.card-icon {
-  font-size: 15px;
-  color: var(--fluent-accent);
-}
-
-.collapse-card-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  color: var(--md-text-secondary);
-}
-
-.collapse-card-btn:hover {
-  background-color: var(--fluent-bg-hover);
-  color: var(--md-text-primary);
-}
-
-.collapse-card-btn .material-icons {
-  font-size: 14px;
-}
-
-/* 实时双向速度行 (固定宽度防跳动) */
-.stat-speeds-row {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 6px;
-}
-
-.speed-box {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background-color: var(--fluent-bg-subtle);
-  border: 1px solid var(--fluent-border-subtle);
-  border-radius: var(--fluent-radius);
-  padding: 3px 2px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.speed-box:hover {
-  background-color: var(--fluent-bg-hover);
-  border-color: var(--fluent-accent);
-}
-
-.speed-box.down { color: var(--md-info); }
-.speed-box.up { color: var(--md-success); }
-
-.speed-icon {
-  font-size: 13px;
-}
-
-.speed-fixed-val {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  width: 62px;
-  text-align: right;
-  display: inline-block;
-  white-space: nowrap;
-}
-
-/* 快捷限速 Flyout 气泡 (朝上悬浮在卡片上方，永远在侧栏内，零溢出零裁剪) */
-.speed-flyout {
+/* 侧边栏拖拽调宽手柄 */
+.sidebar-resize-handle {
   position: absolute;
-  bottom: calc(100% + 6px);
-  left: 6px;
-  right: 6px;
-  background-color: var(--fluent-bg-canvas);
-  border: 1px solid var(--fluent-border-subtle);
-  border-radius: 8px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.18);
-  padding: 10px;
-  z-index: 500;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 99;
+  user-select: none;
 }
 
-.flyout-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 11px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--fluent-accent);
+.sidebar-resize-handle:hover,
+.fluent-navigation-pane.is-resizing .sidebar-resize-handle {
+  background-color: var(--fluent-accent);
+  opacity: 0.6;
 }
 
-.flyout-close-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--md-text-secondary);
-}
-
-.flyout-close-btn .material-icons {
-  font-size: 14px;
-}
-
-.flyout-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.flyout-input-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.flyout-num {
-  width: 80px;
-  padding: 3px 6px;
-  font-size: 11px;
-}
-
-.unit-txt {
-  font-size: 11px;
-  color: var(--md-text-secondary);
-}
-
-.fluent-check-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.fluent-check-label input[type="checkbox"] {
-  accent-color: var(--fluent-accent);
-}
-
-.flyout-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-.md-btn.mini {
-  height: 22px;
-  padding: 0 8px;
-  font-size: 11px;
-}
-
-.stat-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-}
-
-.stat-k {
-  color: var(--md-text-secondary);
-}
-
-.stat-v {
-  font-weight: 500;
-  font-family: var(--font-mono);
-}
-
-.stat-accent {
-  color: var(--fluent-accent);
-  font-weight: 700;
+.fluent-navigation-pane.is-resizing {
+  transition: none !important;
+  user-select: none;
 }
 
 .text-accent {
@@ -1100,10 +813,6 @@ function getRatio(): string {
 
   .fluent-navigation-pane.is-collapsed .section-header-flex {
     display: flex !important;
-  }
-
-  .fluent-navigation-pane.is-collapsed .footer-card {
-    display: block !important;
   }
 
   .fluent-navigation-pane.is-collapsed .nav-pane-inner {

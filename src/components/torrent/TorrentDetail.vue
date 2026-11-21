@@ -410,7 +410,6 @@
                   :class="trackerStatusClass(tr.lastAnnounceResult, tr.hasAnnounced)"
                   :title="tr.lastAnnounceResult || ''"
                 >
-                  <i class="tracker-status-dot"></i>
                   {{ trackerStatusLabel(tr.lastAnnounceResult) }}
                 </span>
               </td>
@@ -1081,16 +1080,23 @@ function handleSetLocation() {
 .info-row {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
   font-size: 11px;
   margin-bottom: 3px;
 }
 
 .info-row .label {
   color: var(--md-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .info-row .value {
   color: var(--md-text-primary);
+  min-width: 0;
+  text-align: right;
+  word-break: break-all;
 }
 
 .remove-tr-btn {
@@ -1159,17 +1165,22 @@ function handleSetLocation() {
 
 .detail-table th {
   border-bottom: 1px solid var(--fluent-border-divider);
-  padding: 5px 8px;
+  padding: 7px 10px;
   color: var(--md-text-secondary);
   font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.01em;
   position: sticky;
   top: 0;
   background-color: var(--fluent-bg-subtle);
+  z-index: 5;
 }
 
 .detail-table td {
   border-bottom: 1px solid var(--fluent-border-subtle);
-  padding: 5px 8px;
+  padding: 5px 10px;
+  height: 32px;
+  font-size: 11.5px;
 }
 
 .detail-table tbody tr:hover {
@@ -1180,37 +1191,27 @@ function handleSetLocation() {
 .up-val { color: #ef6c00; font-family: var(--font-mono); }
 
 .tracker-res-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10.5px;
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
   font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 10px;
   white-space: nowrap;
 }
 
-.tracker-status-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-  flex-shrink: 0;
-}
-
 .tracker-res-badge.ok {
-  background-color: rgba(46, 125, 50, 0.12);
+  background-color: rgba(76, 175, 80, 0.12);
   color: #2e7d32;
 }
 
 .tracker-res-badge.error {
-  background-color: rgba(211, 47, 47, 0.12);
+  background-color: rgba(244, 67, 54, 0.15);
   color: #c62828;
 }
 
 .tracker-res-badge.warn {
-  background-color: rgba(255, 152, 0, 0.16);
-  color: #b26a00;
+  background-color: rgba(255, 152, 0, 0.18);
+  color: #e65100;
 }
 
 .tracker-res-badge.wait {
@@ -1240,17 +1241,6 @@ function handleSetLocation() {
   color: var(--fluent-accent);
 }
 
-.detail-table th {
-  font-size: 10.5px;
-  padding: 7px 10px;
-  letter-spacing: 0.01em;
-}
-
-.detail-table td {
-  height: 32px;
-  padding: 5px 10px;
-  font-size: 11.5px;
-}
 
 .webseed-block {
   border-top: 1px solid var(--fluent-border-subtle);

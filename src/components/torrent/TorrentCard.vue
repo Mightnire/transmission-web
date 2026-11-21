@@ -6,7 +6,7 @@
   >
     <!-- 卡片主体内容 -->
     <div class="card-inner">
-      <!-- 1. 顶部：选择框 + 状态胶囊 + 种子名称 -->
+      <!-- 1. 顶部：选择框 + 种子名称 (居左占满) + 状态小气泡 (统一度量置于最右侧) -->
       <div class="card-header">
         <label class="checkbox-wrapper" @click.stop>
           <input
@@ -17,25 +17,24 @@
           />
         </label>
 
-        <div class="header-main">
-          <div class="pill-row">
-            <span class="status-pill" :class="statusClass">
-              <FluentIcon :name="statusIcon" class="pill-icon" />
-              <span class="pill-text">{{ statusText }}</span>
-            </span>
-            <span
-              class="corrupt-pill"
-              v-if="torrent.corruptEver > 0"
-              :title="t('table.corruptTitle', { size: formatBytes(torrent.corruptEver) })"
-            >
-              <FluentIcon name="warning" class="pill-icon" />
-              <span>{{ t('common.corrupt') }}: {{ formatBytes(torrent.corruptEver) }}</span>
-            </span>
-          </div>
+        <div class="torrent-name" :title="torrent.name">
+          {{ torrent.name }}
+        </div>
 
-          <div class="torrent-name" :title="torrent.name">
-            {{ torrent.name }}
-          </div>
+        <div class="header-pills">
+          <span class="status-pill" :class="statusClass">
+            <FluentIcon :name="statusIcon" class="pill-icon" />
+            <span class="pill-text">{{ statusText }}</span>
+          </span>
+
+          <span
+            class="corrupt-pill"
+            v-if="torrent.corruptEver > 0"
+            :title="t('table.corruptTitle', { size: formatBytes(torrent.corruptEver) })"
+          >
+            <FluentIcon name="warning" class="pill-icon" />
+            <span>{{ t('common.corrupt') }}: {{ formatBytes(torrent.corruptEver) }}</span>
+          </span>
         </div>
       </div>
 
@@ -50,10 +49,9 @@
         </div>
       </div>
 
-      <!-- 3. 统计指标 (精炼排版，彻底消除冗余与重复) -->
+      <!-- 3. 统计指标 (严格单行不换行紧凑排版，小屏超出截断或隐藏次要节点) -->
       <div class="metrics-block">
-        <!-- 第一行：进度百分比与文件体积 · 状态/剩余时间/分享率 -->
-        <div class="metric-row">
+        <div class="metric-row single-metric-line">
           <div class="metric-group-left">
             <span class="metric-pct" :class="{ 'text-warning': isChecking }">
               {{ progressPercent.toFixed(1) }}%
@@ -62,6 +60,14 @@
             <span class="metric-size" v-if="torrent.totalSize > 0">
               {{ formatBytes(torrent.totalSize * torrent.percentDone) }} / {{ formatBytes(torrent.totalSize) }}
             </span>
+            <div class="metric-speeds">
+              <span class="speed-item speed-down" :class="{ inactive: torrent.rateDownload === 0 }">
+                <span class="speed-arrow">↓</span> {{ formatSpeed(torrent.rateDownload) }}
+              </span>
+              <span class="speed-item speed-up" :class="{ inactive: torrent.rateUpload === 0 }">
+                <span class="speed-arrow">↑</span> {{ formatSpeed(torrent.rateUpload) }}
+              </span>
+            </div>
           </div>
 
           <div class="metric-group-right">
@@ -69,30 +75,12 @@
               <FluentIcon name="schedule" class="mini-icon" />
               {{ formatETA(torrent.eta) }}
             </span>
-            <span class="metric-ratio" v-else-if="torrent.percentDone >= 1">
-              {{ t('common.ratio') }}: {{ torrent.uploadRatio < 0 ? '0.00' : torrent.uploadRatio.toFixed(2) }}
+            <span class="metric-ratio" v-if="torrent.uploadRatio >= 0">
+              {{ t('common.ratio') }}: {{ torrent.uploadRatio.toFixed(2) }}
             </span>
-          </div>
-        </div>
-
-        <!-- 第二行：即时上下行速度 · 节点总数与分享率 -->
-        <div class="metric-row secondary-row">
-          <div class="metric-speeds">
-            <span class="speed-item speed-down" :class="{ inactive: torrent.rateDownload === 0 }">
-              <span class="speed-arrow">↓</span> {{ formatSpeed(torrent.rateDownload) }}
-            </span>
-            <span class="speed-item speed-up" :class="{ inactive: torrent.rateUpload === 0 }">
-              <span class="speed-arrow">↑</span> {{ formatSpeed(torrent.rateUpload) }}
-            </span>
-          </div>
-
-          <div class="metric-peers">
-            <span class="peers-badge" :title="`${torrent.peersGettingFromUs} ↑ / ${torrent.peersSendingToUs} ↓`">
+            <span class="metric-peers" :title="`${torrent.peersGettingFromUs} ↑ / ${torrent.peersSendingToUs} ↓`">
               <FluentIcon name="group" class="mini-icon" />
               {{ t('common.peers') }}: {{ torrent.peersConnected }}
-            </span>
-            <span class="metric-ratio-downloading" v-if="torrent.percentDone < 1">
-              {{ t('common.ratio') }}: {{ torrent.uploadRatio < 0 ? '0.00' : torrent.uploadRatio.toFixed(2) }}
             </span>
           </div>
         </div>
@@ -382,49 +370,49 @@ function removeTorrent() {
 /* 头部 */
 .card-header {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .checkbox-wrapper {
   display: flex;
   align-items: center;
-  padding-top: 2px;
+  padding-top: 0;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .fluent-checkbox {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   cursor: pointer;
   accent-color: var(--fluent-accent);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
-.header-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.pill-row {
+.header-pills {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
-.status-pill {
+.status-pill,
+.corrupt-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 12px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
   font-size: 11px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 20px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .pill-icon {
@@ -472,33 +460,26 @@ function removeTorrent() {
 }
 
 .corrupt-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  border-radius: 12px;
-  font-size: 10.5px;
-  font-weight: 600;
   background-color: rgba(255, 185, 0, 0.18);
   color: #b26b00;
   border: 1px solid rgba(255, 185, 0, 0.3);
 }
 
 .torrent-name {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--md-text-primary);
-  line-height: 1.35;
-  word-break: break-all;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.3;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
 /* 进度条 */
 .progress-container {
-  margin: 8px 0 7px;
+  margin: 6px 0;
 }
 
 .fluent-progress-track {
@@ -536,27 +517,28 @@ function removeTorrent() {
 .metrics-block {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
+  gap: 2px;
+  font-size: 11.5px;
 }
 
-.metric-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.single-metric-line {
+  white-space: nowrap;
+  overflow: hidden;
+  gap: 8px;
 }
 
 .metric-group-left {
   display: flex;
-  align-items: baseline;
-  gap: 5px;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .metric-pct {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--md-text-primary);
 }
@@ -574,9 +556,11 @@ function removeTorrent() {
 .metric-group-right {
   display: flex;
   align-items: center;
-  font-size: 11.5px;
+  gap: 8px;
+  font-size: 11px;
   color: var(--md-text-secondary);
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .metric-eta {
@@ -759,5 +743,11 @@ function removeTorrent() {
   color: var(--md-text-primary);
   font-weight: 500;
   text-align: right;
+}
+
+@media (max-width: 480px) {
+  .metric-peers {
+    display: none;
+  }
 }
 </style>

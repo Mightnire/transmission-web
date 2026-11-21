@@ -14,7 +14,7 @@
 
           <th
             class="col-queue"
-            v-if="state.ribbonTab === 'transfer'"
+            v-if="shouldShowDynamicQueueCol"
             @click="handleSort('queuePosition')"
             :title="t('common.queue')"
           >
@@ -45,14 +45,25 @@
             @click="columnSort(col.id)"
           >
             <div class="th-content">
-              <span>{{ headerLabel(col) }}</span>
+              <FluentIcon
+                v-if="col.id === 'status'"
+                name="swap_vert"
+                class="sort-icon status-header-icon"
+                :title="t('common.status')"
+              />
+              <span v-else>{{ headerLabel(col) }}</span>
               <FluentIcon
                 v-if="sortKey(col.id) && state.filter.sortBy === sortKey(col.id)"
                 :name="state.filter.sortAsc ? 'arrow_upward' : 'arrow_downward'"
                 class="sort-indicator-icon"
               />
             </div>
-            <div class="col-resizer" @mousedown.stop="startResize(col.id, $event)"></div>
+            <div
+              class="col-resizer"
+              draggable="false"
+              @mousedown.stop.prevent="startResize(col.id, $event)"
+              @dragstart.stop.prevent
+            ></div>
           </th>
         </tr>
       </thead>
@@ -78,7 +89,7 @@
             />
           </td>
 
-          <td class="col-queue" v-if="state.ribbonTab === 'transfer'">
+          <td class="col-queue" v-if="shouldShowDynamicQueueCol">
             <span
               class="queue-cell-badge"
               :class="{ 'queue-waiting': isQueueWaiting(torrent) }"
@@ -99,6 +110,16 @@
           >
             <template v-if="col.id === 'status'">
               <FluentIcon :name="getStatusIcon(torrent)" class="status-ico" :class="getStatusIconClass(torrent)" />
+            </template>
+
+            <template v-else-if="col.id === 'queuePosition'">
+              <span
+                class="queue-cell-badge"
+                :class="{ 'queue-waiting': isQueueWaiting(torrent) }"
+                :title="`${t('common.queue')}: ${torrent.queuePosition}`"
+              >
+                {{ torrent.queuePosition !== undefined && torrent.queuePosition >= 0 ? torrent.queuePosition + 1 : '—' }}
+              </span>
             </template>
 
             <template v-else-if="col.id === 'name'">
@@ -266,25 +287,26 @@
         <FluentIcon name="pause" />
         <span>{{ t('menu.pause') }}</span>
       </div>
-      <div class="menu-divider"></div>
-
-      <!-- 队列调度快捷 -->
-      <div class="menu-item" @click="handleAction('move-top')">
-        <FluentIcon name="vertical_align_top" />
-        <span>{{ t('menu.moveTop') }}</span>
-      </div>
-      <div class="menu-item" @click="handleAction('move-up')">
-        <FluentIcon name="arrow_upward" />
-        <span>{{ t('menu.moveUp') }}</span>
-      </div>
-      <div class="menu-item" @click="handleAction('move-down')">
-        <FluentIcon name="arrow_downward" />
-        <span>{{ t('menu.moveDown') }}</span>
-      </div>
-      <div class="menu-item" @click="handleAction('move-bottom')">
-        <FluentIcon name="vertical_align_bottom" />
-        <span>{{ t('menu.moveBottom') }}</span>
-      </div>
+      <!-- 队列调度快捷 (仅在服务端开启队列功能时显示) -->
+      <template v-if="isQueueEnabled">
+        <div class="menu-divider"></div>
+        <div class="menu-item" @click="handleAction('move-top')">
+          <FluentIcon name="vertical_align_top" />
+          <span>{{ t('menu.moveTop') }}</span>
+        </div>
+        <div class="menu-item" @click="handleAction('move-up')">
+          <FluentIcon name="arrow_upward" />
+          <span>{{ t('menu.moveUp') }}</span>
+        </div>
+        <div class="menu-item" @click="handleAction('move-down')">
+          <FluentIcon name="arrow_downward" />
+          <span>{{ t('menu.moveDown') }}</span>
+        </div>
+        <div class="menu-item" @click="handleAction('move-bottom')">
+          <FluentIcon name="vertical_align_bottom" />
+          <span>{{ t('menu.moveBottom') }}</span>
+        </div>
+      </template>
       <div class="menu-divider"></div>
 
       <div class="menu-item" @click="handleAction('verify')">
@@ -361,7 +383,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted } from 'vue';
+import { ref, computed, reactive, onMounted, onUnmounted, nextTick } from 'vue';
 import {
   state,
   filteredTorrents,
@@ -406,15 +428,28 @@ function handleResetColumns() {
   headerMenu.open = false;
 }
 
+const isQueueEnabled = computed(() => {
+  if (!state.session) return true;
+  return !!(state.session['download-queue-enabled'] || state.session['seed-queue-enabled']);
+});
+
+const isQueueColConfigured = computed(() => {
+  return state.columns.some((col) => col.id === 'queuePosition' && col.visible);
+});
+
+const shouldShowDynamicQueueCol = computed(() => {
+  return isQueueEnabled.value && state.ribbonTab === 'transfer' && !isQueueColConfigured.value;
+});
+
 const visibleColumnCount = computed(() => {
   let count = 1;
-  if (state.ribbonTab === 'transfer') count++;
+  if (shouldShowDynamicQueueCol.value) count++;
   count += state.columns.filter((c) => c.visible).length;
   return count;
 });
 
 const COLUMN_CLASS_MAP: Record<string, string> = {
-  status: 'col-status', name: 'col-name', size: 'col-size', progress: 'col-progress',
+  status: 'col-status', queuePosition: 'col-queue', name: 'col-name', size: 'col-size', progress: 'col-progress',
   statustext: 'col-statustext', downSpeed: 'col-downspeed', upSpeed: 'col-upspeed',
   eta: 'col-eta', ratio: 'col-ratio', peers: 'col-peers', corrupt: 'col-corrupt',
   downloaded: 'col-downloaded', uploaded: 'col-uploaded', remaining: 'col-remaining',
@@ -430,6 +465,7 @@ const COLUMN_CLASS_MAP: Record<string, string> = {
 const visibleColumns = computed(() => state.columns.filter((column) => column.visible));
 
 const COLUMN_SORT_KEYS: Record<string, string> = {
+  status: 'status', queuePosition: 'queuePosition',
   name: 'name', size: 'totalSize', progress: 'percentDone',
   downSpeed: 'rateDownload', upSpeed: 'rateUpload', ratio: 'uploadRatio',
   peers: 'peersConnected', downloaded: 'downloadedEver', uploaded: 'uploadedEver',
@@ -447,6 +483,7 @@ function columnClass(id: string): string {
 
 function headerLabel(column: { id: string; labelKey: string }): string {
   if (column.id === 'status') return '';
+  if (column.id === 'queuePosition') return '#';
   if (column.id === 'statustext') return t('common.status');
   return t(column.labelKey);
 }
@@ -488,6 +525,10 @@ function columnLabel(id: string): string {
 }
 
 function onColumnDragStart(event: DragEvent, id: string) {
+  if (resizingColId || (event.target as HTMLElement)?.closest('.col-resizer')) {
+    event.preventDefault();
+    return;
+  }
   draggingColumnId.value = id;
   dropBeforeId.value = null;
   dropAfterLast.value = false;
@@ -585,6 +626,9 @@ let startX = 0;
 let startWidth = 0;
 
 function startResize(colId: string, e: MouseEvent) {
+  e.preventDefault();
+  e.stopPropagation();
+  suppressHeaderClick = true;
   resizingColId = colId;
   startX = e.clientX;
   const col = state.columns.find((c) => c.id === colId);
@@ -614,6 +658,9 @@ function stopResize() {
   window.removeEventListener('mouseup', stopResize);
   document.body.style.cursor = '';
   document.body.style.userSelect = '';
+  setTimeout(() => {
+    suppressHeaderClick = false;
+  }, 100);
 }
 
 const contextMenu = reactive({
@@ -720,9 +767,27 @@ function openContextMenu(e: MouseEvent, id: number) {
     selectTorrent(id, false);
   }
   contextMenu.visible = true;
-  contextMenu.x = Math.min(e.clientX, window.innerWidth - 220);
-  contextMenu.y = Math.min(e.clientY, window.innerHeight - 420);
   contextMenu.targetId = id;
+  // 初步基于估计值定位
+  contextMenu.x = Math.max(8, Math.min(e.clientX, window.innerWidth - 220));
+  contextMenu.y = Math.max(8, Math.min(e.clientY, window.innerHeight - 520));
+
+  nextTick(() => {
+    const el = document.querySelector('.fluent-context-menu') as HTMLElement | null;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      if (e.clientY + rect.height > window.innerHeight - 8) {
+        contextMenu.y = Math.max(8, window.innerHeight - rect.height - 8);
+      } else {
+        contextMenu.y = Math.max(8, e.clientY);
+      }
+      if (e.clientX + rect.width > window.innerWidth - 8) {
+        contextMenu.x = Math.max(8, window.innerWidth - rect.width - 8);
+      } else {
+        contextMenu.x = Math.max(8, e.clientX);
+      }
+    }
+  });
 }
 
 function closeContextMenu() {
@@ -1322,6 +1387,8 @@ function getStatusBadgeClass(item: Torrent): string {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
   z-index: 300;
   min-width: 170px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
   padding: 4px;
 }
 
