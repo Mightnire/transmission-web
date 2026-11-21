@@ -3,86 +3,156 @@
     class="transmission-logo"
     :width="size"
     :height="size"
-    viewBox="0 0 64 64"
+    viewBox="0 0 48 48"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <!-- 外层金属圆角基座 -->
-    <rect x="2" y="2" width="60" height="60" rx="13" fill="url(#t-baseGrad)" stroke="url(#t-baseStroke)" stroke-width="1.8" />
-    
-    <!-- 内层凹陷面板 (立体光影) -->
-    <rect x="6.5" y="6.5" width="51" height="51" rx="8.5" fill="url(#t-panelGrad)" />
-    
-    <!-- 凹槽上下双向通道与黑色主箭头 -->
-    <path d="M24 24L32 16L40 24H36V28H28V24H24Z" fill="var(--tlogo-arrow-1, #222222)" opacity="0.85" />
-    <path d="M22 36H28V28H36V36H42L32 49L22 36Z" fill="var(--tlogo-arrow-2, #151515)" />
-    <path d="M24 37H29V29H35V37H40L32 47.5L24 37Z" fill="var(--tlogo-arrow-3, #262626)" />
-
-    <!-- 垂直金属变速杆主轴 -->
-    <path d="M26.5 12H37.5L36.5 30H27.5L26.5 12Z" fill="url(#t-shaftGrad)" />
-
-    <!-- 操纵手柄 (鲜明红大理石/红皮革质感) -->
-    <rect x="12" y="5.5" width="40" height="13.5" rx="6.75" fill="url(#t-redHandle)" />
-    <!-- 操纵手柄高光条 -->
-    <ellipse cx="32" cy="7.5" rx="16" ry="1.8" fill="#FF8A80" opacity="0.6" />
-
-    <!-- 左侧释放按钮 (金属按钮) -->
-    <path d="M13 7.8L8.5 9.2C7.8 9.5 7.8 10.5 8.5 10.8L13 12.2V7.8Z" fill="url(#t-btnGrad)" stroke="#555" stroke-width="0.5" />
-
-    <!-- 中部加固金属卡箍 -->
-    <rect x="25.5" y="4.5" width="13" height="15.5" rx="3.5" fill="url(#t-clampGrad)" stroke="#555555" stroke-width="0.6" />
-    <!-- 卡箍中线微高光 -->
-    <rect x="31.2" y="4.8" width="1.6" height="14.9" fill="#FFFFFF" opacity="0.75" />
-
     <defs>
-      <!-- 基座金属质感 -->
-      <linearGradient id="t-baseGrad" x1="2" y1="2" x2="62" y2="62" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#555555" />
-        <stop offset="0.5" stop-color="#303030" />
-        <stop offset="1" stop-color="#1A1A1A" />
-      </linearGradient>
-      <linearGradient id="t-baseStroke" x1="2" y1="2" x2="62" y2="62" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#999999" />
-        <stop offset="1" stop-color="#333333" />
+      <!-- 1. 外基座金属渐变 (上到下立体反射) -->
+      <linearGradient id="tr-base-grad" x1="10.19" y1="16.59" x2="10.19" y2="46.59" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#787b76" />
+        <stop offset="0.87" stop-color="#babcb9" />
+        <stop offset="1" stop-color="#787b76" />
       </linearGradient>
 
-      <!-- 内面板高光浅灰渐变 -->
-      <linearGradient id="t-panelGrad" x1="6.5" y1="6.5" x2="57.5" y2="57.5" gradientUnits="userSpaceOnUse">
-        <stop stop-color="var(--tlogo-panel-1, #FFFFFF)" />
-        <stop offset="0.65" stop-color="var(--tlogo-panel-2, #EEEEEE)" />
-        <stop offset="1" stop-color="var(--tlogo-panel-3, #D5D5D5)" />
+      <!-- 2. 内凹面板渐变 (下到上浅色象牙面板) -->
+      <linearGradient id="tr-panel-grad" x1="13.6" y1="39.6" x2="14.1" y2="19.5" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#f0f2ef" />
+        <stop offset="1" stop-color="#cdd1c8" />
       </linearGradient>
 
-      <!-- 垂直轴金属柱 -->
-      <linearGradient id="t-shaftGrad" x1="26.5" y1="12" x2="37.5" y2="30" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#EEEEEE" />
-        <stop offset="0.3" stop-color="#FFFFFF" />
-        <stop offset="0.7" stop-color="#9E9E9E" />
-        <stop offset="1" stop-color="#616161" />
+      <!-- 3. 下箭头凹槽深色通道渐变 -->
+      <linearGradient id="tr-slot-grad" x1="23.94" y1="20.44" x2="23.94" y2="37.63" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#555753" />
+        <stop offset="1" stop-color="#2e3436" />
+      </linearGradient>
+      <linearGradient id="tr-slot-stroke" x1="20.77" y1="37.63" x2="20.56" y2="20.44" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#888a85" />
+        <stop offset="1" stop-color="#2e3436" />
       </linearGradient>
 
-      <!-- 红色把手质感 -->
-      <linearGradient id="t-redHandle" x1="12" y1="5.5" x2="52" y2="19" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#E53935" />
-        <stop offset="0.35" stop-color="#D32F2F" />
-        <stop offset="0.7" stop-color="#C62828" />
-        <stop offset="1" stop-color="#8E0000" />
+      <!-- 4. 经典 Transmission 红色横向把手渐变 (位于垂直主轴杆后方) -->
+      <linearGradient id="tr-handle-grad" x1="8.48" y1="4.5" x2="8.48" y2="10.57" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#cc0000" />
+        <stop offset="0.36" stop-color="#ef0000" />
+        <stop offset="1" stop-color="#aa0000" />
       </linearGradient>
 
-      <!-- 左侧按钮 -->
-      <linearGradient id="t-btnGrad" x1="8" y1="8" x2="13" y2="12" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#EEEEEE" />
-        <stop offset="1" stop-color="#757575" />
+      <!-- 5. 红色把手顶部高光条渐变 -->
+      <linearGradient id="tr-handle-hilite" x1="24" y1="5.07" x2="24" y2="10.01" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.8" />
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
       </linearGradient>
 
-      <!-- 中间金属卡箍 -->
-      <linearGradient id="t-clampGrad" x1="25.5" y1="4.5" x2="38.5" y2="20" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#FFFFFF" />
-        <stop offset="0.25" stop-color="#E0E0E0" />
-        <stop offset="0.7" stop-color="#9E9E9E" />
-        <stop offset="1" stop-color="#616161" />
+      <!-- 6. 垂直金属排挡杆主轴 (浮在红色手柄上方，具有圆柱立体光泽) -->
+      <linearGradient id="tr-shaft-grad" x1="20.48" y1="15" x2="27.58" y2="15" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#9a9c97" />
+        <stop offset="0.25" stop-color="#ffffff" />
+        <stop offset="0.65" stop-color="#d4d6d2" />
+        <stop offset="1" stop-color="#80827d" />
+      </linearGradient>
+
+      <!-- 7. 杆身插槽底部投影 -->
+      <linearGradient id="tr-shaft-shadow" x1="23.7" y1="30.1" x2="23.7" y2="22" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#2e3436" stop-opacity="0.9" />
+        <stop offset="1" stop-color="#2e3436" stop-opacity="0" />
       </linearGradient>
     </defs>
+
+    <!-- 1. 外基座金属底座 (带俯视梯形透视) -->
+    <path
+      d="M 10 16.59 C 8.82 16.55 7.64 17.57 7.53 18.81 C 6.64 26.1 5.33 33.4 4.66 40.69 L 4.66 43.75 C 4.69 45.33 5.73 46.39 6.88 46.59 L 41.5 46.59 C 42.48 46.57 43.57 45.89 43.53 44.59 L 43.53 40.66 L 40.41 19.44 C 40.15 18.14 39.04 16.75 37.5 16.59 Z"
+      fill="url(#tr-base-grad)"
+      stroke="#555753"
+      stroke-width="1"
+    />
+
+    <!-- 2. 金属内凹梯形面板 -->
+    <path
+      d="M 10.6 39.62 C 9.47 39.5 8.67 38.76 8.7 37.4 L 10.6 21.41 C 10.89 20.34 11.59 19.49 12.68 19.49 L 34.61 19.49 C 35.69 19.46 36.78 20.21 37.06 21.1 L 39.48 37.24 C 39.54 38.71 38.93 39.56 37.91 39.52 Z"
+      fill="url(#tr-panel-grad)"
+      stroke="#555753"
+      stroke-width="1"
+    />
+
+    <!-- 3. 下边缘微高光倒角线 -->
+    <path
+      d="M 11.42 41.49 L 39.53 41.49"
+      stroke="#ffffff"
+      stroke-width="1"
+      stroke-linecap="round"
+      opacity="0.45"
+    />
+
+    <!-- 4. 下箭头档位槽 (黑色通道) -->
+    <path
+      d="M 20.47 20.44 L 18.41 32.47 L 15.44 32.47 L 23.47 37.63 L 32.44 32.47 L 29.47 32.47 L 27.59 20.44 Z"
+      fill="url(#tr-slot-grad)"
+      stroke="url(#tr-slot-stroke)"
+      stroke-width="1"
+    />
+
+    <!-- 5. 红色横向操纵手柄 (位于垂直金属竖杆后方) -->
+    <rect
+      x="8.48"
+      y="4.51"
+      width="31.11"
+      height="6.06"
+      rx="3.03"
+      ry="2"
+      fill="url(#tr-handle-grad)"
+      stroke="#930000"
+      stroke-width="1"
+    />
+
+    <!-- 6. 红色手柄反光弧线 -->
+    <rect
+      x="9.5"
+      y="5.57"
+      width="29.08"
+      height="3.94"
+      rx="1.83"
+      ry="1.28"
+      fill="none"
+      stroke="url(#tr-handle-hilite)"
+      stroke-width="0.8"
+      opacity="0.65"
+    />
+
+    <!-- 7. 垂直金属排挡杆主轴 (浮在红色手柄上方，顶部高于红色手柄) -->
+    <rect
+      x="20.48"
+      y="3.6"
+      width="7.1"
+      height="25.97"
+      rx="1.08"
+      fill="url(#tr-shaft-grad)"
+      stroke="#787a75"
+      stroke-width="0.9"
+    />
+
+    <!-- 8. 排挡杆入槽处暗部阴影 -->
+    <rect
+      x="19.98"
+      y="22.01"
+      width="8.13"
+      height="8.04"
+      rx="1.08"
+      fill="url(#tr-shaft-shadow)"
+    />
+
+    <!-- 9. 排挡杆高光边线 -->
+    <rect
+      x="21.43"
+      y="4.63"
+      width="5.15"
+      height="23.94"
+      rx="1.08"
+      fill="none"
+      stroke="#ffffff"
+      stroke-width="0.6"
+      opacity="0.35"
+    />
   </svg>
 </template>
 
@@ -103,20 +173,5 @@ withDefaults(
   vertical-align: middle;
   flex-shrink: 0;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
-  --tlogo-panel-1: #FFFFFF;
-  --tlogo-panel-2: #EEEEEE;
-  --tlogo-panel-3: #D5D5D5;
-  --tlogo-arrow-1: #222222;
-  --tlogo-arrow-2: #151515;
-  --tlogo-arrow-3: #262626;
-}
-
-:global([data-theme="dark"]) .transmission-logo {
-  --tlogo-panel-1: #383838;
-  --tlogo-panel-2: #282828;
-  --tlogo-panel-3: #1c1c1c;
-  --tlogo-arrow-1: #777777;
-  --tlogo-arrow-2: #999999;
-  --tlogo-arrow-3: #666666;
 }
 </style>
