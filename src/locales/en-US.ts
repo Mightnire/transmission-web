@@ -157,6 +157,7 @@ export default {
   },
   ribbon: {
     file: 'File',
+    brandFileHint: 'Backstage & Settings',
     about: 'About Transmission',
     batchTags: 'Batch Labels',
     selectAll: 'Select All',

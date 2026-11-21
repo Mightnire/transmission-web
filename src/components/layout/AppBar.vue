@@ -11,20 +11,16 @@
         <FluentIcon name="menu" />
       </button>
 
-      <!-- 应用标题 / 品牌标识 (Transmission 官方高保真变速杆 Logo) -->
-      <div class="fluent-brand">
-        <TransmissionLogo :size="20" class="brand-logo" />
-        <span class="brand-text">Transmission</span>
-      </div>
-
-      <!-- Office 2016 全屏“文件”菜单入口 -->
+      <!-- Transmission 官方高保真品牌与 Backstage / 文件后台入口一体化按钮 -->
       <div class="file-menu-wrapper">
         <button
-          class="ribbon-file-btn"
-          :class="{ active: state.fileMenuOpen }"
-          @click.stop="openFileMenu()"
+          class="ribbon-file-btn brand-file-btn"
+          :class="{ active: state.fileMenuOpen, 'brand-breathing': isBrandBreathing }"
+          @click.stop="handleBrandFileClick"
+          :title="t('ribbon.brandFileHint')"
         >
-          <span>{{ t('ribbon.file') }}</span>
+          <TransmissionLogo :size="state.compactDensity ? 16 : 18" class="brand-logo" />
+          <span class="brand-text">Transmission</span>
         </button>
       </div>
 
@@ -1229,6 +1225,24 @@ const menus = reactive({
 
 const menuPos = reactive({ top: 0, left: 0 });
 
+const isBrandBreathing = ref(false);
+
+onMounted(() => {
+  if (typeof window !== 'undefined' && !localStorage.getItem('transmission_brand_clicked')) {
+    isBrandBreathing.value = true;
+  }
+});
+
+function handleBrandFileClick() {
+  if (isBrandBreathing.value) {
+    isBrandBreathing.value = false;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('transmission_brand_clicked', 'true');
+    }
+  }
+  openFileMenu();
+}
+
 function runMobile(action: () => void) {
   mobileMenuOpen.value = false;
   action();
@@ -1719,6 +1733,40 @@ function toggleTheme() {
   font-size: 9px;
 }
 
+.fluent-ribbon-root.compact-density .ribbon-header-row {
+  height: 30px;
+  padding: 0 4px;
+}
+
+.fluent-ribbon-root.compact-density .brand-file-btn {
+  padding: 0 8px;
+  gap: 5px;
+}
+
+.fluent-ribbon-root.compact-density .brand-file-btn .brand-text {
+  font-size: 12px;
+}
+
+.fluent-ribbon-root.compact-density .ribbon-tab-btn {
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.fluent-ribbon-root.compact-density .fluent-search-box {
+  height: 22px;
+  width: 130px;
+}
+
+.fluent-ribbon-root.compact-density .top-search-input {
+  font-size: 11px;
+}
+
+.fluent-ribbon-root.compact-density .fluent-tool-btn {
+  height: 24px;
+  width: 24px;
+  padding: 0 2px;
+}
+
 /* 1. 标题与 Tab 行 (高度 38px，Office 2016 纯平单色，无渐变、无底边线) */
 .ribbon-header-row {
   height: 38px;
@@ -1741,30 +1789,64 @@ function toggleTheme() {
   background-color: var(--ribbon-header-tab-hover) !important;
 }
 
-.fluent-brand {
+/* 文件 (File) 菜单与品牌一体化按钮 (Office 2016 纯平直角块，零 border-radius) */
+.file-menu-wrapper {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-right: 6px;
-  align-self: center;
+  align-items: stretch;
 }
 
 .brand-logo {
   flex-shrink: 0;
 }
 
-.brand-text {
+.brand-file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  background-color: var(--ribbon-file-btn-bg);
+  border: none !important;
+  border-radius: 0 !important;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  user-select: none;
+}
+
+.brand-file-btn:hover,
+.brand-file-btn.active {
+  background-color: var(--ribbon-file-btn-hover);
+}
+
+.brand-file-btn .brand-text {
   font-size: 13px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 0.02em;
 }
 
-/* 文件 (File) 菜单按钮 (Office 2016 纯平直角块，零 border-radius) */
-.file-menu-wrapper {
+/* 首次进入引导：Transmission 品牌标签呼吸闪烁（明暗呼吸效果，点击即止） */
+.brand-file-btn.brand-breathing {
+  animation: brandBreathe 2.2s ease-in-out infinite;
   position: relative;
-  display: flex;
-  align-items: stretch;
+}
+
+.brand-file-btn.brand-breathing:hover,
+.brand-file-btn.brand-breathing.active {
+  animation: none;
+  filter: none;
+  opacity: 1;
+}
+
+@keyframes brandBreathe {
+  0%, 100% {
+    filter: brightness(1);
+    opacity: 1;
+  }
+  50% {
+    filter: brightness(1.35) drop-shadow(0 0 4px rgba(255, 255, 255, 0.45));
+    opacity: 0.78;
+  }
 }
 
 .ribbon-file-btn {
@@ -3130,7 +3212,7 @@ function toggleTheme() {
 }
 
 @media (max-width: 1080px) {
-  .fluent-brand .brand-text {
+  .brand-file-btn .brand-text {
     display: none; /* 释放 ~85px 空间 */
   }
   .ribbon-tab-btn {

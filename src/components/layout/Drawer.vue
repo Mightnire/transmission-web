@@ -10,7 +10,7 @@
 
   <aside
     class="fluent-navigation-pane"
-    :class="{ 'mobile-open': state.sidebarOpen, 'is-collapsed': state.sidebarCollapsed, 'is-resizing': isResizing }"
+    :class="{ 'mobile-open': state.sidebarOpen, 'is-collapsed': state.sidebarCollapsed, 'is-resizing': isResizing, 'compact-density': state.compactDensity }"
     :style="sidebarStyle"
   >
     <!-- 移动端专属侧边栏头部 (带品牌与关闭按钮) -->
@@ -553,6 +553,52 @@ function clearGroupFilter() {
 
 .fluent-navigation-pane.is-collapsed .fluent-divider {
   margin: 6px 4px;
+}
+
+/* 紧凑模式高密度支持 (高度压缩 ~24%，单屏容纳更多分组项) */
+.fluent-navigation-pane.compact-density .nav-pane-inner {
+  padding: 4px;
+  gap: 6px;
+}
+
+.fluent-navigation-pane.compact-density .section-header-flex {
+  padding: 1px 4px;
+  margin-bottom: 2px;
+}
+
+.fluent-navigation-pane.compact-density .section-label {
+  font-size: 10.5px;
+}
+
+.fluent-navigation-pane.compact-density .fluent-nav-item {
+  height: 26px;
+  padding: 0 6px;
+  gap: 6px;
+  font-size: 11.5px;
+}
+
+.fluent-navigation-pane.compact-density .nav-icon {
+  font-size: 15px;
+}
+
+.fluent-navigation-pane.compact-density .nav-badge {
+  font-size: 10px;
+  padding: 0 5px;
+  line-height: 16px;
+}
+
+.fluent-navigation-pane.compact-density .active-indicator {
+  top: 4px;
+  bottom: 4px;
+}
+
+.fluent-navigation-pane.compact-density .sort-list {
+  gap: 0;
+  padding: 0 2px;
+}
+
+.fluent-navigation-pane.compact-density .fluent-divider {
+  margin: 2px 4px;
 }
 
 .nav-pane-inner {

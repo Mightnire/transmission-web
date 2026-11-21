@@ -157,6 +157,7 @@ export default {
   },
   ribbon: {
     file: '文件',
+    brandFileHint: '后台与设置',
     about: '关于 Transmission',
     batchTags: '批量设置标签',
     selectAll: '全选任务',

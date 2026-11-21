@@ -157,6 +157,7 @@ export default {
   },
   ribbon: {
     file: 'Файл',
+    brandFileHint: 'Центр управления и настройки',
     about: 'О программе Transmission',
     batchTags: 'Пакетные метки',
     selectAll: 'Выбрать все',
