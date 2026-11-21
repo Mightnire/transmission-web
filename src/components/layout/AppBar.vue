@@ -597,7 +597,7 @@
         <div class="ribbon-group">
           <div class="ribbon-controls view-prefs-col office-select-group">
             <div class="office-select-row" :title="t('ribbon.pollTorrents')">
-              <FluentIcon name="sync" class="row-icon" size="16" />
+              <FluentIcon name="sync" class="row-icon" />
               <span class="input-prefix-label">{{ t('ribbon.pollTorrents') }}</span>
               <select
                 class="fluent-select"
@@ -612,7 +612,7 @@
               </select>
             </div>
             <div class="office-select-row" :title="t('ribbon.pollStats')">
-              <FluentIcon name="insights" class="row-icon" size="16" />
+              <FluentIcon name="insights" class="row-icon" />
               <span class="input-prefix-label">{{ t('ribbon.pollStats') }}</span>
               <select
                 class="fluent-select"
@@ -2349,6 +2349,9 @@ function toggleTheme() {
 }
 
 .office-select-row .row-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
   flex-shrink: 0;
   color: var(--md-text-primary);
 }
@@ -3261,16 +3264,17 @@ function toggleTheme() {
   height: 28px;
 }
 
+.fluent-ribbon-root .ribbon-body .fluent-svg-icon,
 .fluent-ribbon-root .ribbon-body .material-icons {
   font-size: 16px !important;
-  width: 16px;
-  height: 16px;
+  width: 16px !important;
+  height: 16px !important;
 }
 
 .fluent-ribbon-root .fluent-btn-large .large-icon {
   font-size: 20px !important;
-  width: 20px;
-  height: 20px;
+  width: 20px !important;
+  height: 20px !important;
 }
 
 .fluent-ribbon-root .dialog-launcher-btn {

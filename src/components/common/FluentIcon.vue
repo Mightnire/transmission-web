@@ -32,7 +32,7 @@ const svgStyle = computed(() => {
     const s = typeof props.size === 'number' ? `${props.size}px` : props.size;
     return { width: s, height: s, fontSize: s };
   }
-  return { width: '1em', height: '1em' };
+  return undefined;
 });
 
 const iconClass = computed(() => props.class);
@@ -142,6 +142,8 @@ const svgPath = computed(() => {
 .fluent-svg-icon {
   display: inline-block;
   vertical-align: middle;
+  width: 1em;
+  height: 1em;
   flex-shrink: 0;
   transition: transform 0.15s ease, fill 0.15s ease;
 }
