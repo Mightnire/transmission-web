@@ -40,6 +40,7 @@ export default defineConfig(({ mode }) => {
       drop: ['console', 'debugger'],
     },
     build: {
+      target: 'es2015',
       outDir: 'dist',
       assetsDir: 'assets',
       minify: 'esbuild',
