@@ -34,7 +34,7 @@
         </nav>
 
         <!-- 右侧连续滚动长页 (Continuous Scroll Content) -->
-        <div class="chrome-scroll-container" ref="scrollContainer" @scroll.passive="onScroll">
+        <div class="chrome-scroll-container" ref="scrollContainer" @scroll.passive="onScroll" @click="closePathDropdown">
           <!-- 0. 界面与偏好 (Web 前端设置整合) -->
           <section id="settings-sec-ui" class="chrome-section">
             <header class="section-title">
@@ -130,13 +130,49 @@
                   </thead>
                   <tbody>
                     <tr v-for="(rule, idx) in form.pathAliases" :key="idx">
-                      <td>
-                        <input
-                          type="text"
-                          class="alias-input"
-                          v-model="rule.from"
-                          placeholder="/media/AiDisk_a1"
-                        />
+                      <td class="alias-from-cell">
+                        <div class="alias-combobox-wrapper">
+                          <input
+                            type="text"
+                            class="alias-input combobox-input"
+                            v-model="rule.from"
+                            placeholder="/media/AiDisk_a1"
+                            @focus="openPathDropdown(idx)"
+                            @click.stop="openPathDropdown(idx)"
+                          />
+                          <button
+                            type="button"
+                            class="alias-combobox-btn"
+                            :class="{ active: activePathDropdownIndex === idx }"
+                            @click.stop="togglePathDropdown(idx)"
+                            :title="t('addDialog.selectPath')"
+                            tabindex="-1"
+                          >
+                            <FluentIcon name="expand_more" />
+                          </button>
+
+                          <!-- 下拉推荐路径列表 (复用 AddDialog 的现有物理路径) -->
+                          <div
+                            class="alias-dropdown-menu"
+                            v-if="activePathDropdownIndex === idx && getFilteredPaths(rule.from).length > 0"
+                            @click.stop
+                          >
+                            <div
+                              class="alias-dropdown-item"
+                              v-for="item in getFilteredPaths(rule.from)"
+                              :key="item.path"
+                              :class="{ selected: rule.from === item.path }"
+                              @click.stop="selectPathForAlias(idx, item.path)"
+                            >
+                              <FluentIcon name="folder" class="dropdown-item-icon" />
+                              <div class="dropdown-item-info">
+                                <span class="dropdown-item-path">{{ item.path }}</span>
+                                <span class="dropdown-item-alias" v-if="item.alias">({{ item.alias }})</span>
+                              </div>
+                              <span class="dropdown-item-badge" v-if="item.count">{{ item.count }}</span>
+                            </div>
+                          </div>
+                        </div>
                       </td>
                       <td class="arrow-cell">→</td>
                       <td>
@@ -357,7 +393,7 @@
               <div class="form-row">
                 <span>{{ t('session.network.portLabel') }}</span>
                 <div class="port-input-group">
-                  <input type="number" class="num-input" v-model.number="form.peerPort" />
+                  <input type="number" class="num-input" v-model.number="form.peerPort" min="1" max="65535" />
                   <button class="md-btn md-btn-flat btn-sm" @click="testPort" :disabled="testingPort">
                     <FluentIcon :name="testingPort ? 'sync' : 'network_check'" style="font-size: 16px;" />
                     <span>{{ testingPort ? t('session.network.portTesting') : t('session.network.testPort') }}</span>
@@ -370,14 +406,11 @@
                 <span>{{ portStatus ? t('session.network.portOpen') : t('session.network.portClosed') }}</span>
               </div>
 
-              <div class="form-row mt-2">
+              <div class="form-vertical-switches mt-2">
                 <label class="form-check">
                   <input type="checkbox" v-model="form.peerPortRandomOnStart" />
                   <span>{{ t('session.network.randomPort') }}</span>
                 </label>
-              </div>
-
-              <div class="form-row">
                 <label class="form-check">
                   <input type="checkbox" v-model="form.portForwardingEnabled" />
                   <span>{{ t('session.network.upnp') }}</span>
@@ -388,30 +421,22 @@
 
               <h4 class="sub-title">{{ t('session.network.protocols') }}</h4>
               <div class="form-vertical-switches">
-                <div class="form-row">
-                  <label class="form-check">
-                    <input type="checkbox" v-model="form.dhtEnabled" />
-                    <span>{{ t('session.network.dht') }}</span>
-                  </label>
-                </div>
-                <div class="form-row">
-                  <label class="form-check">
-                    <input type="checkbox" v-model="form.pexEnabled" />
-                    <span>{{ t('session.network.pex') }}</span>
-                  </label>
-                </div>
-                <div class="form-row">
-                  <label class="form-check">
-                    <input type="checkbox" v-model="form.lpdEnabled" />
-                    <span>{{ t('session.network.lpd') }}</span>
-                  </label>
-                </div>
-                <div class="form-row">
-                  <label class="form-check">
-                    <input type="checkbox" v-model="form.utpEnabled" />
-                    <span>{{ t('session.network.utp') }}</span>
-                  </label>
-                </div>
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.dhtEnabled" />
+                  <span>{{ t('session.network.dht') }}</span>
+                </label>
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.pexEnabled" />
+                  <span>{{ t('session.network.pex') }}</span>
+                </label>
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.lpdEnabled" />
+                  <span>{{ t('session.network.lpd') }}</span>
+                </label>
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.utpEnabled" />
+                  <span>{{ t('session.network.utp') }}</span>
+                </label>
               </div>
 
               <div class="divider"></div>
@@ -474,12 +499,9 @@
 
               <h4 class="sub-title">{{ t('session.storage.cacheTitle') }}</h4>
               <div class="form-row">
-                <div>
-                  <span>{{ t('session.storage.cacheSize') }}</span>
-                  <div class="form-hint">{{ t('session.storage.cacheHint') }}</div>
-                </div>
+                <span>{{ t('session.storage.cacheSize') }}</span>
                 <div class="unit-group">
-                  <input type="number" class="num-input" v-model.number="form.cacheSizeMb" min="1" max="64" />
+                  <input type="number" class="num-input" v-model.number="form.cacheSizeMb" min="1" max="1024" />
                   <span class="unit-label">MB</span>
                 </div>
               </div>
@@ -584,6 +606,7 @@ import {
   state,
   fetchSession,
   formatBytes,
+  formatDisplayPath,
   showToast,
   describeError,
   saveUIPreferences,
@@ -745,6 +768,11 @@ function minsToTimeStr(mins = 0) {
 }
 
 async function testPort() {
+  const port = Number(form.peerPort);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    showToast(t('common.failed', { error: '监听端口必须在 1 ~ 65535 之间！' }), 'error');
+    return;
+  }
   testingPort.value = true;
   portStatus.value = null;
   try {
@@ -844,6 +872,57 @@ function initForm(s: any) {
   }
 }
 
+// 现有任务保存路径提取（复用 AddDialog 数据源）
+const detectedFolderGroups = computed(() => {
+  const map = new Map<string, number>();
+  const def = form.downloadDir || state.session?.['download-dir'];
+  if (def && typeof def === 'string') {
+    map.set(def, 0);
+  }
+  for (const t of state.torrents) {
+    if (t.downloadDir) {
+      map.set(t.downloadDir, (map.get(t.downloadDir) || 0) + 1);
+    }
+  }
+  return Array.from(map.entries()).map(([path, count]) => {
+    const alias = formatDisplayPath(path);
+    return {
+      path,
+      count,
+      alias: alias !== path ? alias : undefined,
+    };
+  });
+});
+
+const activePathDropdownIndex = ref<number | null>(null);
+
+function getFilteredPaths(query: string) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q) return detectedFolderGroups.value;
+  return detectedFolderGroups.value.filter(
+    (item) => item.path.toLowerCase().includes(q) || (item.alias && item.alias.toLowerCase().includes(q))
+  );
+}
+
+function openPathDropdown(idx: number) {
+  activePathDropdownIndex.value = idx;
+}
+
+function togglePathDropdown(idx: number) {
+  activePathDropdownIndex.value = activePathDropdownIndex.value === idx ? null : idx;
+}
+
+function closePathDropdown() {
+  activePathDropdownIndex.value = null;
+}
+
+function selectPathForAlias(idx: number, path: string) {
+  if (form.pathAliases[idx]) {
+    form.pathAliases[idx].from = path;
+  }
+  activePathDropdownIndex.value = null;
+}
+
 function addPathAliasRule() {
   form.pathAliases.push({ from: '', to: '' });
 }
@@ -926,6 +1005,53 @@ async function saveSettings() {
   if (form.compactDensity !== state.compactDensity) {
     state.compactDensity = form.compactDensity;
     localStorage.setItem('compact_density', String(form.compactDensity));
+  }
+
+  // 1. 监听端口校验 (1 ~ 65535 整数)
+  const port = Number(form.peerPort);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    showToast(t('common.failed', { error: '监听端口必须在 1 ~ 65535 之间！' }), 'error');
+    return;
+  }
+
+  // 2. 限速合法性校验 (>= 0)
+  if (form.speedLimitDownEnabled && (isNaN(form.speedLimitDown) || form.speedLimitDown < 0)) {
+    showToast(t('common.failed', { error: '下载限速不能为负数！' }), 'error');
+    return;
+  }
+  if (form.speedLimitUpEnabled && (isNaN(form.speedLimitUp) || form.speedLimitUp < 0)) {
+    showToast(t('common.failed', { error: '上传限速不能为负数！' }), 'error');
+    return;
+  }
+  if (form.altSpeedDown < 0 || form.altSpeedUp < 0) {
+    showToast(t('common.failed', { error: '临时限速不能为负数！' }), 'error');
+    return;
+  }
+
+  // 3. 并发队列上限校验 (>= 1)
+  if (form.downloadQueueEnabled && (isNaN(form.downloadQueueSize) || form.downloadQueueSize < 1)) {
+    showToast(t('common.failed', { error: '最大下载任务数必须大于 0！' }), 'error');
+    return;
+  }
+  if (form.seedQueueEnabled && (isNaN(form.seedQueueSize) || form.seedQueueSize < 1)) {
+    showToast(t('common.failed', { error: '最大做种任务数必须大于 0！' }), 'error');
+    return;
+  }
+
+  // 4. 连接数上限校验 (>= 1)
+  if (isNaN(form.peerLimitGlobal) || form.peerLimitGlobal < 1) {
+    showToast(t('common.failed', { error: '全局最大连接数必须大于 0！' }), 'error');
+    return;
+  }
+  if (isNaN(form.peerLimitPerTorrent) || form.peerLimitPerTorrent < 1) {
+    showToast(t('common.failed', { error: '单任务最大连接数必须大于 0！' }), 'error');
+    return;
+  }
+
+  // 5. 磁盘缓存大小校验 (1 ~ 1024 MB)
+  if (isNaN(form.cacheSizeMb) || form.cacheSizeMb < 1 || form.cacheSizeMb > 1024) {
+    showToast(t('common.failed', { error: '写入缓存大小必须在 1 ~ 1024 MB 之间！' }), 'error');
+    return;
   }
 
   state.uiPreferences.showTrackerGroup = form.showTrackerGroup;
@@ -1211,6 +1337,9 @@ useEscapeKey(() => {
   gap: 8px;
   cursor: pointer;
   font-size: 12px;
+  line-height: 1.4;
+  color: var(--fluent-text-primary);
+  user-select: none;
 }
 
 .form-check input[type="checkbox"] {
@@ -1220,7 +1349,14 @@ useEscapeKey(() => {
 .form-vertical-switches {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.form-vertical-switches .form-check {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--fluent-text-primary);
 }
 
 .form-hint {
@@ -1524,18 +1660,6 @@ useEscapeKey(() => {
   width: 70px;
 }
 
-.form-vertical-switches {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 6px;
-}
-
-.form-vertical-switches .form-check {
-  font-size: 13px;
-  color: var(--fluent-text-primary);
-}
-
 /* 路径替换别名表格与卡片样式 */
 .desc-text {
   font-size: 12px;
@@ -1592,7 +1716,7 @@ useEscapeKey(() => {
 }
 
 .alias-table-wrapper {
-  overflow-x: auto;
+  overflow: visible;
   border: 1px solid var(--fluent-border-subtle);
   border-radius: 4px;
   background-color: var(--fluent-bg-canvas);
@@ -1645,6 +1769,115 @@ useEscapeKey(() => {
 .alias-input:focus {
   outline: none;
   border-color: var(--fluent-accent);
+}
+
+.alias-from-cell {
+  position: relative;
+}
+
+.alias-combobox-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.alias-combobox-wrapper .alias-input {
+  padding-right: 28px;
+}
+
+.alias-combobox-btn {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--fluent-text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.alias-combobox-btn:hover,
+.alias-combobox-btn.active {
+  background-color: var(--fluent-bg-hover);
+  color: var(--fluent-text-primary);
+}
+
+.alias-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  min-width: 260px;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-divider);
+  border-radius: var(--fluent-radius);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  z-index: 1000;
+  padding: 4px;
+}
+
+.alias-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.12s ease;
+}
+
+.alias-dropdown-item:hover {
+  background-color: var(--fluent-bg-hover);
+}
+
+.alias-dropdown-item.selected {
+  background-color: var(--fluent-accent-subtle);
+  color: var(--fluent-accent);
+}
+
+.dropdown-item-icon {
+  font-size: 14px;
+  color: var(--fluent-accent);
+  flex-shrink: 0;
+}
+
+.dropdown-item-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.dropdown-item-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: monospace;
+}
+
+.dropdown-item-alias {
+  font-size: 10.5px;
+  color: var(--fluent-text-muted);
+}
+
+.dropdown-item-badge {
+  font-size: 10px;
+  background-color: rgba(0, 0, 0, 0.06);
+  padding: 0 5px;
+  border-radius: 10px;
+  color: var(--fluent-text-muted);
+  flex-shrink: 0;
 }
 
 .col-actions {
