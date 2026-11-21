@@ -21,7 +21,7 @@
 
         <div class="cards-selection-actions" v-if="selectedCount > 0">
           <button class="cards-action-btn" @click="invertSelection" :title="t('common.invertSelection')">
-            <FluentIcon name="swap_horiz" class="btn-icon" />
+            <FluentIcon name="invert_selection" class="btn-icon" />
             <span>{{ t('common.invertSelection') }}</span>
           </button>
           <button class="cards-action-btn" @click="clearSelection" :title="t('common.deselectAll')">

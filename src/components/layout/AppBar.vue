@@ -287,7 +287,7 @@
                 @click="invertSelection"
                 :title="t('common.invertSelection')"
               >
-                <FluentIcon name="swap_horiz" />
+                <FluentIcon name="invert_selection" />
                 <span>{{ t('common.invertSelection') }}</span>
               </button>
             </div>
@@ -597,7 +597,7 @@
         <div class="ribbon-group">
           <div class="ribbon-controls view-prefs-col office-select-group">
             <div class="office-select-row" :title="t('ribbon.pollTorrents')">
-              <FluentIcon name="sync" class="row-icon text-muted" size="14" />
+              <FluentIcon name="sync" class="row-icon" size="16" />
               <span class="input-prefix-label">{{ t('ribbon.pollTorrents') }}</span>
               <select
                 class="fluent-select"
@@ -612,7 +612,7 @@
               </select>
             </div>
             <div class="office-select-row" :title="t('ribbon.pollStats')">
-              <FluentIcon name="insights" class="row-icon text-muted" size="14" />
+              <FluentIcon name="insights" class="row-icon" size="16" />
               <span class="input-prefix-label">{{ t('ribbon.pollStats') }}</span>
               <select
                 class="fluent-select"
@@ -2342,14 +2342,15 @@ function toggleTheme() {
 .office-select-row {
   display: flex;
   align-items: center;
-  gap: 5px;
-  height: 22px;
+  gap: 6px;
+  height: 24px;
   font-size: 11px;
   width: 100%;
 }
 
 .office-select-row .row-icon {
   flex-shrink: 0;
+  color: var(--md-text-primary);
 }
 
 .office-select-row .input-prefix-label {
@@ -2359,18 +2360,35 @@ function toggleTheme() {
 }
 
 .office-select-row .fluent-select {
-  height: 20px;
-  padding: 0 4px;
+  height: 24px;
+  padding: 0 20px 0 6px;
   font-size: 11px;
-  border: 1px solid var(--fluent-border-subtle);
-  background: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-divider);
+  background-color: var(--fluent-bg-canvas);
   color: var(--md-text-primary);
-  border-radius: 0;
+  border-radius: var(--fluent-radius);
   outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23666666' d='M4.22 6.47a.75.75 0 0 1 1.06 0L8 9.19l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.53a.75.75 0 0 1 0-1.06z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  background-size: 12px 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+[data-theme="dark"] .office-select-row .fluent-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23cccccc' d='M4.22 6.47a.75.75 0 0 1 1.06 0L8 9.19l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.53a.75.75 0 0 1 0-1.06z'/%3E%3C/svg%3E");
+}
+
+.office-select-row .fluent-select:hover {
+  border-color: var(--fluent-border-strong);
 }
 
 .office-select-row .fluent-select:focus {
   border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1px var(--fluent-accent);
 }
 
 /* 切换状态按钮 */
@@ -3250,9 +3268,9 @@ function toggleTheme() {
 }
 
 .fluent-ribbon-root .fluent-btn-large .large-icon {
-  font-size: 18px !important;
-  width: 18px;
-  height: 18px;
+  font-size: 20px !important;
+  width: 20px;
+  height: 20px;
 }
 
 .fluent-ribbon-root .dialog-launcher-btn {
