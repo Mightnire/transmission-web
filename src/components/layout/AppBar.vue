@@ -2660,11 +2660,13 @@ function toggleTheme() {
   background: var(--fluent-bg-hover);
 }
 
+.mobile-sheet-action .fluent-icon,
 .mobile-sheet-action .material-icons {
   font-size: 22px;
   color: var(--md-text-secondary);
 }
 
+.mobile-sheet-action.danger .fluent-icon,
 .mobile-sheet-action.danger .material-icons {
   color: #c62828;
 }
@@ -3115,6 +3117,7 @@ function toggleTheme() {
   cursor: pointer;
 }
 
+.cols-order-btn .fluent-icon,
 .cols-order-btn .material-icons { font-size: 14px; }
 
 .cols-order-btn:hover:not(:disabled) { border-color: var(--fluent-accent); color: var(--fluent-accent); }

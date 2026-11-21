@@ -1,6 +1,6 @@
 /* ==========================================================================
-   Material Design 1 (MD1) Design System
-   Classic Paper & Ink Metaphor, Elevation Shadows, Typography & Palette
+   Fluent UI & Office 2016 Ribbon Design Tokens
+   Unified Theme Palette, Typography, Surface & Form Control Variables
    ========================================================================== */
 
 :root {
@@ -15,15 +15,15 @@
   --font-mono: 'Cascadia Mono', Consolas, 'SFMono-Regular', 'Microsoft YaHei UI',
     'Noto Sans SC', 'PingFang SC', monospace;
 
-  /* MD1 Classic Palette: Indigo 500 & Pink A200 */
-  --md-primary: #3f51b5;
-  --md-primary-dark: #303f9f;
-  --md-primary-light: #c5cae9;
-  --md-accent: #ff4081;
-  --md-accent-dark: #f50057;
+  /* Theme Primary & Accent (Aligned with Fluent System) */
+  --fluent-accent: #0078d4;
+  --fluent-accent-hover: #106ebe;
+  --fluent-accent-active: #005a9e;
+  --md-primary: var(--fluent-accent);
+  --md-accent: var(--fluent-accent);
 
   /* Surface & Background */
-  --md-bg: #eceff1;
+  --md-bg: #f3f3f3;
   --md-surface: #ffffff;
   --md-surface-card: #ffffff;
   
@@ -33,32 +33,17 @@
   --md-text-disabled: rgba(0, 0, 0, 0.38);
   --md-divider: rgba(0, 0, 0, 0.12);
 
-  /* Status Colors */
-  --md-success: #4caf50;
-  --md-warning: #ff9800;
-  --md-error: #f44336;
-  --md-info: #03a9f4;
+  /* Semantic Status Colors */
+  --md-success: #107c41;
+  --md-warning: #ff8c00;
+  --md-error: #d13438;
+  --md-info: #0078d4;
 
-  /* MD1 Elevation Shadows (0dp to 24dp) */
-  --md-shadow-1dp: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  --md-shadow-2dp: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-  --md-shadow-4dp: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-  --md-shadow-6dp: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
-  --md-shadow-8dp: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
-
-  /* Animation Curves */
-  --md-transition-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
-  --md-transition-decel: cubic-bezier(0.0, 0.0, 0.2, 1);
-  --md-transition-accel: cubic-bezier(0.4, 0.0, 1, 1);
-
-  /* Fluent UI 2.0 Tokens */
+  /* Fluent UI Tokens */
   --fluent-bg-subtle: #f3f3f3;
   --fluent-bg-canvas: #ffffff;
   --fluent-bg-hover: rgba(0, 0, 0, 0.05);
   --fluent-bg-active: rgba(0, 0, 0, 0.09);
-  --fluent-accent: #0078d4;
-  --fluent-accent-hover: #106ebe;
-  --fluent-accent-active: #005a9e;
   --fluent-border-subtle: rgba(0, 0, 0, 0.08);
   --fluent-border-divider: rgba(0, 0, 0, 0.14);
   --fluent-border-strong: rgba(0, 0, 0, 0.44);
@@ -86,10 +71,8 @@
   --md-text-secondary: rgba(255, 255, 255, 0.60);
   --md-text-disabled: rgba(255, 255, 255, 0.38);
   --md-divider: rgba(255, 255, 255, 0.12);
-  --md-shadow-1dp: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.6);
-  --md-shadow-2dp: 0 3px 6px rgba(0,0,0,0.6), 0 3px 6px rgba(0,0,0,0.7);
 
-  /* Fluent UI 2.0 Tokens Dark */
+  /* Fluent UI Tokens Dark */
   --fluent-bg-subtle: #202020;
   --fluent-bg-canvas: #2c2c2c;
   --fluent-bg-hover: rgba(255, 255, 255, 0.08);
@@ -97,6 +80,8 @@
   --fluent-accent: #2886de;
   --fluent-accent-hover: #4797e2;
   --fluent-accent-active: #1a76c8;
+  --md-primary: var(--fluent-accent);
+  --md-accent: var(--fluent-accent);
   --fluent-border-subtle: rgba(255, 255, 255, 0.08);
   --fluent-border-divider: rgba(255, 255, 255, 0.14);
   --fluent-border-strong: rgba(255, 255, 255, 0.48);
@@ -155,142 +140,38 @@ body {
   user-select: none;
 }
 
-/* Material App Bar (56dp standard mobile / 64dp desktop) */
-.md-app-bar {
-  height: 56px;
-  background-color: var(--md-primary);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  box-shadow: var(--md-shadow-2dp);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-@media (min-width: 960px) {
-  .md-app-bar {
-    height: 64px;
-    padding: 0 24px;
-  }
-}
-
-.md-app-bar-title {
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+/* Fluent Standard Icon Button (Used by Dialog Close & Navigation) */
+.fluent-icon-btn,
 .md-icon-button {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   outline: none;
   cursor: pointer;
-  color: inherit;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  color: var(--md-text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--fluent-radius);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s var(--md-transition-standard);
+  transition: all 0.15s ease;
   position: relative;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 
+.fluent-icon-btn:hover,
 .md-icon-button:hover {
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: var(--fluent-bg-hover);
+  color: var(--md-text-primary);
 }
 
+.fluent-icon-btn:active,
 .md-icon-button:active {
-  background-color: rgba(255, 255, 255, 0.24);
+  background-color: var(--fluent-bg-active);
 }
 
-/* MD1 Card (2dp elevation, 2dp border radius) */
-.md-card {
-  background-color: var(--md-surface-card);
-  border-radius: 2px;
-  box-shadow: var(--md-shadow-1dp);
-  margin-bottom: 12px;
-  transition: box-shadow 0.28s var(--md-transition-standard), transform 0.28s;
-  overflow: hidden;
-  position: relative;
-}
-
-.md-card:hover {
-  box-shadow: var(--md-shadow-2dp);
-}
-
-.md-card-content {
-  padding: 16px;
-}
-
-/* Floating Action Button (FAB 56dp, 6dp elevation, 12dp on active) */
-.md-fab {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background-color: var(--md-accent);
-  color: #ffffff;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  box-shadow: var(--md-shadow-4dp);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 90;
-  transition: transform 0.2s, box-shadow 0.2s var(--md-transition-standard);
-}
-
-.md-fab:hover {
-  box-shadow: var(--md-shadow-6dp);
-  transform: scale(1.05);
-}
-
-.md-fab:active {
-  box-shadow: var(--md-shadow-8dp);
-  transform: scale(0.95);
-}
-
-/* Classic MD1 Linear Progress Bar */
-.md-progress-track {
-  height: 4px;
-  background-color: rgba(63, 81, 181, 0.2);
-  border-radius: 2px;
-  overflow: hidden;
-  position: relative;
-  width: 100%;
-}
-
-.md-progress-bar {
-  height: 100%;
-  background-color: var(--md-primary);
-  border-radius: 2px;
-  transition: width 0.3s var(--md-transition-decel);
-}
-
-.md-progress-bar.success {
-  background-color: var(--md-success);
-}
-
-.md-progress-bar.warning {
-  background-color: var(--md-warning);
-}
-
-.md-progress-bar.error {
-  background-color: var(--md-error);
-}
-
-/* Fluent 2 Buttons */
+/* Fluent 2 Standard & Dialog Buttons */
+.fluent-btn,
 .md-btn {
   display: inline-flex;
   align-items: center;
@@ -309,50 +190,38 @@ body {
   transition: all 0.15s ease;
 }
 
+.fluent-btn-flat,
 .md-btn-flat {
   background: transparent;
   border-color: var(--fluent-border-subtle);
   color: var(--md-text-primary);
 }
 
+.fluent-btn-flat:hover,
 .md-btn-flat:hover {
   background-color: var(--fluent-bg-hover);
+  border-color: var(--fluent-border-strong);
 }
 
+.fluent-btn-raised,
 .md-btn-raised {
   background-color: var(--fluent-accent);
   color: #ffffff;
   border-color: transparent;
 }
 
+.fluent-btn-raised:hover,
 .md-btn-raised:hover {
   background-color: var(--fluent-accent-hover);
 }
 
-/* Badges & Tags */
-.md-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-
-.md-badge-error {
-  background-color: rgba(244, 67, 54, 0.12);
-  color: var(--md-error);
-}
-
-.md-badge-success {
-  background-color: rgba(76, 175, 80, 0.12);
-  color: var(--md-success);
-}
-
-.md-badge-info {
-  background-color: rgba(3, 169, 244, 0.12);
-  color: var(--md-info);
+/* Global Fluent SVG Base */
+.fluent-svg-icon,
+.fluent-icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 /* Modal Overlay & Fluent ContentDialog */

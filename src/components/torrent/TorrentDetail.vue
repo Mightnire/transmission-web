@@ -173,7 +173,7 @@
             </div>
             <div class="info-row">
               <span class="label">{{ t('detail.general.ratio') }}</span>
-              <span class="value font-bold" style="color: var(--md-primary);">
+              <span class="value font-bold" style="color: var(--fluent-accent);">
                 {{ activeTorrent.uploadRatio >= 0 ? activeTorrent.uploadRatio.toFixed(2) : '0.00' }}
               </span>
             </div>
@@ -974,6 +974,7 @@ function handleSetLocation() {
   border-color: #e57373;
 }
 
+.banner-action-btn .fluent-icon,
 .banner-action-btn .material-icons {
   font-size: 14px;
 }
@@ -1016,6 +1017,7 @@ function handleSetLocation() {
   color: var(--md-text-primary);
 }
 
+.dock-btn .fluent-icon,
 .dock-btn .material-icons {
   font-size: 16px;
 }
@@ -1417,6 +1419,7 @@ function handleSetLocation() {
   font-size: 12px;
 }
 
+.empty-hint .fluent-icon,
 .empty-hint .material-icons {
   font-size: 32px;
   margin-bottom: 6px;
