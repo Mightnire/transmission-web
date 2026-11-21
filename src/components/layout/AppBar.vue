@@ -261,6 +261,42 @@
           </div>
         </div>
 
+        <!-- 选择操作组 (标准 Office / Explorer 规范：全选、取消选择、反选) -->
+        <div class="ribbon-group">
+          <div class="ribbon-controls">
+            <div class="btn-stack">
+              <button
+                class="fluent-btn-small"
+                @click="selectAllTorrents"
+                :title="`${t('common.selectAll')} (Ctrl+A)`"
+              >
+                <FluentIcon name="select_all" class="text-accent" />
+                <span>{{ t('common.selectAll') }}</span>
+              </button>
+              <button
+                class="fluent-btn-small"
+                :disabled="!hasSelection"
+                @click="clearSelection"
+                :title="`${t('common.deselectAll')} (Esc)`"
+              >
+                <FluentIcon name="close" />
+                <span>{{ t('common.deselectAll') }}</span>
+              </button>
+              <button
+                class="fluent-btn-small"
+                @click="invertSelection"
+                :title="t('common.invertSelection')"
+              >
+                <FluentIcon name="swap_horiz" />
+                <span>{{ t('common.invertSelection') }}</span>
+              </button>
+            </div>
+          </div>
+          <div class="group-footer">
+            <span class="group-title">{{ t('ribbon.groups.select') }}</span>
+          </div>
+        </div>
+
         <!-- 详情视图组 -->
         <div class="ribbon-group">
           <div class="ribbon-controls">
@@ -1154,6 +1190,7 @@ import {
   toggleViewMode,
   selectAllTorrents,
   clearSelection,
+  invertSelection,
   openLocationDialog,
   openRenameDialog,
   openConfirmRemove,
@@ -1530,8 +1567,19 @@ function onGlobalClick(e: MouseEvent) {
 }
 
 function handleKeyDown(e: KeyboardEvent) {
+  const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+  const isInput = targetTag === 'input' || targetTag === 'textarea';
+
   if (e.key === 'Escape') {
     closeAllMenus();
+    if (!isInput && hasSelection.value) {
+      clearSelection();
+    }
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A') && !isInput) {
+    e.preventDefault();
+    selectAllTorrents();
     return;
   }
   if (e.ctrlKey && e.key === 'F1') {

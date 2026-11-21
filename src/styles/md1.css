@@ -61,6 +61,7 @@
   --fluent-accent-active: #005a9e;
   --fluent-border-subtle: rgba(0, 0, 0, 0.08);
   --fluent-border-divider: rgba(0, 0, 0, 0.14);
+  --fluent-border-strong: rgba(0, 0, 0, 0.44);
   --fluent-radius: 4px;
 
   /* Office 2016 Flat Design Tokens (Pure Flat Solid Color, Zero Gradient) */
@@ -98,6 +99,7 @@
   --fluent-accent-active: #1a76c8;
   --fluent-border-subtle: rgba(255, 255, 255, 0.08);
   --fluent-border-divider: rgba(255, 255, 255, 0.14);
+  --fluent-border-strong: rgba(255, 255, 255, 0.48);
   --fluent-radius: 4px;
 
   /* Office 2016 Flat Dark */
@@ -449,7 +451,7 @@ input[type="checkbox"],
   min-height: 16px;
   margin: 0;
   padding: 0;
-  border: 1.5px solid var(--fluent-border-strong);
+  border: 1.5px solid var(--fluent-border-strong, rgba(0, 0, 0, 0.44));
   border-radius: 3px;
   background-color: var(--fluent-bg-canvas);
   outline: none;
@@ -508,6 +510,58 @@ input[type="checkbox"]:disabled:checked,
 .fluent-checkbox:disabled:checked {
   background-color: var(--md-text-secondary);
   border-color: var(--md-text-secondary);
+}
+
+/* Fluent 2 Custom Radio (iOS-safe, pure CSS) */
+input[type="radio"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+  border: 1.5px solid var(--fluent-border-strong, rgba(0, 0, 0, 0.44));
+  border-radius: 50%;
+  background-color: var(--fluent-bg-canvas);
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: all 0.15s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+input[type="radio"]:hover {
+  border-color: var(--fluent-accent);
+  background-color: var(--fluent-bg-hover);
+}
+
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--fluent-accent);
+  outline-offset: 2px;
+}
+
+input[type="radio"]:checked {
+  border-color: var(--fluent-accent);
+  background-color: var(--fluent-bg-canvas);
+  background-image: radial-gradient(circle, var(--fluent-accent) 0%, var(--fluent-accent) 42%, transparent 48%);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+}
+
+input[type="radio"]:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background-color: var(--fluent-bg-subtle);
+  border-color: var(--fluent-border-subtle);
 }
 
 /* Compact density (optional): keep the Office ribbon but reclaim vertical space. */

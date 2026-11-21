@@ -31,6 +31,9 @@ export default {
     corrupt: '坏块损耗',
     cardsView: '卡片视图',
     tableView: '表格视图',
+    selectAll: '全选',
+    deselectAll: '取消选择',
+    invertSelection: '反向选择',
     day: '天',
     hour: '时',
     min: '分',
@@ -171,6 +174,7 @@ export default {
     groups: {
       basic: '基础任务',
       organize: '组织与标记',
+      select: '选择',
       data: '校验与链接',
       queue: '队列与调度',
       queueOrder: '队列排序',

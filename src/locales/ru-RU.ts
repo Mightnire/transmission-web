@@ -31,6 +31,9 @@ export default {
     corrupt: 'Повреждено',
     cardsView: 'Вид карточек',
     tableView: 'Вид таблицы',
+    selectAll: 'Выбрать все',
+    deselectAll: 'Снять выбор',
+    invertSelection: 'Инвертировать выбор',
     day: 'д',
     hour: 'ч',
     min: 'м',
@@ -171,6 +174,7 @@ export default {
     groups: {
       basic: 'Основные',
       organize: 'Метки и организация',
+      select: 'Выбор',
       data: 'Проверка и ссылки',
       queue: 'Очередь и порядок',
       queueOrder: 'Порядок',

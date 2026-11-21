@@ -31,6 +31,9 @@ export default {
     corrupt: 'Corrupt',
     cardsView: 'Cards View',
     tableView: 'Table View',
+    selectAll: 'Select All',
+    deselectAll: 'Deselect',
+    invertSelection: 'Invert Selection',
     day: 'd',
     hour: 'h',
     min: 'm',
@@ -171,6 +174,7 @@ export default {
     groups: {
       basic: 'Basic Tasks',
       organize: 'Organize & Tags',
+      select: 'Select',
       data: 'Verification & Links',
       queue: 'Queue & Scheduling',
       queueOrder: 'Queue Order',

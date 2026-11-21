@@ -1350,3 +1350,20 @@ export function clearSelection() {
   state.selectedId = null;
 }
 
+export function invertSelection() {
+  const currentSet = new Set(state.selectedIds);
+  const inverted = filteredTorrents.value.filter((t) => !currentSet.has(t.id)).map((t) => t.id);
+  state.selectedIds = inverted;
+  state.selectedId = inverted[0] || null;
+}
+
+export const isAllSelected = computed(() => {
+  if (filteredTorrents.value.length === 0) return false;
+  return filteredTorrents.value.every((t) => state.selectedIds.includes(t.id));
+});
+
+export const isSomeSelected = computed(() => {
+  if (isAllSelected.value) return false;
+  return filteredTorrents.value.some((t) => state.selectedIds.includes(t.id));
+});
+

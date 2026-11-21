@@ -796,7 +796,6 @@ function clearGroupFilter() {
 }
 
 .fluent-radio-row input[type="radio"] {
-  accent-color: var(--fluent-accent);
   cursor: pointer;
 }
 
