@@ -12,6 +12,14 @@ The interface follows **Microsoft Office 2016 Ribbon** conventions (flat solid c
 一款为路由器（Padavan / OpenWrt）与低配设备打造的轻量 **Transmission Web 客户端**。
 界面采用 **Microsoft Office 2016 Ribbon** 设计语言：纯平色块、选项卡式功能分组、选中任务时出现上下文选项卡，同时保持极小的构建体积与完全离线自治。
 
+> [!IMPORTANT]
+> **📢 重要使用须知与部署约定 (Deployment Notice)**：
+> **本项目不支持在前端 Web 界面中手动输入或动态配置外部 Transmission RPC 的 URL 地址与登录凭据。**
+> 
+> 本 Web UI 专门设计为**直接作为 Web 静态资源包挂载/部署在 Transmission 宿主机环境（如路由器 Padavan/OpenWrt、NAS、Docker 容器）**同源运行；在本地开发与调试阶段，则由 Vite 服务端通过环境变量（`TRANSMISSION_HOST` / `TRANSMISSION_PORT` / `TRANSMISSION_USER` / `TRANSMISSION_PASS`）统一反向代理与注入凭据，不需要也不支持用户在页面运行时随意手动更换远端服务器地址。
+> 
+> *Notice: This project does NOT support configuring custom RPC URLs or credentials from within the web interface. It is designed to be hosted directly on the same origin as the Transmission daemon (e.g. router flash, NAS, or Docker container), or proxied via Vite dev environment variables.*
+
 ---
 
 ## ✨ 功能亮点
