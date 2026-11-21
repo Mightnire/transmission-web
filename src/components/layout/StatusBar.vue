@@ -6,14 +6,17 @@
       <span class="status-text selectable">{{ selectionText }}</span>
     </div>
 
-    <!-- 中间：实时活跃状态提示 -->
-    <div class="status-section status-center">
-      <span class="active-dot" :class="{ 'is-active': counts.active > 0 }"></span>
-      <span class="status-text">{{ activeText }}</span>
-    </div>
+    <!-- 中间：留空 -->
+    <div class="status-section status-center"></div>
 
     <!-- 右侧：磁盘剩余空间、实时双向速率与控制项 -->
     <div class="status-section status-right">
+      <!-- 实时活跃状态提示 (紧邻可用空间左侧，仅在有真实传输时出现) -->
+      <div class="status-item active-transfer-item" v-if="activeTransfer.hasActive">
+        <span class="active-dot is-active"></span>
+        <span class="status-text">{{ activeText }}</span>
+      </div>
+
       <!-- 磁盘可用空间 -->
       <div class="status-item storage-item" v-if="freeSpaceBytes !== null" :title="downloadDirTooltip">
         <FluentIcon name="hard_drive" class="status-icon" />
@@ -183,24 +186,23 @@ const selectionText = computed(() => {
   });
 });
 
-// 活跃状态汇总
-const counts = computed(() => {
-  let downloading = 0;
-  let seeding = 0;
-  let active = 0;
+// 活跃状态汇总 (统计真实有传输速率的任务，保持静默原则)
+const activeTransfer = computed(() => {
+  let down = 0;
+  let up = 0;
   for (const item of state.torrents) {
-    if (item.rateDownload > 0 || item.rateUpload > 0) active++;
-    if (item.status === TorrentStatus.DOWNLOAD || item.status === TorrentStatus.DOWNLOAD_WAIT) downloading++;
-    if (item.status === TorrentStatus.SEED || item.status === TorrentStatus.SEED_WAIT) seeding++;
+    if (item.rateDownload > 0) down++;
+    if (item.rateUpload > 0) up++;
   }
-  return { downloading, seeding, active };
+  const total = down + up;
+  return { down, up, total, hasActive: total > 0 };
 });
 
 const activeText = computed(() => {
-  if (counts.value.active > 0) {
-    return t('statusbar.activeSummary', { down: counts.value.downloading, up: counts.value.seeding });
+  if (activeTransfer.value.hasActive) {
+    return t('statusbar.activeSummary', { down: activeTransfer.value.down, up: activeTransfer.value.up });
   }
-  return t('statusbar.idle');
+  return '';
 });
 
 // 限速状态判定与标识
@@ -424,6 +426,13 @@ onUnmounted(() => {
   color: var(--md-text-primary);
   font-family: var(--font-mono);
   font-size: 10.5px;
+  min-width: 96px;
+  font-variant-numeric: tabular-nums;
+}
+
+.active-transfer-item {
+  font-variant-numeric: tabular-nums;
+  margin-right: 2px;
 }
 
 .status-btn {
@@ -457,6 +466,11 @@ onUnmounted(() => {
 .speed-btn {
   font-family: var(--font-mono);
   font-size: 10px;
+  min-width: 84px;
+}
+
+.speed-btn.is-limited {
+  min-width: 144px;
 }
 
 /* 普通全局限速：沉稳科技蓝 */
@@ -506,9 +520,10 @@ onUnmounted(() => {
 }
 
 .speed-val {
-  min-width: 54px;
+  min-width: 66px;
   text-align: right;
   display: inline-block;
+  font-variant-numeric: tabular-nums;
 }
 
 .turtle-btn.active {
@@ -623,7 +638,7 @@ onUnmounted(() => {
 }
 
 .fluent-check-label input[type="checkbox"] {
-  accent-color: var(--fluent-accent);
+  cursor: pointer;
 }
 
 .flyout-footer {

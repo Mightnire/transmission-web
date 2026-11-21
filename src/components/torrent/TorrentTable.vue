@@ -123,10 +123,22 @@
             </template>
 
             <template v-else-if="col.id === 'name'">
-              <div
-                class="name-text"
-                :title="torrent.errorString ? `${torrent.name}\n\n[${t('status.error')}] ${torrent.errorString}` : torrent.name"
-              >{{ torrent.name }}</div>
+              <div class="name-cell-wrapper">
+                <span
+                  class="name-text"
+                  :title="torrent.errorString ? `${torrent.name}\n\n[${t('status.error')}] ${torrent.errorString}` : torrent.name"
+                >{{ torrent.name }}</span>
+                <button
+                  type="button"
+                  class="custom-rule-tag"
+                  v-if="hasCustomSettings(torrent)"
+                  :title="getCustomSettingsSummary(torrent)"
+                  @click.stop="openTorrentProps(torrent.id)"
+                  :aria-label="t('common.customRules')"
+                >
+                  <FluentIcon name="tune" class="custom-rule-icon" />
+                </button>
+              </div>
               <div class="fluent-error-pill" v-if="torrent.error !== 0 || torrent.errorString" :title="torrent.errorString">
                 <FluentIcon name="error_outline" class="pill-icon" />
                 <span class="pill-text">{{ torrent.errorString || t('status.error') }}</span>
@@ -216,7 +228,7 @@
             </template>
 
             <template v-else-if="col.id === 'savePath'">
-              <span :title="torrent.downloadDir">{{ torrent.downloadDir || '—' }}</span>
+              <span :title="torrent.downloadDir">{{ formatDisplayPath(torrent.downloadDir) || '—' }}</span>
             </template>
 
             <template v-else-if="col.id === 'labels'">
@@ -327,17 +339,27 @@
         <FluentIcon name="folder_open" />
         <span>{{ t('menu.setLocation') }}</span>
       </div>
-      <div class="menu-item" @click="handleAction('rename')">
-        <FluentIcon name="edit" />
-        <span>{{ t('menu.rename') }}</span>
-      </div>
-      <div class="menu-item" @click="handleAction('props')">
-        <FluentIcon name="tune" />
-        <span>{{ t('menu.props') }}</span>
-      </div>
-      <div class="menu-item" @click="handleAction('detail')">
-        <FluentIcon name="vertical_split" />
-        <span>{{ t('menu.detail') }}</span>
+
+      <!-- 单选专有功能 (多选时隐藏不可用项) -->
+      <template v-if="!isContextMenuMulti">
+        <div class="menu-item" @click="handleAction('rename')">
+          <FluentIcon name="edit" />
+          <span>{{ t('menu.rename') }}</span>
+        </div>
+        <div class="menu-item" @click="handleAction('props')">
+          <FluentIcon name="tune" />
+          <span>{{ t('menu.props') }}</span>
+        </div>
+        <div class="menu-item" @click="handleAction('detail')">
+          <FluentIcon name="vertical_split" />
+          <span>{{ t('menu.detail') }}</span>
+        </div>
+      </template>
+
+      <!-- 多选专属批量操作快捷：批量标签 -->
+      <div class="menu-item" v-if="isContextMenuMulti" @click="handleAction('batch-tags')">
+        <FluentIcon name="local_offer" class="text-accent" />
+        <span>{{ t('ribbon.batchTags') }}</span>
       </div>
       <div class="menu-divider"></div>
 
@@ -401,11 +423,16 @@ import {
   openRenameDialog,
   openConfirmRemove,
   copyTorrentMagnet,
+  copyTorrentMagnets,
   startTorrentsAction,
   stopTorrentsAction,
   startNowTorrentsAction,
   confirmVerifySelected,
   reannounceSelected,
+  isTorrentForced,
+  hasCustomSettings,
+  getCustomSettingsSummary,
+  formatDisplayPath,
 } from '../../stores/transmission';
 import { Torrent, TorrentStatus, Priority } from '../../api/types';
 import { t } from '../../locales';
@@ -762,6 +789,10 @@ function formatLimit(limited?: boolean, limit?: number): string {
   return limited ? `${limit ?? 0} KB/s` : '—';
 }
 
+const isContextMenuMulti = computed(() => {
+  return state.selectedIds.length > 1;
+});
+
 function openContextMenu(e: MouseEvent, id: number) {
   if (!isSelected(id)) {
     selectTorrent(id, false);
@@ -840,7 +871,7 @@ async function handleAction(action: string) {
       break;
     case 'copy-magnet':
       if (ids.length > 0) {
-        copyTorrentMagnet(ids[0]);
+        copyTorrentMagnets(ids);
       }
       break;
     case 'rename':
@@ -854,6 +885,12 @@ async function handleAction(action: string) {
         state.selectedIds = ids;
         state.selectedId = ids[0];
         openLocationDialog();
+      }
+      break;
+    case 'batch-tags':
+      if (ids.length > 0) {
+        state.selectedIds = ids;
+        state.batchTagsDialogOpen = true;
       }
       break;
     case 'remove':
@@ -940,7 +977,8 @@ function getStatusDisplayText(item: Torrent): string {
   if (item.status === TorrentStatus.CHECK_WAIT) {
     return t('status.checkWait');
   }
-  return getStatusText(item.status);
+  const base = getStatusText(item.status);
+  return isTorrentForced(item.id) ? `${base} [${t('status.forcedTag')}]` : base;
 }
 
 function getProgressFillClass(item: Torrent): string {
@@ -954,6 +992,7 @@ function getProgressFillClass(item: Torrent): string {
 function getStatusBadgeClass(item: Torrent): string {
   if (item.error !== 0) return 'badge-error';
   if (isChecking(item)) return 'badge-check';
+  if (isTorrentForced(item.id)) return 'badge-forced';
   if (item.status === TorrentStatus.DOWNLOAD) return 'badge-download';
   if (item.status === TorrentStatus.SEED) return 'badge-seed';
   if (isQueueWaiting(item)) return 'badge-queued';
@@ -1119,7 +1158,7 @@ function getStatusBadgeClass(item: Torrent): string {
 .cols-order-btn:disabled { opacity: 0.25; cursor: default; }
 
 .cols-menu-item:hover { background-color: var(--fluent-bg-hover); }
-.cols-menu-item input[type="checkbox"] { accent-color: var(--fluent-accent); }
+.cols-menu-item input[type="checkbox"] { cursor: pointer; }
 
 .sort-indicator {
   font-size: 9px;
@@ -1168,7 +1207,6 @@ function getStatusBadgeClass(item: Torrent): string {
 }
 
 .col-check input[type="checkbox"] {
-  accent-color: var(--fluent-accent);
   cursor: pointer;
   vertical-align: middle;
 }
@@ -1190,6 +1228,60 @@ function getStatusBadgeClass(item: Torrent): string {
   background-color: rgba(255, 152, 0, 0.18);
   color: #e65100;
   font-weight: 700;
+}
+
+.name-cell-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
+.name-cell-wrapper .name-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-rule-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background-color: rgba(3, 169, 244, 0.12);
+  color: #0288d1;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.custom-rule-tag:hover {
+  background-color: rgba(3, 169, 244, 0.24);
+  color: #01579b;
+}
+
+[data-theme="dark"] .custom-rule-tag {
+  background-color: rgba(3, 169, 244, 0.18);
+  color: #29b6f6;
+}
+
+[data-theme="dark"] .custom-rule-tag:hover {
+  background-color: rgba(3, 169, 244, 0.32);
+  color: #4fc3f7;
+}
+
+.custom-rule-tag .custom-rule-icon {
+  font-size: 13px !important;
+  line-height: 1;
 }
 
 .name-text {
@@ -1313,6 +1405,7 @@ function getStatusBadgeClass(item: Torrent): string {
 .badge-error { background-color: rgba(244, 67, 54, 0.15); color: #c62828; }
 .badge-check { background-color: rgba(255, 152, 0, 0.18); color: #e65100; font-weight: 600; }
 .badge-queued { background-color: rgba(255, 152, 0, 0.15); color: #ef6c00; font-weight: 600; }
+.badge-forced { background-color: rgba(255, 152, 0, 0.18); color: #e65100; font-weight: 600; }
 
 .down-val { color: #2e7d32; }
 .up-val { color: #ef6c00; }

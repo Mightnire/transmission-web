@@ -35,6 +35,139 @@
 
         <!-- 右侧连续滚动长页 (Continuous Scroll Content) -->
         <div class="chrome-scroll-container" ref="scrollContainer" @scroll.passive="onScroll">
+          <!-- 0. 界面与偏好 (Web 前端设置整合) -->
+          <section id="settings-sec-ui" class="chrome-section">
+            <header class="section-title">
+              <FluentIcon name="palette" class="sec-icon" />
+              <h3>{{ t('session.tabs.ui') }}</h3>
+            </header>
+
+            <div class="section-card">
+              <!-- 1. 外观与语言 -->
+              <h4 class="sub-title">{{ t('session.ui.general') }}</h4>
+              <div class="form-row align-items-center">
+                <span>{{ t('session.ui.language') }}</span>
+                <select class="select-input fixed-width-select" v-model="form.appLocale">
+                  <option value="zh-CN">简体中文</option>
+                  <option value="en-US">English</option>
+                  <option value="ru-RU">Русский</option>
+                </select>
+              </div>
+              <div class="form-row mt-2">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.compactDensity" />
+                  <span>{{ t('session.ui.compactDensity') }}</span>
+                </label>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- 2. 侧边栏分组显示 -->
+              <h4 class="sub-title">{{ t('session.ui.sidebarGroups') }}</h4>
+              <div class="form-vertical-switches">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.showTrackerGroup" />
+                  <span>{{ t('session.ui.showTrackers') }}</span>
+                </label>
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.showTagGroup" />
+                  <span>{{ t('session.ui.showTags') }}</span>
+                </label>
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.showFolderGroup" />
+                  <span>{{ t('session.ui.showFolders') }}</span>
+                </label>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- 3. 数据刷新频率 -->
+              <h4 class="sub-title">{{ t('session.ui.polling') }}</h4>
+              <div class="form-row">
+                <span>{{ t('session.ui.pollTorrents') }}</span>
+                <div class="unit-group">
+                  <input type="number" class="num-input fixed-num" v-model.number="form.pollIntervalTorrents" min="1" max="60" />
+                  <span class="unit-label">{{ t('common.sec') }}</span>
+                </div>
+              </div>
+              <div class="form-row">
+                <span>{{ t('session.ui.pollStats') }}</span>
+                <div class="unit-group">
+                  <input type="number" class="num-input fixed-num" v-model.number="form.pollIntervalStats" min="1" max="60" />
+                  <span class="unit-label">{{ t('common.sec') }}</span>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- 4. 保存路径显示别名替换 -->
+              <div class="card-header-row">
+                <div>
+                  <h4 class="sub-title" style="margin-bottom: 4px;">{{ t('session.ui.pathAliases') }}</h4>
+                  <p class="desc-text">{{ t('session.ui.pathAliasesDesc') }}</p>
+                </div>
+                <div class="header-btns">
+                  <button type="button" class="md-btn md-btn-flat mini-btn" @click="autoDetectPaths" :title="t('session.ui.autoDetect')">
+                    <FluentIcon name="bolt" class="btn-icon text-warning" />
+                    <span>{{ t('session.ui.autoDetect') }}</span>
+                  </button>
+                  <button type="button" class="md-btn md-btn-flat mini-btn primary" @click="addPathAliasRule">
+                    <FluentIcon name="add" class="btn-icon" />
+                    <span>{{ t('session.ui.addRule') }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="alias-table-wrapper" v-if="form.pathAliases.length > 0">
+                <table class="alias-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 46%;">{{ t('session.ui.originalPath') }}</th>
+                      <th style="width: 28px; text-align: center;"></th>
+                      <th style="width: 46%;">{{ t('session.ui.aliasName') }}</th>
+                      <th class="col-actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(rule, idx) in form.pathAliases" :key="idx">
+                      <td>
+                        <input
+                          type="text"
+                          class="alias-input"
+                          v-model="rule.from"
+                          placeholder="/media/AiDisk_a1"
+                        />
+                      </td>
+                      <td class="arrow-cell">→</td>
+                      <td>
+                        <input
+                          type="text"
+                          class="alias-input"
+                          v-model="rule.to"
+                          placeholder="U盘"
+                        />
+                      </td>
+                      <td class="col-actions">
+                        <button
+                          type="button"
+                          class="alias-delete-btn"
+                          @click="removePathAliasRule(idx)"
+                          :title="t('common.delete')"
+                        >
+                          <FluentIcon name="delete" />
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="empty-alias-hint" v-else>
+                <FluentIcon name="drive_file_rename_outline" class="empty-icon text-muted" />
+                <span>{{ t('session.ui.noAliases') }}</span>
+              </div>
+            </div>
+          </section>
+
           <!-- 1. 速度与计划 (包含常规限速与计划任务) -->
           <section id="settings-sec-speed" class="chrome-section">
             <header class="section-title">
@@ -227,7 +360,7 @@
                   <input type="number" class="num-input" v-model.number="form.peerPort" />
                   <button class="md-btn md-btn-flat btn-sm" @click="testPort" :disabled="testingPort">
                     <FluentIcon :name="testingPort ? 'sync' : 'network_check'" style="font-size: 16px;" />
-                    {{ testingPort ? t('session.network.portTesting') : t('session.network.testPort') }}
+                    <span>{{ testingPort ? t('session.network.portTesting') : t('session.network.testPort') }}</span>
                   </button>
                 </div>
               </div>
@@ -387,8 +520,8 @@
               </div>
               <div class="blocklist-action-row">
                 <button class="md-btn md-btn-flat" @click="updateBlocklist" :disabled="updatingBlocklist || !form.blocklistEnabled">
-                  <FluentIcon name="security" />
-                  {{ updatingBlocklist ? t('session.automation.blocklistUpdating') : t('session.automation.blocklistUpdate') }}
+                  <FluentIcon name="security" style="font-size: 16px;" />
+                  <span>{{ updatingBlocklist ? t('session.automation.blocklistUpdating') : t('session.automation.blocklistUpdate') }}</span>
                 </button>
                 <span class="blocklist-size" v-if="state.session?.['blocklist-size']">
                   {{ t('session.automation.blocklistRules', { count: state.session['blocklist-size'] }) }}
@@ -447,21 +580,29 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed, onMounted } from 'vue';
-import { state, fetchSession, formatBytes, showToast, describeError } from '../../stores/transmission';
+import {
+  state,
+  fetchSession,
+  formatBytes,
+  showToast,
+  describeError,
+  saveUIPreferences,
+} from '../../stores/transmission';
 import { useEscapeKey } from '../../composables/useEscapeKey';
-import { t } from '../../locales';
+import { t, currentLocale, setLocale, LocaleKey } from '../../locales';
 import { rpc } from '../../api/rpc';
 import FluentIcon from '../common/FluentIcon.vue';
 
 const props = defineProps<{ embedded?: boolean }>();
 const emit = defineEmits<{ (e: 'done'): void }>();
 
-type SectionId = 'speed' | 'queue' | 'network' | 'storage' | 'automation';
-const currentSection = ref<SectionId>('speed');
+type SectionId = 'ui' | 'speed' | 'queue' | 'network' | 'storage' | 'automation';
+const currentSection = ref<SectionId>('ui');
 const scrollContainer = ref<HTMLElement | null>(null);
 let isManualScroll = false;
 
 const navSections = computed(() => [
+  { id: 'ui' as SectionId, label: t('session.tabs.ui'), icon: 'palette' },
   { id: 'speed' as SectionId, label: t('session.tabs.speed'), icon: 'speed' },
   { id: 'queue' as SectionId, label: t('session.tabs.queue'), icon: 'low_priority' },
   { id: 'network' as SectionId, label: t('session.tabs.network'), icon: 'lan' },
@@ -491,7 +632,7 @@ function onScroll() {
   const container = scrollContainer.value;
   if (!container) return;
 
-  const sections: SectionId[] = ['speed', 'queue', 'network', 'storage', 'automation'];
+  const sections: SectionId[] = ['ui', 'speed', 'queue', 'network', 'storage', 'automation'];
 
   // 接近底部时直接高亮最后一项
   if (container.scrollHeight - container.scrollTop - container.clientHeight < 24) {
@@ -531,6 +672,16 @@ const timeBeginStr = ref('00:00');
 const timeEndStr = ref('00:00');
 
 const form = reactive({
+  // Web 前端专属偏好
+  appLocale: (localStorage.getItem('locale') as LocaleKey) || 'zh-CN',
+  compactDensity: state.compactDensity,
+  showTrackerGroup: state.uiPreferences.showTrackerGroup,
+  showTagGroup: state.uiPreferences.showTagGroup,
+  showFolderGroup: state.uiPreferences.showFolderGroup,
+  pollIntervalTorrents: state.uiPreferences.pollIntervalTorrents,
+  pollIntervalStats: state.uiPreferences.pollIntervalStats,
+  pathAliases: [] as Array<{ from: string; to: string }>,
+
   speedLimitDownEnabled: false,
   speedLimitDown: 0,
   speedLimitUpEnabled: false,
@@ -630,6 +781,15 @@ async function updateBlocklist() {
 }
 
 function initForm(s: any) {
+  form.appLocale = (localStorage.getItem('locale') as LocaleKey) || 'zh-CN';
+  form.compactDensity = state.compactDensity;
+  form.showTrackerGroup = state.uiPreferences.showTrackerGroup;
+  form.showTagGroup = state.uiPreferences.showTagGroup;
+  form.showFolderGroup = state.uiPreferences.showFolderGroup;
+  form.pollIntervalTorrents = state.uiPreferences.pollIntervalTorrents;
+  form.pollIntervalStats = state.uiPreferences.pollIntervalStats;
+  form.pathAliases = (state.uiPreferences.pathAliases || []).map((r) => ({ ...r }));
+
   form.speedLimitDownEnabled = s['speed-limit-down-enabled'] || false;
   form.speedLimitDown = s['speed-limit-down'] || 0;
   form.speedLimitUpEnabled = s['speed-limit-up-enabled'] || false;
@@ -684,6 +844,43 @@ function initForm(s: any) {
   }
 }
 
+function addPathAliasRule() {
+  form.pathAliases.push({ from: '', to: '' });
+}
+
+function removePathAliasRule(index: number) {
+  form.pathAliases.splice(index, 1);
+}
+
+function autoDetectPaths() {
+  const existingFroms = new Set(form.pathAliases.map((r) => r.from.trim()));
+  const discovered = new Set<string>();
+
+  if (state.session?.['download-dir']) {
+    discovered.add(state.session['download-dir'].trim());
+  }
+  for (const t of state.torrents) {
+    if (t.downloadDir && t.downloadDir.trim()) {
+      discovered.add(t.downloadDir.trim());
+    }
+  }
+
+  let added = 0;
+  for (const p of discovered) {
+    if (p && !existingFroms.has(p)) {
+      form.pathAliases.push({ from: p, to: '' });
+      existingFroms.add(p);
+      added++;
+    }
+  }
+
+  if (added > 0) {
+    showToast(`已识别并添加 ${added} 条路径候选`, 'info');
+  } else {
+    showToast('未发现新的未配置路径', 'info');
+  }
+}
+
 // 核心修复：仅在用户打开弹窗的一瞬间根据当前 session 同步一次表单！
 watch(
   () => state.sessionDialogOpen,
@@ -721,6 +918,24 @@ function isSafeAbsolutePath(pathStr: string): boolean {
 }
 
 async function saveSettings() {
+  // 1. 同步并持久化前端 UI 偏好设置
+  if (form.appLocale && form.appLocale !== currentLocale.value) {
+    setLocale(form.appLocale);
+  }
+
+  if (form.compactDensity !== state.compactDensity) {
+    state.compactDensity = form.compactDensity;
+    localStorage.setItem('compact_density', String(form.compactDensity));
+  }
+
+  state.uiPreferences.showTrackerGroup = form.showTrackerGroup;
+  state.uiPreferences.showTagGroup = form.showTagGroup;
+  state.uiPreferences.showFolderGroup = form.showFolderGroup;
+  state.uiPreferences.pollIntervalTorrents = Math.max(1, form.pollIntervalTorrents || 3);
+  state.uiPreferences.pollIntervalStats = Math.max(1, form.pollIntervalStats || 3);
+  state.uiPreferences.pathAliases = form.pathAliases.filter((r) => r.from && r.from.trim());
+  saveUIPreferences();
+
   const payload: any = {
     'speed-limit-down-enabled': form.speedLimitDownEnabled,
     'speed-limit-down': form.speedLimitDown,
@@ -999,7 +1214,6 @@ useEscapeKey(() => {
 }
 
 .form-check input[type="checkbox"] {
-  accent-color: var(--fluent-accent);
   cursor: pointer;
 }
 
@@ -1122,8 +1336,11 @@ useEscapeKey(() => {
 
 .btn-sm {
   height: 28px;
-  padding: 0 8px;
+  padding: 0 10px;
   font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .port-status-box {
@@ -1295,5 +1512,172 @@ useEscapeKey(() => {
   .unit-group {
     margin-left: auto;
   }
+}
+
+/* 界面与偏好卡片规整样式 */
+.fixed-width-select {
+  width: 260px;
+  max-width: 100%;
+}
+
+.fixed-num {
+  width: 70px;
+}
+
+.form-vertical-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.form-vertical-switches .form-check {
+  font-size: 13px;
+  color: var(--fluent-text-primary);
+}
+
+/* 路径替换别名表格与卡片样式 */
+.desc-text {
+  font-size: 12px;
+  color: var(--fluent-text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.header-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mini-btn {
+  height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--fluent-border-subtle);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--fluent-bg-canvas);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mini-btn:hover {
+  background-color: var(--fluent-bg-hover);
+}
+
+.mini-btn.primary {
+  color: var(--fluent-accent);
+  border-color: rgba(0, 120, 212, 0.35);
+  background-color: rgba(0, 120, 212, 0.06);
+}
+
+.mini-btn.primary:hover {
+  background-color: rgba(0, 120, 212, 0.12);
+}
+
+.btn-icon {
+  font-size: 14px;
+}
+
+.alias-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 4px;
+  background-color: var(--fluent-bg-canvas);
+}
+
+.alias-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.alias-table th {
+  background-color: var(--fluent-bg-subtle);
+  color: var(--fluent-text-muted);
+  text-align: left;
+  padding: 6px 10px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+}
+
+.alias-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  vertical-align: middle;
+}
+
+.alias-table tr:last-child td {
+  border-bottom: none;
+}
+
+.arrow-cell {
+  width: 24px;
+  text-align: center;
+  color: var(--fluent-text-muted);
+  font-weight: bold;
+}
+
+.alias-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--fluent-text-primary);
+  background-color: var(--fluent-bg-canvas);
+}
+
+.alias-input:focus {
+  outline: none;
+  border-color: var(--fluent-accent);
+}
+
+.col-actions {
+  width: 36px;
+  text-align: center;
+}
+
+.alias-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fluent-text-muted);
+  padding: 4px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alias-delete-btn:hover {
+  color: var(--md-danger, #d13438);
+  background-color: rgba(209, 52, 56, 0.1);
+}
+
+.empty-alias-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 12px;
+  color: var(--fluent-text-muted);
+  font-size: 12px;
+  border: 1px dashed var(--fluent-border-subtle);
+  border-radius: 4px;
 }
 </style>

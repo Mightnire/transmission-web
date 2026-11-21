@@ -116,12 +116,106 @@
           </div>
 
           <div class="form-group">
-            <input
-              type="text"
-              class="fluent-input"
-              v-model="downloadDir"
-              :placeholder="state.session?.['download-dir'] || '/media/AiDisk_a1/Downloads'"
-            />
+            <div class="combobox-container" ref="dirDropdownRef">
+              <div class="combobox-input-wrapper">
+                <input
+                  type="text"
+                  class="fluent-input combobox-input"
+                  v-model="downloadDir"
+                  :placeholder="state.session?.['download-dir'] || '/media/AiDisk_a1/Downloads'"
+                  @focus="openDropdown"
+                  @click="openDropdown"
+                  @keydown.esc="isDropdownOpen = false"
+                />
+                <button
+                  type="button"
+                  class="combobox-toggle-btn"
+                  :class="{ active: isDropdownOpen }"
+                  @click.stop="toggleDropdown"
+                  :title="t('addDialog.selectPath')"
+                  tabindex="-1"
+                >
+                  <FluentIcon name="expand_more" />
+                </button>
+              </div>
+
+              <!-- 下拉建议浮层 -->
+              <div
+                class="combobox-dropdown"
+                :class="{ 'placement-up': dropdownPlacement === 'up' }"
+                :style="{ maxHeight: dropdownMaxHeight + 'px' }"
+                v-if="isDropdownOpen && hasDropdownItems"
+              >
+                <!-- 最近使用 -->
+                <div class="dropdown-group" v-if="filteredRecentDirs.length > 0">
+                  <div class="dropdown-group-header">
+                    <FluentIcon name="history" class="group-icon" />
+                    <span>{{ t('addDialog.recentDirs') }}</span>
+                  </div>
+                  <div
+                    class="dropdown-item"
+                    v-for="item in filteredRecentDirs"
+                    :key="'recent-' + item.path"
+                    :class="{ selected: downloadDir === item.path }"
+                    @click="selectDir(item.path)"
+                  >
+                    <div class="item-left">
+                      <FluentIcon name="folder" class="item-icon" />
+                      <div class="item-content">
+                        <span class="item-alias" v-if="item.alias">{{ item.alias }}</span>
+                        <span class="item-path" :class="{ muted: !!item.alias }">{{ item.path }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 现有任务保存路径 -->
+                <div class="dropdown-group" v-if="filteredFolderGroups.length > 0">
+                  <div class="dropdown-group-header">
+                    <FluentIcon name="folder_copy" class="group-icon" />
+                    <span>{{ t('addDialog.existingFolderGroups') }}</span>
+                  </div>
+                  <div
+                    class="dropdown-item"
+                    v-for="item in filteredFolderGroups"
+                    :key="'group-' + item.path"
+                    :class="{ selected: downloadDir === item.path }"
+                    @click="selectDir(item.path)"
+                  >
+                    <div class="item-left">
+                      <FluentIcon name="folder" class="item-icon" />
+                      <div class="item-content">
+                        <span class="item-alias" v-if="item.alias">{{ item.alias }}</span>
+                        <span class="item-path" :class="{ muted: !!item.alias }">{{ item.path }}</span>
+                      </div>
+                    </div>
+                    <span class="item-badge" v-if="item.count">{{ item.count }}</span>
+                  </div>
+                </div>
+
+                <!-- 默认下载目录 -->
+                <div class="dropdown-group" v-if="defaultOption">
+                  <div class="dropdown-group-header">
+                    <FluentIcon name="settings" class="group-icon" />
+                    <span>{{ t('addDialog.defaultDir') }}</span>
+                  </div>
+                  <div
+                    class="dropdown-item"
+                    :class="{ selected: downloadDir === defaultOption.path }"
+                    @click="selectDir(defaultOption.path)"
+                  >
+                    <div class="item-left">
+                      <FluentIcon name="home" class="item-icon" />
+                      <div class="item-content">
+                        <span class="item-alias" v-if="defaultOption.alias">{{ defaultOption.alias }}</span>
+                        <span class="item-path" :class="{ muted: !!defaultOption.alias }">{{ defaultOption.path }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="dir-free-space" v-if="freeSpaceBytes !== null">
               <FluentIcon name="hard_drive" style="font-size: 13px;" />
               <span>{{ t('addDialog.freeSpace', { size: formatBytes(freeSpaceBytes) }) }}</span>
@@ -158,8 +252,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
-import { state, fetchTorrents, showToast, describeError, formatBytes } from '../../stores/transmission';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { state, fetchTorrents, showToast, describeError, formatBytes, formatDisplayPath } from '../../stores/transmission';
 import { useEscapeKey } from '../../composables/useEscapeKey';
 import { t } from '../../locales';
 import { rpc } from '../../api/rpc';
@@ -183,6 +277,172 @@ const isDragging = ref(false);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const selectedFiles = ref<SelectedTorrentFile[]>([]);
 const isSubmitting = ref(false);
+
+const RECENT_DIRS_KEY = 'transmission_recent_download_dirs';
+
+function loadRecentDirs(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_DIRS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+const recentDirs = ref<string[]>(loadRecentDirs());
+
+function saveRecentDir(path: string) {
+  if (!path || !path.trim()) return;
+  const trimmed = path.trim();
+  try {
+    const list = loadRecentDirs().filter((p) => p !== trimmed);
+    list.unshift(trimmed);
+    const capped = list.slice(0, 8);
+    localStorage.setItem(RECENT_DIRS_KEY, JSON.stringify(capped));
+    recentDirs.value = capped;
+  } catch {}
+}
+
+const dirDropdownRef = ref<HTMLElement | null>(null);
+const isDropdownOpen = ref(false);
+const dropdownPlacement = ref<'down' | 'up'>('down');
+const dropdownMaxHeight = ref<number>(220);
+
+async function updateDropdownPosition() {
+  await nextTick();
+  if (!dirDropdownRef.value) return;
+  const rect = dirDropdownRef.value.getBoundingClientRect();
+
+  // 视口与弹窗/Backstage 容器双重感知：不仅看窗口，还要看最近的滚动容器边界
+  const container = dirDropdownRef.value.closest('.md-dialog-content, .backstage-body') as HTMLElement | null;
+  const containerRect = container ? container.getBoundingClientRect() : null;
+
+  const limitBottom = containerRect ? Math.min(window.innerHeight, containerRect.bottom) : window.innerHeight;
+  const limitTop = containerRect ? Math.max(0, containerRect.top) : 0;
+
+  const spaceBelow = limitBottom - rect.bottom - 12;
+  const spaceAbove = rect.top - limitTop - 12;
+
+  // 下方空间不足 200px 且上方空间更充裕时，自适应向上展开；否则向下展开
+  if (spaceBelow < 200 && spaceAbove > spaceBelow) {
+    dropdownPlacement.value = 'up';
+    dropdownMaxHeight.value = Math.min(220, Math.max(90, Math.floor(spaceAbove)));
+  } else {
+    dropdownPlacement.value = 'down';
+    dropdownMaxHeight.value = Math.min(220, Math.max(90, Math.floor(spaceBelow)));
+  }
+}
+
+async function openDropdown() {
+  isDropdownOpen.value = true;
+  await updateDropdownPosition();
+}
+
+async function toggleDropdown() {
+  isDropdownOpen.value = !isDropdownOpen.value;
+  if (isDropdownOpen.value) {
+    await updateDropdownPosition();
+  }
+}
+
+watch(isDropdownOpen, (open) => {
+  if (open) {
+    updateDropdownPosition();
+    window.addEventListener('resize', updateDropdownPosition, { passive: true });
+    window.addEventListener('scroll', updateDropdownPosition, { passive: true, capture: true });
+  } else {
+    window.removeEventListener('resize', updateDropdownPosition);
+    window.removeEventListener('scroll', updateDropdownPosition, true);
+  }
+});
+
+function onDocumentClick(e: MouseEvent) {
+  if (dirDropdownRef.value && !dirDropdownRef.value.contains(e.target as Node)) {
+    isDropdownOpen.value = false;
+  }
+}
+
+function selectDir(path: string) {
+  downloadDir.value = path;
+  isDropdownOpen.value = false;
+  updateFreeSpace(path);
+}
+
+const folderGroups = computed(() => {
+  const map = new Map<string, number>();
+  for (const t of state.torrents) {
+    if (t.downloadDir) {
+      map.set(t.downloadDir, (map.get(t.downloadDir) || 0) + 1);
+    }
+  }
+  return Array.from(map.entries()).map(([path, count]) => {
+    const alias = formatDisplayPath(path);
+    return {
+      path,
+      count,
+      alias: alias !== path ? alias : undefined,
+    };
+  });
+});
+
+const filteredRecentDirs = computed(() => {
+  const q = (downloadDir.value || '').trim().toLowerCase();
+  return recentDirs.value
+    .map((path) => {
+      const alias = formatDisplayPath(path);
+      return {
+        path,
+        alias: alias !== path ? alias : undefined,
+      };
+    })
+    .filter((item) => {
+      if (!q) return true;
+      return (
+        item.path.toLowerCase().includes(q) ||
+        (item.alias && item.alias.toLowerCase().includes(q))
+      );
+    });
+});
+
+const filteredFolderGroups = computed(() => {
+  const q = (downloadDir.value || '').trim().toLowerCase();
+  const recentPaths = new Set(filteredRecentDirs.value.map((r) => r.path));
+  return folderGroups.value
+    .filter((item) => !recentPaths.has(item.path))
+    .filter((item) => {
+      if (!q) return true;
+      return (
+        item.path.toLowerCase().includes(q) ||
+        (item.alias && item.alias.toLowerCase().includes(q))
+      );
+    });
+});
+
+const defaultOption = computed(() => {
+  const def = state.session?.['download-dir'];
+  if (!def) return null;
+  const recentPaths = new Set(filteredRecentDirs.value.map((r) => r.path));
+  const groupPaths = new Set(filteredFolderGroups.value.map((g) => g.path));
+  if (recentPaths.has(def) || groupPaths.has(def)) return null;
+
+  const q = (downloadDir.value || '').trim().toLowerCase();
+  const alias = formatDisplayPath(def);
+  if (q && !def.toLowerCase().includes(q) && (!alias || !alias.toLowerCase().includes(q))) {
+    return null;
+  }
+  return {
+    path: def,
+    alias: alias !== def ? alias : undefined,
+  };
+});
+
+const hasDropdownItems = computed(() => {
+  return (
+    filteredRecentDirs.value.length > 0 ||
+    filteredFolderGroups.value.length > 0 ||
+    !!defaultOption.value
+  );
+});
 
 const parsedUrls = computed(() => {
   return magnetUrl.value
@@ -220,10 +480,17 @@ watch(() => state.session?.['download-dir'], (val) => {
 });
 
 onMounted(() => {
+  document.addEventListener('mousedown', onDocumentClick);
   if (!downloadDir.value && state.session?.['download-dir']) {
     downloadDir.value = state.session['download-dir'];
   }
   updateFreeSpace(downloadDir.value);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('mousedown', onDocumentClick);
+  window.removeEventListener('resize', updateDropdownPosition);
+  window.removeEventListener('scroll', updateDropdownPosition, true);
 });
 
 useEscapeKey(() => {
@@ -284,8 +551,9 @@ async function submit() {
     const baseOpts: any = {
       paused: !startNow.value,
     };
-    if (downloadDir.value.trim()) {
-      baseOpts.downloadDir = downloadDir.value.trim();
+    const targetDir = downloadDir.value.trim();
+    if (targetDir) {
+      baseOpts['download-dir'] = targetDir;
     }
 
     const tasks: Promise<any>[] = [];
@@ -303,6 +571,9 @@ async function submit() {
     const failCount = results.length - successCount;
 
     if (successCount > 0) {
+      if (targetDir) {
+        saveRecentDir(targetDir);
+      }
       magnetUrl.value = '';
       selectedFiles.value = [];
       fetchTorrents();
@@ -597,7 +868,6 @@ async function submit() {
 }
 
 .checkbox-label input[type="checkbox"] {
-  accent-color: var(--fluent-accent);
   cursor: pointer;
 }
 
@@ -612,6 +882,183 @@ async function submit() {
 
 .dir-free-space span {
   font-family: var(--font-mono);
+}
+
+/* 路径选择 Combobox 样式 */
+.combobox-container {
+  position: relative;
+  width: 100%;
+}
+
+.combobox-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.combobox-input {
+  width: 100%;
+  padding-right: 30px !important;
+}
+
+.combobox-toggle-btn {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 28px;
+  border: none;
+  background: transparent;
+  color: var(--md-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 0 var(--fluent-radius) var(--fluent-radius) 0;
+  transition: all 0.15s ease;
+}
+
+.combobox-toggle-btn:hover {
+  background: var(--fluent-bg-hover);
+  color: var(--md-text-primary);
+}
+
+.combobox-toggle-btn.active {
+  color: var(--fluent-accent);
+  transform: rotate(180deg);
+}
+
+.combobox-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  background: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  z-index: 1000;
+  padding: 4px 0;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--fluent-border-strong) transparent;
+}
+
+.combobox-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.combobox-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.combobox-dropdown::-webkit-scrollbar-thumb {
+  background-color: var(--fluent-border-strong);
+  border-radius: 3px;
+}
+
+.combobox-dropdown:not(.placement-up) {
+  top: calc(100% + 4px);
+}
+
+.combobox-dropdown.placement-up {
+  bottom: calc(100% + 4px);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.dropdown-group {
+  padding-bottom: 4px;
+}
+
+.dropdown-group:not(:last-child) {
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  margin-bottom: 4px;
+}
+
+.dropdown-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--md-text-secondary);
+}
+
+.group-icon {
+  font-size: 13px;
+  color: var(--fluent-accent);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.dropdown-item:hover {
+  background: var(--fluent-bg-hover);
+}
+
+.dropdown-item.selected {
+  background: var(--fluent-bg-subtle);
+  font-weight: 500;
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.item-icon {
+  font-size: 15px;
+  color: var(--md-text-secondary);
+  flex-shrink: 0;
+}
+
+.item-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.item-alias {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--md-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-path {
+  font-size: 11px;
+  color: var(--md-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-path.muted {
+  font-size: 10px;
+  color: var(--md-text-secondary);
+}
+
+.item-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--fluent-border-subtle);
+  color: var(--md-text-secondary);
+  flex-shrink: 0;
 }
 
 .primary-submit-btn {
@@ -635,7 +1082,7 @@ async function submit() {
   display: block;
   padding: 0;
   background: transparent;
-  overflow: visible;
+  overflow: visible !important;
 }
 
 .add-dialog.embedded-card {
@@ -648,18 +1095,19 @@ async function submit() {
   background: transparent;
   animation: none !important;
   transform: none !important;
+  overflow: visible !important;
 }
 
 .md-dialog-overlay.embedded .md-dialog-content {
   padding: 0;
   max-height: none;
-  overflow: visible;
+  overflow: visible !important;
 }
 
 .embedded-actions {
   background: transparent;
   border-top: none;
-  padding: 10px 0 0;
+  padding: 10px 0 24px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;

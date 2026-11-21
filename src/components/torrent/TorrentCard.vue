@@ -135,11 +135,13 @@
         <!-- 任务属性 -->
         <button
           class="fluent-pill-btn"
+          :class="{ 'btn-custom-props': hasCustomSettings(torrent) }"
           @click="openProps"
-          :title="t('ribbon.tabs.torrentProps')"
+          :title="hasCustomSettings(torrent) ? `${t('ribbon.tabs.torrentProps')}\n${getCustomSettingsSummary(torrent)}` : t('ribbon.tabs.torrentProps')"
         >
           <FluentIcon name="tune" class="btn-icon" />
           <span>{{ t('common.properties') }}</span>
+          <span class="custom-badge-dot" v-if="hasCustomSettings(torrent)"></span>
         </button>
 
         <!-- 删除按钮 -->
@@ -167,6 +169,9 @@ import {
   openConfirmRemove,
   startTorrentsAction,
   stopTorrentsAction,
+  isTorrentForced,
+  hasCustomSettings,
+  getCustomSettingsSummary,
 } from '../../stores/transmission';
 import { t } from '../../locales';
 import { rpc } from '../../api/rpc';
@@ -189,11 +194,14 @@ const progressPercent = computed(() => {
 
 const statusText = computed(() => {
   if (props.torrent.error !== 0) return t('sidebar.errors');
+  let base = '';
   switch (props.torrent.status) {
     case TorrentStatus.DOWNLOAD:
-      return t('sidebar.downloading');
+      base = t('sidebar.downloading');
+      break;
     case TorrentStatus.SEED:
-      return t('sidebar.seeding');
+      base = t('sidebar.seeding');
+      break;
     case TorrentStatus.CHECK:
       return t('status.checking');
     case TorrentStatus.CHECK_WAIT:
@@ -206,10 +214,12 @@ const statusText = computed(() => {
     default:
       return t('sidebar.all');
   }
+  return isTorrentForced(props.torrent.id) ? `${base} [${t('status.forcedTag')}]` : base;
 });
 
 const statusIcon = computed(() => {
   if (props.torrent.error !== 0) return 'error_outline';
+  if (isTorrentForced(props.torrent.id)) return 'bolt';
   switch (props.torrent.status) {
     case TorrentStatus.DOWNLOAD:
       return 'arrow_downward';
@@ -230,6 +240,7 @@ const statusIcon = computed(() => {
 
 const statusClass = computed(() => {
   if (props.torrent.error !== 0) return 'pill-error';
+  if (isTorrentForced(props.torrent.id)) return 'pill-forced';
   switch (props.torrent.status) {
     case TorrentStatus.DOWNLOAD:
       return 'pill-download';
@@ -342,11 +353,7 @@ function removeTorrent() {
 }
 
 .fluent-checkbox {
-  width: 16px;
-  height: 16px;
   cursor: pointer;
-  accent-color: var(--fluent-accent);
-  border-radius: 3px;
 }
 
 .header-pills {
@@ -385,6 +392,12 @@ function removeTorrent() {
 .pill-seed {
   background-color: rgba(0, 120, 212, 0.12);
   color: #0078d4;
+}
+
+.pill-forced {
+  background-color: rgba(255, 152, 0, 0.18);
+  color: #e65100;
+  font-weight: 600;
 }
 
 .pill-waiting {
@@ -664,6 +677,28 @@ function removeTorrent() {
   color: #d83b01;
   border-color: rgba(216, 59, 1, 0.25);
   background-color: rgba(216, 59, 1, 0.08);
+}
+
+.fluent-pill-btn.btn-custom-props {
+  background-color: rgba(3, 169, 244, 0.12);
+  color: #0288d1;
+  border-color: rgba(3, 169, 244, 0.35);
+  position: relative;
+}
+
+.fluent-pill-btn.btn-custom-props .btn-icon {
+  color: #0288d1;
+}
+
+.custom-badge-dot {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #0288d1;
+  box-shadow: 0 0 0 1.5px var(--fluent-bg-canvas);
 }
 
 .fluent-pill-btn.btn-danger {

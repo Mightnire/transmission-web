@@ -262,6 +262,7 @@ export interface SessionInfo {
   'blocklist-enabled': boolean;
   'blocklist-size': number;
   'blocklist-url': string;
+  'cache-size-mb'?: number;
   'config-dir': string;
   'default-trackers'?: string;
   'dht-enabled': boolean;

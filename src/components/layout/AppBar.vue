@@ -471,10 +471,10 @@
 
       <!-- 2.4 视图与偏好标签页 (View) -->
       <div class="ribbon-tab-pane" v-else-if="currentTab === 'view'">
-        <!-- 侧边栏与分组 (Office 2016 规范双行切换按钮，大方干掉复选框) -->
+        <!-- 侧边栏与分组 (Office 2016 规范切换按钮) -->
         <div class="ribbon-group">
           <div class="ribbon-controls">
-            <div class="btn-stack-2row">
+            <div class="btn-stack">
               <button
                 class="fluent-btn-small ribbon-toggle-btn"
                 :class="{ active: state.uiPreferences.showTrackerGroup }"
@@ -492,6 +492,15 @@
               >
                 <FluentIcon name="local_offer" />
                 <span>{{ t('ribbon.showTags') }}</span>
+              </button>
+              <button
+                class="fluent-btn-small ribbon-toggle-btn"
+                :class="{ active: state.uiPreferences.showFolderGroup }"
+                @click="state.uiPreferences.showFolderGroup = !state.uiPreferences.showFolderGroup; saveUIPreferences()"
+                :title="t('ribbon.showFolders')"
+              >
+                <FluentIcon name="folder" />
+                <span>{{ t('ribbon.showFolders') }}</span>
               </button>
             </div>
           </div>
@@ -1137,6 +1146,7 @@ import {
   confirmVerifySelected,
   removeSelected,
   openTorrentProps,
+  updateTorrentPropsOptimistically,
   fetchTorrents,
   saveColumns,
   resetColumns,
@@ -1152,6 +1162,7 @@ import {
   showToast,
   describeError,
   copyTorrentMagnet,
+  copyTorrentMagnets,
   startTorrentsAction,
   stopTorrentsAction,
   startNowTorrentsAction,
@@ -1409,14 +1420,9 @@ watch(hasSelection, (newVal) => {
 async function updateSelectedTorrents(props: Record<string, any>) {
   const ids = targetTorrentIds.value;
   if (ids.length === 0) return;
-  for (const id of ids) {
-    const item = state.torrents.find((t) => t.id === id);
-    if (item) Object.assign(item, props);
-  }
   try {
-    await rpc.torrentSet({ ids, ...props });
+    await updateTorrentPropsOptimistically(ids, props);
   } catch (err: any) {
-    await fetchTorrents();
     showToast(t('common.failed', { error: describeError(err) }), 'error');
   }
 }
@@ -1589,8 +1595,9 @@ function handleRemove(trashData = false) {
 }
 
 function copyMagnet() {
-  if (!selectedTorrentId.value) return;
-  copyTorrentMagnet(selectedTorrentId.value);
+  const ids = state.selectedIds.length > 0 ? state.selectedIds : (selectedTorrentId.value ? [selectedTorrentId.value] : []);
+  if (ids.length === 0) return;
+  copyTorrentMagnets(ids);
 }
 
 function openProps() {
@@ -2271,10 +2278,7 @@ function toggleTheme() {
 
 .office-checkbox-native {
   margin: 0;
-  width: 13px;
-  height: 13px;
   cursor: pointer;
-  accent-color: var(--fluent-accent);
 }
 
 .office-checkbox-row .row-icon {

@@ -100,6 +100,19 @@
             <span class="nav-badge badge-queued" v-if="counts.queued > 0">{{ counts.queued }}</span>
           </div>
 
+          <!-- 强制开始 (跳过队列限制) -->
+          <div
+            class="fluent-nav-item"
+            :class="{ active: state.filter.status === 'forced' }"
+            @click="setStatusFilter('forced')"
+            :title="t('sidebar.forced')"
+          >
+            <div class="active-indicator"></div>
+            <FluentIcon name="bolt" class="nav-icon text-warning" />
+            <span class="nav-label">{{ t('sidebar.forced') }}</span>
+            <span class="nav-badge badge-warning" v-if="counts.forced > 0">{{ counts.forced }}</span>
+          </div>
+
           <!-- 已完成 -->
           <div
             class="fluent-nav-item"
@@ -169,12 +182,52 @@
               :key="tg.name"
               :class="{ active: state.selectedTag === tg.name }"
               @click="toggleTag(tg.name)"
-              :title="tg.name"
+              :title="tg.label"
             >
               <div class="active-indicator"></div>
-              <FluentIcon name="local_offer" class="nav-icon text-accent" />
-              <span class="nav-label">{{ tg.name }}</span>
+              <FluentIcon :name="tg.isUntagged ? 'label_off' : 'local_offer'" class="nav-icon" :class="tg.isUntagged ? 'text-muted' : 'text-accent'" />
+              <span class="nav-label">{{ tg.label }}</span>
               <span class="nav-badge">{{ tg.count }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- 保存路径分组 (按存储目录) -->
+      <template v-if="state.uiPreferences.showFolderGroup && folderGroups.length > 0">
+        <div class="fluent-divider"></div>
+        <div class="nav-section">
+          <div class="section-header-flex clickable" @click="folderCollapsed = !folderCollapsed">
+            <span class="section-label">{{ t('sidebar.folders') }}</span>
+            <div class="header-actions">
+              <button
+                class="clear-filter-btn"
+                v-if="state.selectedFolder"
+                @click.stop="clearGroupFilter"
+                title="Clear"
+              >
+                <FluentIcon name="close" />
+              </button>
+              <button class="section-collapse-btn" @click.stop="folderCollapsed = !folderCollapsed">
+                <FluentIcon :name="folderCollapsed ? 'chevron_right' : 'expand_more'" />
+              </button>
+            </div>
+          </div>
+
+          <div class="nav-items-group" v-show="!folderCollapsed">
+            <div
+              class="fluent-nav-item"
+              v-for="fg in folderGroups"
+              :key="fg.path"
+              :class="{ active: state.selectedFolder === fg.path }"
+              @click="toggleFolder(fg.path)"
+              @contextmenu.prevent="onFolderContextMenu(fg.path)"
+              :title="fg.display !== fg.path ? `${fg.display}\n(${fg.path})` : fg.path"
+            >
+              <div class="active-indicator"></div>
+              <FluentIcon name="folder" class="nav-icon text-muted" />
+              <span class="nav-label" :title="fg.path">{{ fg.display }}</span>
+              <span class="nav-badge">{{ fg.count }}</span>
             </div>
           </div>
         </div>
@@ -232,7 +285,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { state } from '../../stores/transmission';
+import { state, formatDisplayPath, setPathAlias, openPrompt, showToast } from '../../stores/transmission';
 import { useEscapeKey } from '../../composables/useEscapeKey';
 import { TorrentStatus } from '../../api/types';
 import { t } from '../../locales';
@@ -301,12 +354,18 @@ watch(trackerCollapsed, (val) => {
   localStorage.setItem('tracker_collapsed', String(val));
 });
 
+const folderCollapsed = ref(localStorage.getItem('folder_collapsed') === 'true');
+watch(folderCollapsed, (val) => {
+  localStorage.setItem('folder_collapsed', String(val));
+});
+
 const counts = computed(() => {
   const c = {
     active: 0,
     downloading: 0,
     seeding: 0,
     queued: 0,
+    forced: 0,
     finished: 0,
     paused: 0,
     error: 0,
@@ -317,10 +376,15 @@ const counts = computed(() => {
     if (item.status === TorrentStatus.DOWNLOAD || item.status === TorrentStatus.DOWNLOAD_WAIT) c.downloading++;
     if (item.status === TorrentStatus.SEED || item.status === TorrentStatus.SEED_WAIT) c.seeding++;
     if (item.status === TorrentStatus.DOWNLOAD_WAIT || item.status === TorrentStatus.SEED_WAIT) c.queued++;
+    if (state.forcedTorrentIds.has(item.id) && (item.status === TorrentStatus.DOWNLOAD || item.status === TorrentStatus.SEED)) c.forced++;
     if (item.status === TorrentStatus.STOPPED) c.paused++;
     if (item.isFinished || item.percentDone >= 1.0) c.finished++;
   }
   return c;
+});
+
+const untaggedCount = computed(() => {
+  return state.torrents.filter((t) => !t.labels || t.labels.length === 0).length;
 });
 
 const tagGroups = computed(() => {
@@ -333,8 +397,57 @@ const tagGroups = computed(() => {
       }
     }
   }
-  return Object.entries(map).map(([name, count]) => ({ name, count }));
+  const list = Object.entries(map).map(([name, count]) => ({
+    name,
+    label: name,
+    count,
+    isUntagged: false
+  }));
+
+  // 用户要求：无标签筛选放在最顶部
+  if (untaggedCount.value > 0) {
+    list.unshift({
+      name: '__untagged__',
+      label: t('sidebar.noTags') || '无标签任务',
+      count: untaggedCount.value,
+      isUntagged: true
+    });
+  }
+
+  return list;
 });
+
+const folderGroups = computed(() => {
+  const map: Record<string, number> = {};
+  for (const item of state.torrents) {
+    const dir = item.downloadDir?.trim() || '';
+    if (dir) {
+      map[dir] = (map[dir] || 0) + 1;
+    }
+  }
+  return Object.entries(map)
+    .map(([path, count]) => ({
+      path,
+      display: formatDisplayPath(path),
+      count,
+    }))
+    .sort((a, b) => a.display.localeCompare(b.display));
+});
+
+function onFolderContextMenu(path: string) {
+  const currentAlias = formatDisplayPath(path);
+  openPrompt({
+    title: t('pathAlias.setAliasTitle'),
+    label: `${t('pathAlias.originalPath')}: ${path}`,
+    value: currentAlias !== path ? currentAlias : '',
+    placeholder: t('pathAlias.aliasPlaceholder'),
+    confirmText: t('common.save'),
+    onConfirm: (val) => {
+      setPathAlias(path, val ? val.trim() : '');
+      showToast(t('toast.saved'), 'success');
+    },
+  });
+}
 
 const trackerGroups = computed(() => {
   const map: Record<string, number> = {};
@@ -361,6 +474,7 @@ function setStatusFilter(status: any) {
   state.filter.status = status;
   state.selectedTag = null;
   state.selectedTracker = null;
+  state.selectedFolder = null;
   if (window.innerWidth <= 1024) {
     state.sidebarOpen = false;
   }
@@ -369,6 +483,7 @@ function setStatusFilter(status: any) {
 function toggleTag(tag: string) {
   state.selectedTag = state.selectedTag === tag ? null : tag;
   state.selectedTracker = null;
+  state.selectedFolder = null;
   if (window.innerWidth <= 1024) {
     state.sidebarOpen = false;
   }
@@ -377,6 +492,16 @@ function toggleTag(tag: string) {
 function toggleTracker(host: string) {
   state.selectedTracker = state.selectedTracker === host ? null : host;
   state.selectedTag = null;
+  state.selectedFolder = null;
+  if (window.innerWidth <= 1024) {
+    state.sidebarOpen = false;
+  }
+}
+
+function toggleFolder(path: string) {
+  state.selectedFolder = state.selectedFolder === path ? null : path;
+  state.selectedTag = null;
+  state.selectedTracker = null;
   if (window.innerWidth <= 1024) {
     state.sidebarOpen = false;
   }
@@ -385,6 +510,7 @@ function toggleTracker(host: string) {
 function clearGroupFilter() {
   state.selectedTag = null;
   state.selectedTracker = null;
+  state.selectedFolder = null;
 }
 </script>
 

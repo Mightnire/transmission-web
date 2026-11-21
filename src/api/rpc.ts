@@ -295,7 +295,12 @@ export class TransmissionRPC {
   // =========================================================================
 
   public async torrentAdd(args: TorrentAddArgs): Promise<TorrentAddResult> {
-    return this.request<TorrentAddResult>('torrent-add', args);
+    const payload: any = { ...args };
+    if (payload.downloadDir && !payload['download-dir']) {
+      payload['download-dir'] = payload.downloadDir;
+      delete payload.downloadDir;
+    }
+    return this.request<TorrentAddResult>('torrent-add', payload);
   }
 
   // =========================================================================

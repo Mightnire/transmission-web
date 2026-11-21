@@ -1,11 +1,11 @@
 <template>
   <div class="panel network-panel">
-    <div class="network-head">
-      <h3>{{ t('backstage.network') }}</h3>
-      <button class="network-settings" @click="emit('openSettings')">
-        <FluentIcon name="settings" />
-        <span>{{ t('backstage.settings') }}</span>
-      </button>
+    <div class="panel-head">
+      <div>
+        <h3>{{ t('backstage.network') }}</h3>
+        <p>{{ t('backstage.networkSubtitle') }}</p>
+      </div>
+      <FluentIcon name="lan" class="panel-icon text-accent" />
     </div>
 
     <div class="network-grid">
@@ -40,28 +40,32 @@
     </div>
 
     <div class="network-actions">
-      <button class="network-btn" @click="testPort" :disabled="testingPort">
-        <FluentIcon name="lan" />
-        <span>{{ testingPort ? t('backstage.portTesting') : t('backstage.testPort') }}</span>
-      </button>
-      <span
-        class="port-result"
-        v-if="portStatus !== null"
-        :class="portStatus ? 'ok' : 'bad'"
-      >
-        <i></i>
-        {{ portStatus ? t('backstage.portOpen') : t('backstage.portClosed') }}
-      </span>
-      <span class="port-result muted" v-else>{{ t('backstage.portUntested') }}</span>
+      <div class="network-actions-left">
+        <button class="network-btn" @click="testPort" :disabled="testingPort">
+          <FluentIcon :name="testingPort ? 'sync' : 'network_check'" />
+          <span>{{ testingPort ? t('backstage.portTesting') : t('backstage.testPort') }}</span>
+        </button>
+        <span
+          class="port-result"
+          v-if="portStatus !== null"
+          :class="portStatus ? 'ok' : 'bad'"
+        >
+          <i></i>
+          {{ portStatus ? t('backstage.portOpen') : t('backstage.portClosed') }}
+        </span>
+        <span class="port-result muted" v-else>{{ t('backstage.portUntested') }}</span>
+      </div>
 
-      <button
-        class="network-btn"
-        @click="updateBlocklist"
-        :disabled="updatingBlocklist || !state.session?.['blocklist-enabled']"
-      >
-        <FluentIcon name="security" />
-        <span>{{ updatingBlocklist ? t('backstage.blocklistUpdating') : t('backstage.blocklistUpdate') }}</span>
-      </button>
+      <div class="network-actions-right">
+        <button
+          class="network-btn"
+          @click="updateBlocklist"
+          :disabled="updatingBlocklist || !state.session?.['blocklist-enabled']"
+        >
+          <FluentIcon name="security" />
+          <span>{{ updatingBlocklist ? t('backstage.blocklistUpdating') : t('backstage.blocklistUpdate') }}</span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -72,8 +76,6 @@ import { state, showToast, fetchSession } from '../../stores/transmission';
 import { rpc } from '../../api/rpc';
 import { t } from '../../locales';
 import FluentIcon from '../common/FluentIcon.vue';
-
-const emit = defineEmits<{ (e: 'openSettings'): void }>();
 
 const testingPort = ref(false);
 const portStatus = ref<boolean | null>(null);
@@ -120,41 +122,36 @@ async function updateBlocklist() {
 
 <style scoped>
 .network-panel {
-  margin-top: 12px;
+  margin-bottom: 16px;
   background: var(--fluent-bg-canvas);
   border: 1px solid var(--fluent-border-subtle);
   border-radius: 4px;
   padding: 14px 16px;
 }
 
-.network-head {
+.panel-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.network-head h3 {
+.panel-head h3 {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
   color: var(--md-text-primary);
 }
 
-.network-settings {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: none;
-  background: transparent;
-  color: var(--fluent-accent);
+.panel-head p {
+  margin: 2px 0 0;
   font-size: 11px;
-  cursor: pointer;
-  padding: 0;
+  color: var(--md-text-secondary);
 }
 
-.network-settings:hover {
-  text-decoration: underline;
+.panel-icon {
+  font-size: 18px;
 }
 
 .network-grid {
@@ -194,16 +191,30 @@ async function updateBlocklist() {
 .network-actions {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.network-actions-left {
+  display: flex;
+  align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.network-actions-right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
 }
 
 .network-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   height: 28px;
-  padding: 0 10px;
+  padding: 0 12px;
   border: 1px solid var(--fluent-border-subtle);
   border-radius: 3px;
   background: var(--fluent-bg-subtle);

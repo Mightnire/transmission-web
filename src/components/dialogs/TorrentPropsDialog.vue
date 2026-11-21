@@ -133,9 +133,14 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue';
-import { state, fetchTorrents, showToast, describeError } from '../../stores/transmission';
+import {
+  state,
+  showToast,
+  describeError,
+  updateTorrentPropsOptimistically,
+} from '../../stores/transmission';
 import { useEscapeKey } from '../../composables/useEscapeKey';
-import { Torrent, Priority, SeedRatioMode, SeedIdleMode } from '../../api/types';
+import { Priority, SeedRatioMode, SeedIdleMode } from '../../api/types';
 import { t } from '../../locales';
 import { rpc } from '../../api/rpc';
 
@@ -172,24 +177,43 @@ const form = reactive({
 
 const labelsStr = ref('');
 
+function syncFormFromData(data: any) {
+  if (!data) return;
+  form.bandwidthPriority = data.bandwidthPriority !== undefined ? data.bandwidthPriority : Priority.NORMAL;
+  form.peerLimit = data['peer-limit'] || data.peerLimit || 50;
+  form.downloadLimit = data.downloadLimit || 0;
+  form.downloadLimited = !!data.downloadLimited;
+  form.uploadLimit = data.uploadLimit || 0;
+  form.uploadLimited = !!data.uploadLimited;
+  form.honorsSessionLimits = data.honorsSessionLimits !== undefined ? data.honorsSessionLimits : true;
+  form.seedRatioMode = data.seedRatioMode !== undefined ? data.seedRatioMode : SeedRatioMode.GLOBAL;
+  form.seedRatioLimit = data.seedRatioLimit ?? 2.0;
+  form.seedIdleMode = data.seedIdleMode !== undefined ? data.seedIdleMode : SeedIdleMode.GLOBAL;
+  form.seedIdleLimit = data.seedIdleLimit ?? 30;
+  if (Array.isArray(data.labels)) {
+    labelsStr.value = data.labels.join(', ');
+  }
+}
+
 watch(
-  () => props.torrentId,
-  async (id) => {
-    if (!id) return;
-    const detail = await rpc.getTorrentDetail(id);
-    if (!detail) return;
-    form.bandwidthPriority = detail.bandwidthPriority !== undefined ? detail.bandwidthPriority : Priority.NORMAL;
-    form.peerLimit = (detail as any)['peer-limit'] || 50;
-    form.downloadLimit = detail.downloadLimit || 0;
-    form.downloadLimited = detail.downloadLimited || false;
-    form.uploadLimit = detail.uploadLimit || 0;
-    form.uploadLimited = detail.uploadLimited || false;
-    form.honorsSessionLimits = detail.honorsSessionLimits !== undefined ? detail.honorsSessionLimits : true;
-    form.seedRatioMode = detail.seedRatioMode !== undefined ? detail.seedRatioMode : SeedRatioMode.GLOBAL;
-    form.seedRatioLimit = detail.seedRatioLimit || 2.0;
-    form.seedIdleMode = detail.seedIdleMode !== undefined ? detail.seedIdleMode : SeedIdleMode.GLOBAL;
-    form.seedIdleLimit = detail.seedIdleLimit || 30;
-    labelsStr.value = (detail.labels || []).join(', ');
+  [() => props.torrentId, () => props.modelValue],
+  async ([id, open]) => {
+    if (!id || !open) return;
+    const local =
+      state.activeTorrentDetail && state.activeTorrentDetail.id === id
+        ? state.activeTorrentDetail
+        : state.torrents.find((t) => t.id === id);
+    if (local) {
+      syncFormFromData(local);
+    }
+    try {
+      const detail = await rpc.getTorrentDetail(id);
+      if (detail && isOpen.value && props.torrentId === id) {
+        syncFormFromData(detail);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch torrent detail for dialog:', e);
+    }
   },
   { immediate: true }
 );
@@ -210,25 +234,25 @@ async function saveProps() {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  try {
-    await rpc.torrentSet({
-      ids: [props.torrentId],
-      bandwidthPriority: form.bandwidthPriority,
-      'peer-limit': form.peerLimit,
-      downloadLimit: form.downloadLimit,
-      downloadLimited: form.downloadLimited,
-      uploadLimit: form.uploadLimit,
-      uploadLimited: form.uploadLimited,
-      honorsSessionLimits: form.honorsSessionLimits,
-      seedRatioMode: form.seedRatioMode,
-      seedRatioLimit: form.seedRatioLimit,
-      seedIdleMode: form.seedIdleMode,
-      seedIdleLimit: form.seedIdleLimit,
-      labels,
-    });
+  const patch = {
+    bandwidthPriority: form.bandwidthPriority,
+    'peer-limit': form.peerLimit,
+    peerLimit: form.peerLimit,
+    downloadLimit: form.downloadLimit,
+    downloadLimited: form.downloadLimited,
+    uploadLimit: form.uploadLimit,
+    uploadLimited: form.uploadLimited,
+    honorsSessionLimits: form.honorsSessionLimits,
+    seedRatioMode: form.seedRatioMode,
+    seedRatioLimit: form.seedRatioLimit,
+    seedIdleMode: form.seedIdleMode,
+    seedIdleLimit: form.seedIdleLimit,
+    labels,
+  };
 
-    close();
-    await fetchTorrents();
+  close();
+  try {
+    await updateTorrentPropsOptimistically([props.torrentId], patch);
     showToast(t('toast.saved'), 'success');
   } catch (err: any) {
     showToast(t('common.failed', { error: describeError(err) }), 'error');
@@ -306,7 +330,6 @@ async function saveProps() {
 }
 
 .form-check input[type="checkbox"] {
-  accent-color: var(--fluent-accent);
   cursor: pointer;
 }
 

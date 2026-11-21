@@ -1,5 +1,5 @@
 import { reactive, ref, computed } from 'vue';
-import { Torrent, TorrentStatus, SessionInfo, SessionStats } from '../api/types';
+import { Torrent, TorrentStatus, SessionInfo, SessionStats, SeedRatioMode, SeedIdleMode } from '../api/types';
 import { rpc } from '../api/rpc';
 import { t } from '../locales';
 import { createDefaultColumns, loadSavedColumns, saveColumnsToStorage, type TableColumnConfig } from '../core/columns';
@@ -7,7 +7,7 @@ export type { TableColumnConfig } from '../core/columns';
 export { formatBytes, formatSpeed, formatETA, getStatusText } from '../core/format';
 
 export interface TorrentFilter {
-  status: 'all' | 'active' | 'downloading' | 'seeding' | 'queued' | 'paused' | 'error' | 'finished';
+  status: 'all' | 'active' | 'downloading' | 'seeding' | 'queued' | 'forced' | 'paused' | 'error' | 'finished';
   search: string;
   sortBy:
     | 'queuePosition'
@@ -37,11 +37,18 @@ export interface TorrentFilter {
   sortAsc: boolean;
 }
 
+export interface PathAliasRule {
+  from: string;
+  to: string;
+}
+
 export interface UIPreferences {
   showTrackerGroup: boolean;
   showTagGroup: boolean;
+  showFolderGroup: boolean;
   pollIntervalTorrents: number;
   pollIntervalStats: number;
+  pathAliases: PathAliasRule[];
 }
 
 export type ToastType = 'info' | 'success' | 'error';
@@ -75,8 +82,10 @@ export interface SpeedSample {
 const DEFAULT_UI_PREFS: UIPreferences = {
   showTrackerGroup: true,
   showTagGroup: true,
+  showFolderGroup: true,
   pollIntervalTorrents: 3,
   pollIntervalStats: 3,
+  pathAliases: [],
 };
 
 function loadSavedUIPreferences(): UIPreferences {
@@ -95,6 +104,25 @@ function loadDetailHeight(): number {
   const saved = Number(localStorage.getItem('detail_panel_height'));
   if (Number.isFinite(saved) && saved >= 180) return Math.min(saved, 900);
   return 380;
+}
+
+function loadSavedForcedIds(): Set<number> {
+  try {
+    const raw = localStorage.getItem('forced_torrent_ids');
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) {
+        return new Set(arr);
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse forced_torrent_ids:', e);
+  }
+  return new Set();
+}
+
+export function saveForcedIds() {
+  localStorage.setItem('forced_torrent_ids', JSON.stringify([...state.forcedTorrentIds]));
 }
 
 function getInitialViewMode(): 'table' | 'cards' {
@@ -125,6 +153,7 @@ export const state = reactive<{
   columnsDialogOpen: boolean;
   selectedTag: string | null;
   selectedTracker: string | null;
+  selectedFolder: string | null;
   addDialogOpen: boolean;
   sessionDialogOpen: boolean;
   detailOpen: boolean;
@@ -148,6 +177,7 @@ export const state = reactive<{
   isPolling: boolean;
   viewMode: 'table' | 'cards';
   compactDensity: boolean;
+  forcedTorrentIds: Set<number>;
 }>({
   torrents: [],
   session: null,
@@ -169,6 +199,7 @@ export const state = reactive<{
   columnsDialogOpen: false,
   selectedTag: null,
   selectedTracker: null,
+  selectedFolder: null,
   addDialogOpen: false,
   sessionDialogOpen: false,
   detailOpen: false,
@@ -192,6 +223,7 @@ export const state = reactive<{
   isPolling: false,
   viewMode: getInitialViewMode(),
   compactDensity: typeof window !== 'undefined' && localStorage.getItem('compact_density') === 'true',
+  forcedTorrentIds: loadSavedForcedIds(),
 });
 
 if (typeof window !== 'undefined') {
@@ -225,6 +257,59 @@ export function saveUIPreferences() {
   restartPolling();
 }
 
+// 路径别名格式化工具函数：基于最长匹配原则替换物理前缀
+export function formatDisplayPath(rawPath: string | undefined | null): string {
+  if (!rawPath) return '';
+  const rules = state.uiPreferences.pathAliases || [];
+  if (rules.length === 0) return rawPath;
+
+  // 按 from 的长度降序排序（最长前缀优先匹配）
+  const sorted = [...rules]
+    .filter((r) => r && r.from && r.from.trim())
+    .sort((a, b) => b.from.trim().length - a.from.trim().length);
+
+  const normalizedRaw = rawPath.replace(/\\/g, '/');
+
+  for (const rule of sorted) {
+    const fromPrefix = rule.from.trim();
+    const toAlias = rule.to?.trim() || '';
+    if (!fromPrefix) continue;
+
+    const normalizedPrefix = fromPrefix.replace(/\\/g, '/').replace(/\/+$/, '');
+
+    // 精确匹配
+    if (normalizedRaw === normalizedPrefix) {
+      return toAlias || rawPath;
+    }
+
+    // 前缀子目录匹配
+    if (normalizedRaw.startsWith(normalizedPrefix + '/')) {
+      const rest = normalizedRaw.slice(normalizedPrefix.length);
+      return toAlias ? `${toAlias}${rest}` : rawPath;
+    }
+  }
+
+  return rawPath;
+}
+
+// 快速设置或更新一条路径别名规则
+export function setPathAlias(from: string, to: string) {
+  if (!from || !from.trim()) return;
+  const list = [...(state.uiPreferences.pathAliases || [])];
+  const idx = list.findIndex((r) => r.from.trim() === from.trim());
+  if (idx > -1) {
+    if (!to || !to.trim()) {
+      list.splice(idx, 1);
+    } else {
+      list[idx].to = to.trim();
+    }
+  } else if (to && to.trim()) {
+    list.push({ from: from.trim(), to: to.trim() });
+  }
+  state.uiPreferences.pathAliases = list;
+  saveUIPreferences();
+}
+
 let torrentTimer: any = null;
 let statsTimer: any = null;
 
@@ -241,9 +326,24 @@ interface PendingStatusOverride {
   expires: number;
 }
 
+interface PendingPropsOverride {
+  props: Record<string, any>;
+  expires: number;
+}
+
 const PENDING_STATUS_TTL = 10_000;
+const PENDING_PROPS_TTL = 5_000;
 const pendingStatus = new Map<number, PendingStatusOverride>();
+const pendingProps = new Map<number, PendingPropsOverride>();
 const pendingRemoved = new Map<number, number>();
+
+// 时序栅栏 (Epoch Barrier): 单调递增请求序号，杜绝先发后至的旧轮询响应倒灌覆盖乐观状态
+let currentFetchEpoch = 0;
+let latestAppliedEpoch = 0;
+
+export function invalidateInFlightFetches() {
+  latestAppliedEpoch = ++currentFetchEpoch;
+}
 
 function trackPendingStatus(ids: number[], display: TorrentStatus, accept: TorrentStatus[], ttl = PENDING_STATUS_TTL) {
   const expires = Date.now() + ttl;
@@ -259,22 +359,46 @@ function applyPendingState(list: Torrent[]): Torrent[] {
   const presentIds = new Set(list.map((t) => t.id));
 
   for (const torrent of list) {
+    // 1. 状态覆盖 (Pending Status Override)
     const pending = pendingStatus.get(torrent.id);
-    if (!pending) continue;
-    // 服务端已报错时不要再掩盖真实状态
-    if (torrent.error || pending.accept.includes(torrent.status) || now > pending.expires) {
-      pendingStatus.delete(torrent.id);
-      continue;
+    if (pending) {
+      if (torrent.error || pending.accept.includes(torrent.status) || now > pending.expires) {
+        pendingStatus.delete(torrent.id);
+      } else {
+        torrent.status = pending.display;
+        if (pending.display === TorrentStatus.STOPPED) {
+          torrent.rateDownload = 0;
+          torrent.rateUpload = 0;
+        }
+      }
     }
-    torrent.status = pending.display;
-    if (pending.display === TorrentStatus.STOPPED) {
-      torrent.rateDownload = 0;
-      torrent.rateUpload = 0;
+
+    // 2. 属性覆盖 (Pending Props Guard): 防范未落盘的旧轮询倒灌覆盖乐观设置
+    const propOverride = pendingProps.get(torrent.id);
+    if (propOverride) {
+      if (now > propOverride.expires) {
+        pendingProps.delete(torrent.id);
+      } else {
+        let allMatched = true;
+        for (const [k, v] of Object.entries(propOverride.props)) {
+          if ((torrent as any)[k] !== v) {
+            allMatched = false;
+            (torrent as any)[k] = v;
+          }
+        }
+        if (allMatched) {
+          pendingProps.delete(torrent.id);
+        }
+      }
     }
   }
 
   for (const id of pendingStatus.keys()) {
     if (!presentIds.has(id)) pendingStatus.delete(id);
+  }
+
+  for (const id of pendingProps.keys()) {
+    if (!presentIds.has(id)) pendingProps.delete(id);
   }
 
   for (const [id, expires] of pendingRemoved) {
@@ -294,18 +418,27 @@ async function refreshActiveDetail() {
   const basic = state.torrents.find((t) => t.id === state.selectedId);
   const detail = await rpc.getTorrentDetail(state.selectedId);
   if (detail) {
+    const propOverride = pendingProps.get(state.selectedId);
+    if (propOverride && Date.now() <= propOverride.expires) {
+      Object.assign(detail, propOverride.props);
+    }
     state.activeTorrentDetail = { ...(basic || {}), ...detail };
   }
 }
 
-async function fetchFullTorrents() {
+async function fetchFullTorrents(reqEpoch: number) {
   const list = await rpc.getTorrents();
+  if (reqEpoch <= latestAppliedEpoch) return;
+  latestAppliedEpoch = reqEpoch;
   state.torrents = applyPendingState(list);
   hasFullTorrentSnapshot = true;
 }
 
-async function fetchIncrementalTorrents() {
+async function fetchIncrementalTorrents(reqEpoch: number) {
   const response = await rpc.getTorrentsIncremental();
+  if (reqEpoch <= latestAppliedEpoch) return;
+  latestAppliedEpoch = reqEpoch;
+
   const byId = new Map(state.torrents.map((torrent) => [torrent.id, torrent]));
 
   for (const update of response.torrents) {
@@ -319,22 +452,25 @@ async function fetchIncrementalTorrents() {
 }
 
 export async function fetchTorrents() {
+  const reqEpoch = ++currentFetchEpoch;
   try {
     const shouldFullFetch = !hasFullTorrentSnapshot || !incrementalSupported || incrementalPolls++ % 20 === 0;
     if (shouldFullFetch) {
-      await fetchFullTorrents();
+      await fetchFullTorrents(reqEpoch);
     } else {
       try {
-        await fetchIncrementalTorrents();
+        await fetchIncrementalTorrents(reqEpoch);
       } catch (error) {
         // 某些旧版本或代理会拒绝 recently-active；失败一次后回退全量。
         incrementalSupported = false;
         hasFullTorrentSnapshot = false;
-        await fetchFullTorrents();
+        await fetchFullTorrents(reqEpoch);
       }
     }
 
-    await refreshActiveDetail();
+    if (reqEpoch > latestAppliedEpoch) {
+      await refreshActiveDetail();
+    }
   } catch (e) {
     console.warn('Failed to fetch torrents:', e);
   }
@@ -506,6 +642,7 @@ export function toggleDetail(id?: number) {
 export function openTorrentProps(id: number) {
   state.propsTorrentId = id;
   state.propsDialogOpen = true;
+  selectTorrent(id);
 }
 
 function selectionIds(): number[] {
@@ -515,6 +652,7 @@ function selectionIds(): number[] {
 // 核心操作：停止/暂停（乐观更新 + 服务端确认保护 + 失败回滚）
 export async function stopTorrentsAction(ids: number[]) {
   if (!ids || ids.length === 0) return;
+  invalidateInFlightFetches();
 
   const backups: { id: number; status: TorrentStatus; rateDownload: number; rateUpload: number }[] = [];
   for (const id of ids) {
@@ -535,6 +673,10 @@ export async function stopTorrentsAction(ids: number[]) {
   trackPendingStatus(ids, TorrentStatus.STOPPED, [TorrentStatus.STOPPED]);
   try {
     await rpc.stopTorrents(ids);
+    for (const id of ids) {
+      state.forcedTorrentIds.delete(id);
+    }
+    saveForcedIds();
     await fetchTorrents();
     scheduleConfirmFetch();
   } catch (err: any) {
@@ -551,9 +693,10 @@ export async function stopTorrentsAction(ids: number[]) {
   }
 }
 
-// 核心操作：开始/继续（乐观更新 + 服务端确认保护 + 失败回滚）
+// 核心操作：开始/继续（普通队列调度模式）
 export async function startTorrentsAction(ids: number[]) {
   if (!ids || ids.length === 0) return;
+  invalidateInFlightFetches();
 
   const backups: { id: number; status: TorrentStatus }[] = [];
   for (const id of ids) {
@@ -585,6 +728,10 @@ export async function startTorrentsAction(ids: number[]) {
 
   try {
     await rpc.startTorrents(ids);
+    for (const id of ids) {
+      state.forcedTorrentIds.delete(id);
+    }
+    saveForcedIds();
     await fetchTorrents();
     scheduleConfirmFetch();
   } catch (err: any) {
@@ -599,9 +746,10 @@ export async function startTorrentsAction(ids: number[]) {
   }
 }
 
-// 核心操作：跳过队列立即开始（乐观更新 + 服务端确认保护 + 失败回滚）
+// 核心操作：强制开始（跳过队列限制，并记录强制开始状态）
 export async function startNowTorrentsAction(ids: number[]) {
   if (!ids || ids.length === 0) return;
+  invalidateInFlightFetches();
 
   const backups: { id: number; status: TorrentStatus }[] = [];
   for (const id of ids) {
@@ -628,6 +776,10 @@ export async function startNowTorrentsAction(ids: number[]) {
 
   try {
     await rpc.torrentStartNow(ids);
+    for (const id of ids) {
+      state.forcedTorrentIds.add(id);
+    }
+    saveForcedIds();
     await fetchTorrents();
     scheduleConfirmFetch();
   } catch (err: any) {
@@ -877,39 +1029,49 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-// 统一磁链复制助手 (支持 Hash 兜底秒级合成，绝不静默装死)
-export async function copyTorrentMagnet(id: number): Promise<boolean> {
-  const target = state.torrents.find((t) => t.id === id);
-  let magnet = target?.magnetLink;
+// 统一磁链批量复制助手 (支持多选任务多行写入剪切板，绝不静默装死)
+export async function copyTorrentMagnets(ids: number[]): Promise<boolean> {
+  if (!ids || ids.length === 0) return false;
+  const magnets: string[] = [];
 
-  // 如果没有 magnetLink 但有 hashString，本地秒级组装标准 Magnet URI
-  if (!magnet && target?.hashString) {
-    magnet = `magnet:?xt=urn:btih:${target.hashString}&dn=${encodeURIComponent(target.name)}`;
-    if (target.trackers && target.trackers.length > 0) {
-      for (const tr of target.trackers) {
-        if (tr.announce) {
-          magnet += `&tr=${encodeURIComponent(tr.announce)}`;
+  for (const id of ids) {
+    const target = state.torrents.find((t) => t.id === id);
+    let magnet = target?.magnetLink;
+
+    // 如果没有 magnetLink 但有 hashString，本地秒级组装标准 Magnet URI
+    if (!magnet && target?.hashString) {
+      magnet = `magnet:?xt=urn:btih:${target.hashString}&dn=${encodeURIComponent(target.name)}`;
+      if (target.trackers && target.trackers.length > 0) {
+        for (const tr of target.trackers) {
+          if (tr.announce) {
+            magnet += `&tr=${encodeURIComponent(tr.announce)}`;
+          }
         }
       }
     }
-  }
 
-  // 若仍为空，尝试异步向后端请求最新详情
-  if (!magnet) {
-    try {
-      const detail = await rpc.getTorrentDetail(id);
-      if (detail?.magnetLink) {
-        magnet = detail.magnetLink;
-      } else if (detail?.hashString) {
-        magnet = `magnet:?xt=urn:btih:${detail.hashString}&dn=${encodeURIComponent(detail.name)}`;
+    // 若仍为空，尝试异步向后端请求最新详情
+    if (!magnet) {
+      try {
+        const detail = await rpc.getTorrentDetail(id);
+        if (detail?.magnetLink) {
+          magnet = detail.magnetLink;
+        } else if (detail?.hashString) {
+          magnet = `magnet:?xt=urn:btih:${detail.hashString}&dn=${encodeURIComponent(detail.name)}`;
+        }
+      } catch (e) {
+        console.warn('Failed to fetch detail for magnet:', e);
       }
-    } catch (e) {
-      console.warn('Failed to fetch detail for magnet:', e);
+    }
+
+    if (magnet) {
+      magnets.push(magnet);
     }
   }
 
-  if (magnet) {
-    const ok = await copyToClipboard(magnet);
+  if (magnets.length > 0) {
+    const textToCopy = magnets.join('\n');
+    const ok = await copyToClipboard(textToCopy);
     if (ok) {
       showToast(t('menu.magnetCopied'), 'success');
       return true;
@@ -918,6 +1080,128 @@ export async function copyTorrentMagnet(id: number): Promise<boolean> {
 
   showToast(t('toast.copyFailed'), 'error');
   return false;
+}
+
+export async function copyTorrentMagnet(id: number): Promise<boolean> {
+  return copyTorrentMagnets([id]);
+}
+
+// 检查某个任务是否正处于强制开始状态中
+export function isTorrentForced(id: number): boolean {
+  if (!state.forcedTorrentIds.has(id)) return false;
+  const t = state.torrents.find((x) => x.id === id);
+  return !!t && (t.status === TorrentStatus.DOWNLOAD || t.status === TorrentStatus.SEED);
+}
+
+// 检查某个任务是否配置了个性化特殊设置（覆盖了做种规则、配置了单种独立限速，或不遵循全局限速）
+export function hasCustomSettings(tor: Torrent): boolean {
+  if (!tor) return false;
+  if (tor.seedRatioMode === SeedRatioMode.SINGLE || tor.seedRatioMode === SeedRatioMode.UNLIMITED) return true;
+  if (tor.seedIdleMode === SeedIdleMode.SINGLE || tor.seedIdleMode === SeedIdleMode.UNLIMITED) return true;
+  if (tor.uploadLimited || tor.downloadLimited) return true;
+  if (tor.honorsSessionLimits === false) return true;
+  return false;
+}
+
+// 获取个性化特殊设置的多行 Tooltip 详情
+export function getCustomSettingsSummary(tor: Torrent): string {
+  if (!tor) return '';
+  const lines: string[] = [];
+  if (tor.seedIdleMode === SeedIdleMode.SINGLE) {
+    lines.push(t('custom.idleLimit', { val: tor.seedIdleLimit ?? 30 }));
+  } else if (tor.seedIdleMode === SeedIdleMode.UNLIMITED) {
+    lines.push(t('custom.idleUnlimited'));
+  }
+
+  if (tor.seedRatioMode === SeedRatioMode.SINGLE) {
+    lines.push(t('custom.ratioLimit', { val: (tor.seedRatioLimit ?? 2).toFixed(2) }));
+  } else if (tor.seedRatioMode === SeedRatioMode.UNLIMITED) {
+    lines.push(t('custom.ratioUnlimited'));
+  }
+
+  if (tor.uploadLimited) {
+    lines.push(t('custom.upLimit', { val: `${tor.uploadLimit ?? 0} KB/s` }));
+  }
+  if (tor.downloadLimited) {
+    lines.push(t('custom.downLimit', { val: `${tor.downloadLimit ?? 0} KB/s` }));
+  }
+  if (tor.honorsSessionLimits === false) {
+    lines.push(`${t('props.honorsSession')}: ${t('common.disabled')}`);
+  }
+
+  return lines.length > 0 ? `${t('custom.rulesTitle')}\n• ` + lines.join('\n• ') : '';
+}
+
+// 种子属性变更（乐观更新 + 失败回滚 + 服务端确认兜底）
+export async function updateTorrentPropsOptimistically(
+  ids: number[],
+  patch: Record<string, any>
+): Promise<boolean> {
+  if (!ids || ids.length === 0) return true;
+
+  // 1. 深度备份当前快照，预留失败逃生回滚通道 (Fail-Safe before Mutation)
+  const snapshots = ids
+    .map((id) => {
+      const tor = state.torrents.find((t) => t.id === id);
+      if (!tor) return null;
+      return {
+        id,
+        snapshot: { ...tor },
+        detailSnapshot:
+          state.activeTorrentDetail && state.activeTorrentDetail.id === id
+            ? { ...state.activeTorrentDetail }
+            : null,
+      };
+    })
+    .filter(Boolean) as Array<{ id: number; snapshot: Torrent; detailSnapshot: any | null }>;
+
+  // 2. 立即前端乐观更新（就地生效）
+  // 突变屏障：使突变前已在途中的后台轮询请求在返回时作废，彻底杜绝陈旧数据倒灌导致的“闪现”
+  invalidateInFlightFetches();
+
+  const now = Date.now();
+  for (const id of ids) {
+    const tor = state.torrents.find((t) => t.id === id);
+    if (tor) {
+      Object.assign(tor, patch);
+    }
+    if (state.activeTorrentDetail && state.activeTorrentDetail.id === id) {
+      Object.assign(state.activeTorrentDetail, patch);
+    }
+    // 装配短期 pendingProps 保护锁，在落盘确认期内免疫一切未同步的旧轮询响应
+    pendingProps.set(id, {
+      props: { ...patch },
+      expires: now + PENDING_PROPS_TTL,
+    });
+  }
+
+  // 3. 构建 RPC 请求参数并净化
+  const rpcArgs: any = { ids, ...patch };
+  if ('peerLimit' in rpcArgs) {
+    rpcArgs['peer-limit'] = rpcArgs.peerLimit;
+    delete rpcArgs.peerLimit;
+  }
+
+  try {
+    await rpc.torrentSet(rpcArgs);
+    // 成功：解除增量缓存标记，在确认周期内强制全量更新一次服务端 ground truth
+    hasFullTorrentSnapshot = false;
+    scheduleConfirmFetch();
+    return true;
+  } catch (err: any) {
+    // 失败：执行原子级回滚恢复，并清理保护锁
+    for (const item of snapshots) {
+      pendingProps.delete(item.id);
+      const tor = state.torrents.find((t) => t.id === item.id);
+      if (tor) {
+        Object.assign(tor, item.snapshot);
+      }
+      if (item.detailSnapshot && state.activeTorrentDetail && state.activeTorrentDetail.id === item.id) {
+        Object.assign(state.activeTorrentDetail, item.detailSnapshot);
+      }
+    }
+    throw err;
+  }
 }
 
 // 计算过滤与排序后的种子列表
@@ -936,6 +1220,8 @@ export const filteredTorrents = computed(() => {
           return t.status === TorrentStatus.SEED || t.status === TorrentStatus.SEED_WAIT;
         case 'queued':
           return t.status === TorrentStatus.DOWNLOAD_WAIT || t.status === TorrentStatus.SEED_WAIT;
+        case 'forced':
+          return state.forcedTorrentIds.has(t.id) && (t.status === TorrentStatus.DOWNLOAD || t.status === TorrentStatus.SEED);
         case 'paused':
           return t.status === TorrentStatus.STOPPED;
         case 'finished':
@@ -956,7 +1242,16 @@ export const filteredTorrents = computed(() => {
 
   // 标签筛选
   if (state.selectedTag) {
-    list = list.filter((t) => t.labels && t.labels.includes(state.selectedTag!));
+    if (state.selectedTag === '__untagged__') {
+      list = list.filter((t) => !t.labels || t.labels.length === 0);
+    } else {
+      list = list.filter((t) => t.labels && t.labels.includes(state.selectedTag!));
+    }
+  }
+
+  // 保存路径筛选
+  if (state.selectedFolder) {
+    list = list.filter((t) => t.downloadDir === state.selectedFolder);
   }
 
   // Tracker 筛选
@@ -981,11 +1276,36 @@ export const filteredTorrents = computed(() => {
     if (sortBy === 'queuePosition') {
       cmp = (a.queuePosition ?? 999999) - (b.queuePosition ?? 999999);
     } else if (sortBy === 'status') {
-      const aScore = a.error !== 0 ? 100 : a.status;
-      const bScore = b.error !== 0 ? 100 : b.status;
+      const getStatusScore = (t: Torrent) => {
+        if (t.error !== 0) return 1000;
+        const forced = state.forcedTorrentIds.has(t.id);
+        switch (t.status) {
+          case TorrentStatus.STOPPED:
+            return 100;
+          case TorrentStatus.CHECK_WAIT:
+            return 200;
+          case TorrentStatus.CHECK:
+            return 300;
+          case TorrentStatus.DOWNLOAD_WAIT:
+            return 400;
+          case TorrentStatus.DOWNLOAD:
+            return forced ? 550 : 500;
+          case TorrentStatus.SEED_WAIT:
+            return 600;
+          case TorrentStatus.SEED:
+            return forced ? 750 : 700;
+          default:
+            return 900;
+        }
+      };
+      const aScore = getStatusScore(a);
+      const bScore = getStatusScore(b);
       cmp = aScore - bScore;
       if (cmp === 0) {
         cmp = (b.percentDone || 0) - (a.percentDone || 0);
+        if (cmp === 0) {
+          cmp = a.name.localeCompare(b.name);
+        }
       }
     } else {
       const aValue = (a as unknown as Record<string, unknown>)[sortBy];

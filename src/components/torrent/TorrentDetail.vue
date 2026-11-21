@@ -188,7 +188,7 @@
             <div class="card-title">{{ t('detail.general.info') }}</div>
             <div class="info-row">
               <span class="label">{{ t('detail.general.savePath') }}</span>
-              <span class="value selectable" :title="activeTorrent.downloadDir">{{ activeTorrent.downloadDir }}</span>
+              <span class="value selectable" :title="activeTorrent.downloadDir">{{ formatDisplayPath(activeTorrent.downloadDir) }}</span>
             </div>
             <div class="info-row">
               <span class="label">{{ t('detail.general.hash') }}</span>
@@ -335,21 +335,54 @@
         <table class="detail-table" v-if="activeTorrent.peers && activeTorrent.peers.length > 0">
           <thead>
             <tr>
-              <th>{{ t('detail.peers.colIp') }}</th>
-              <th>{{ t('detail.peers.colClient') }}</th>
-              <th>{{ t('detail.peers.colDownSpeed') }}</th>
-              <th>{{ t('detail.peers.colUpSpeed') }}</th>
-              <th v-if="peerHasByteStats">{{ t('detail.peers.colDownloaded') }}</th>
-              <th v-if="peerHasByteStats">{{ t('detail.peers.colUploaded') }}</th>
-              <th>{{ t('detail.peers.colEncrypted') }}</th>
-              <th>{{ t('detail.peers.colDirection') }}</th>
-              <th>{{ t('detail.peers.colProgress') }}</th>
-              <th>{{ t('detail.peers.colFlags') }}</th>
-              <th>{{ t('detail.peers.colProtocol') }}</th>
+              <th class="sortable" @click="togglePeerSort('address')">
+                {{ t('detail.peers.colIp') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'address'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
+              <th class="sortable" @click="togglePeerSort('clientName')">
+                {{ t('detail.peers.colClient') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'clientName'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
+              <th class="sortable" @click="togglePeerSort('rateToClient')">
+                {{ t('detail.peers.colDownSpeed') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'rateToClient'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
+              <th class="sortable" @click="togglePeerSort('rateToPeer')">
+                {{ t('detail.peers.colUpSpeed') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'rateToPeer'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
+              <th class="sortable" v-if="peerHasByteStats" @click="togglePeerSort('bytesToClient')">
+                {{ t('detail.peers.colDownloaded') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'bytesToClient'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
+              <th class="sortable" v-if="peerHasByteStats" @click="togglePeerSort('bytesToPeer')">
+                {{ t('detail.peers.colUploaded') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'bytesToPeer'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
+              <th class="sortable" @click="togglePeerSort('isEncrypted')">
+                {{ t('detail.peers.colEncrypted') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'isEncrypted'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
+              <th class="sortable" @click="togglePeerSort('isIncoming')">
+                {{ t('detail.peers.colDirection') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'isIncoming'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
+              <th class="sortable" @click="togglePeerSort('progress')">
+                {{ t('detail.peers.colProgress') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'progress'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
+              <th class="sortable" @click="togglePeerSort('flagStr')">
+                {{ t('detail.peers.colFlags') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'flagStr'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
+              <th class="sortable" @click="togglePeerSort('isUTP')">
+                {{ t('detail.peers.colProtocol') }}
+                <span class="sort-indicator" v-if="peerSortKey === 'isUTP'">{{ peerSortAsc ? '▲' : '▼' }}</span>
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="peer in activeTorrent.peers" :key="peer.address">
+            <tr v-for="peer in sortedPeers" :key="peer.address + ':' + peer.port">
               <td class="monospace">{{ peer.address }}:{{ peer.port }}</td>
               <td>{{ peer.clientName || t('detail.peers.unknownClient') }}</td>
               <td class="down-val">{{ peer.rateToClient > 0 ? formatSpeed(peer.rateToClient) : '—' }}</td>
@@ -471,6 +504,7 @@ import {
   copyTorrentMagnet,
   toggleDetailHeight,
   saveDetailHeight,
+  formatDisplayPath,
 } from '../../stores/transmission';
 import { Priority } from '../../api/types';
 import { t } from '../../locales';
@@ -499,6 +533,56 @@ const peerHasByteStats = computed(() => {
   return (activeTorrent.value?.peers || []).some(
     (peer) => peer.bytesToClient !== undefined || peer.bytesToPeer !== undefined
   );
+});
+
+// 节点列表多列排序
+const peerSortKey = ref<string | null>(null);
+const peerSortAsc = ref<boolean>(false);
+
+function togglePeerSort(key: string) {
+  if (peerSortKey.value === key) {
+    peerSortAsc.value = !peerSortAsc.value;
+  } else {
+    peerSortKey.value = key;
+    if (['rateToClient', 'rateToPeer', 'bytesToClient', 'bytesToPeer', 'progress'].includes(key)) {
+      peerSortAsc.value = false;
+    } else {
+      peerSortAsc.value = true;
+    }
+  }
+}
+
+const sortedPeers = computed(() => {
+  const peers = activeTorrent.value?.peers;
+  if (!peers || peers.length === 0) return [];
+  if (!peerSortKey.value) return peers;
+
+  const key = peerSortKey.value;
+  const asc = peerSortAsc.value;
+
+  return [...peers].sort((a: any, b: any) => {
+    let cmp = 0;
+    if (key === 'address') {
+      const valA = `${a.address}:${a.port}`;
+      const valB = `${b.address}:${b.port}`;
+      cmp = valA.localeCompare(valB);
+    } else if (key === 'clientName') {
+      cmp = (a.clientName || '').localeCompare(b.clientName || '');
+    } else if (key === 'isEncrypted') {
+      cmp = (a.isEncrypted ? 1 : 0) - (b.isEncrypted ? 1 : 0);
+    } else if (key === 'isIncoming') {
+      cmp = (a.isIncoming ? 1 : 0) - (b.isIncoming ? 1 : 0);
+    } else if (key === 'isUTP') {
+      cmp = (a.isUTP ? 1 : 0) - (b.isUTP ? 1 : 0);
+    } else if (key === 'flagStr') {
+      cmp = (a.flagStr || '').localeCompare(b.flagStr || '');
+    } else {
+      const valA = a[key] ?? 0;
+      const valB = b[key] ?? 0;
+      cmp = valA > valB ? 1 : valA < valB ? -1 : 0;
+    }
+    return asc ? cmp : -cmp;
+  });
 });
 
 const peerSources = computed(() => {
@@ -1174,6 +1258,23 @@ function handleSetLocation() {
   top: 0;
   background-color: var(--fluent-bg-subtle);
   z-index: 5;
+}
+
+.detail-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.detail-table th.sortable:hover {
+  background-color: var(--fluent-bg-hover);
+  color: var(--md-text-primary);
+}
+
+.sort-indicator {
+  font-size: 9px;
+  margin-left: 3px;
+  color: var(--fluent-accent);
 }
 
 .detail-table td {

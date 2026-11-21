@@ -63,6 +63,47 @@
             <div class="backstage-page" :key="activeTab" :class="{ 'full-height': activeTab === 'settings' }">
             <!-- 信息 / 仪表盘 -->
             <template v-if="activeTab === 'info'">
+              <!-- 异常任务动态告警条 (仅在有错误时呈现，平时安静) -->
+              <div v-if="counts.errors > 0" class="backstage-alert-banner">
+                <div class="alert-content">
+                  <FluentIcon name="warning" class="alert-icon text-error" />
+                  <div class="alert-text">
+                    <strong>{{ t('backstage.errorDetectedTitle', { count: counts.errors }) }}</strong>
+                    <p>{{ t('backstage.errorDetectedDesc') }}</p>
+                  </div>
+                </div>
+                <button class="alert-action-btn" @click="handleFilterErrors">
+                  <span>{{ t('backstage.viewErrors') }}</span>
+                  <FluentIcon name="arrow_forward" />
+                </button>
+              </div>
+
+              <!-- 快捷操作区 (置于顶端) -->
+              <div class="quick-actions-panel">
+                <div class="panel-head">
+                  <div>
+                    <h3>{{ t('backstage.quickActions') }}</h3>
+                    <p>{{ t('backstage.quickActionsSubtitle') }}</p>
+                  </div>
+                  <FluentIcon name="touch_app" class="panel-icon text-accent" />
+                </div>
+                <div class="quick-actions">
+                  <button class="quick-action primary" @click="handleAdd">
+                    <FluentIcon name="add" />
+                    <span>{{ t('backstage.add') }}</span>
+                  </button>
+                  <button class="quick-action" @click="activeTab = 'settings'">
+                    <FluentIcon name="settings" />
+                    <span>{{ t('backstage.settings') }}</span>
+                  </button>
+                  <button class="quick-action" @click="refreshData">
+                    <FluentIcon name="sync" />
+                    <span>{{ t('backstage.refresh') }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 基础状态卡片组 -->
               <div class="stat-cards">
                 <div class="stat-card">
                   <FluentIcon name="cloud_download" class="stat-icon text-accent" />
@@ -86,25 +127,78 @@
                 </div>
               </div>
 
-              <div class="quick-actions-panel">
-                <div class="panel-head">
-                  <h3>{{ t('backstage.quickActions') }}</h3>
+              <!-- 双列核心概览：本次会话小结 + 存储位置 -->
+              <div class="backstage-grid two">
+                <!-- 本次会话小结 -->
+                <div class="panel">
+                  <div class="panel-head">
+                    <div>
+                      <h3>{{ t('backstage.session') }}</h3>
+                      <p>{{ t('backstage.sessionSummarySubtitle') }}</p>
+                    </div>
+                    <FluentIcon name="speed" class="panel-icon text-accent" />
+                  </div>
+                  <div class="stat-rows">
+                    <div class="stat-row">
+                      <span>{{ t('dialog.downloaded') }}</span>
+                      <strong>{{ formatBytes(state.stats?.['current-stats']?.downloadedBytes) }}</strong>
+                    </div>
+                    <div class="stat-row">
+                      <span>{{ t('dialog.uploaded') }}</span>
+                      <strong>{{ formatBytes(state.stats?.['current-stats']?.uploadedBytes) }}</strong>
+                    </div>
+                    <div class="stat-row">
+                      <span>{{ t('dialog.ratio') }}</span>
+                      <strong>{{ calcRatio(state.stats?.['current-stats']?.uploadedBytes, state.stats?.['current-stats']?.downloadedBytes) }}</strong>
+                    </div>
+                    <div class="stat-row">
+                      <span>{{ t('backstage.filesAdded') }}</span>
+                      <strong>{{ state.stats?.['current-stats']?.filesAdded ?? 0 }}</strong>
+                    </div>
+                  </div>
                 </div>
-                <div class="quick-actions">
-                  <button class="quick-action primary" @click="handleAdd">
-                    <FluentIcon name="add" />
-                    <span>{{ t('backstage.add') }}</span>
-                  </button>
-                  <button class="quick-action" @click="activeTab = 'settings'">
-                    <FluentIcon name="settings" />
-                    <span>{{ t('backstage.settings') }}</span>
-                  </button>
-                  <button class="quick-action" @click="refreshData">
-                    <FluentIcon name="sync" />
-                    <span>{{ t('backstage.refresh') }}</span>
-                  </button>
+
+                <!-- 存储位置 (完全对齐本次会话的 Fluent 纯平设计) -->
+                <div class="panel">
+                  <div class="panel-head">
+                    <div>
+                      <h3>{{ t('backstage.storage') }}</h3>
+                      <p>{{ t('backstage.storageSubtitle') }}</p>
+                    </div>
+                    <FluentIcon name="hard_drive" class="panel-icon text-accent" />
+                  </div>
+                  <div class="stat-rows">
+                    <div class="stat-row">
+                      <span>{{ t('backstage.defaultDownloadDir') }}</span>
+                      <strong class="storage-path-text" :title="downloadDir">{{ formatDisplayPath(downloadDir) }}</strong>
+                    </div>
+                    <div class="stat-row">
+                      <span>{{ t('backstage.diskFreeSpace') }}</span>
+                      <strong class="storage-space-val">{{ freeSpaceLabel || '—' }}</strong>
+                    </div>
+                    <div class="stat-row">
+                      <span>{{ t('backstage.diskCache') }}</span>
+                      <strong>{{ (state.session?.['cache-size-mb'] ?? 4) + ' MB' }}</strong>
+                    </div>
+                    <div class="stat-row">
+                      <span>{{ t('backstage.incompleteDir') }}</span>
+                      <strong>{{ state.session?.['incomplete-dir-enabled'] ? t('common.enabled') : t('common.disabled') }}</strong>
+                    </div>
+                  </div>
+                  <div class="storage-meter-row" v-if="usedSpacePct !== null">
+                    <div class="meter-info">
+                      <span>{{ t('backstage.diskUsage') }}</span>
+                      <span>{{ usedSpacePct.toFixed(0) }}%</span>
+                    </div>
+                    <div class="meter-track">
+                      <div class="meter-fill" :style="{ width: `${usedSpacePct}%` }"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <!-- 网络诊断面板 -->
+              <NetworkDiagnostics />
             </template>
 
             <!-- 统计 -->
@@ -181,47 +275,16 @@
                   </div>
                 </div>
               </div>
-
-              <div class="panel storage-panel">
-                <h3>{{ t('backstage.storage') }}</h3>
-                <p class="storage-path" :title="downloadDir">{{ downloadDir }}</p>
-                <div class="storage-usage" v-if="freeSpaceBytes !== null">
-                  <div class="storage-usage-head">
-                    <span>{{ freeSpaceLabel }}</span>
-                    <span v-if="usedSpacePct !== null">{{ t('backstage.usedSpace', { pct: usedSpacePct.toFixed(0) }) }}</span>
-                  </div>
-                  <div class="storage-meter" v-if="freeSpaceTotal">
-                    <div class="storage-meter-fill" :style="{ width: `${usedSpacePct ?? 0}%` }"></div>
-                  </div>
-                </div>
-                <div class="mini-metrics">
-                  <div class="mini-metric">
-                    <span>{{ t('backstage.torrents') }}</span>
-                    <strong>{{ state.torrents.length }}</strong>
-                  </div>
-                  <div class="mini-metric">
-                    <span>{{ t('backstage.labels') }}</span>
-                    <strong>{{ labelCount }}</strong>
-                  </div>
-                  <div class="mini-metric">
-                    <span>{{ t('backstage.trackers') }}</span>
-                    <strong>{{ trackerCount }}</strong>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 网络诊断面板 (组件化抽取) -->
-              <NetworkDiagnostics @openSettings="activeTab = 'settings'" />
             </template>
 
-            <!-- 添加任务（嵌入 Backstage，不再弹出独立窗口） -->
+            <!-- 添加任务（嵌入 Backstage，完成操作后直接回到 WebUI 主页） -->
             <template v-else-if="activeTab === 'add'">
-              <AddDialog embedded @done="activeTab = 'info'" />
+              <AddDialog embedded @done="handleActionDone" />
             </template>
 
-            <!-- 首选项（嵌入 Backstage，不再弹出独立窗口） -->
+            <!-- 首选项（嵌入 Backstage，保存操作后直接回到 WebUI 主页） -->
             <template v-else-if="activeTab === 'settings'">
-              <SessionDialog embedded @done="activeTab = 'info'" />
+              <SessionDialog embedded @done="handleActionDone" />
             </template>
 
             <!-- 关于 -->
@@ -273,6 +336,7 @@ import {
   fetchTorrents,
   formatBytes,
   formatSpeed,
+  formatDisplayPath,
   showToast,
 } from '../../stores/transmission';
 import { TorrentStatus } from '../../api/types';
@@ -357,12 +421,9 @@ const usedSpacePct = computed(() => {
 const freeSpaceLabel = computed(() => {
   if (freeSpaceBytes.value === null) return '';
   if (freeSpaceTotal.value) {
-    return t('backstage.freeSpaceOf', {
-      free: formatBytes(freeSpaceBytes.value),
-      total: formatBytes(freeSpaceTotal.value),
-    });
+    return `${formatBytes(freeSpaceBytes.value)} / ${formatBytes(freeSpaceTotal.value)}`;
   }
-  return t('backstage.freeSpace', { free: formatBytes(freeSpaceBytes.value) });
+  return formatBytes(freeSpaceBytes.value);
 });
 
 async function loadStorage() {
@@ -397,6 +458,19 @@ const activeTabSubtitle = computed(() => {
 
 function handleAdd() {
   activeTab.value = 'add';
+}
+
+function handleActionDone() {
+  closeFileMenu();
+  state.fileMenuTab = 'info';
+}
+
+function handleFilterErrors() {
+  state.filter.status = 'error';
+  state.selectedTag = null;
+  state.selectedTracker = null;
+  state.selectedFolder = null;
+  closeFileMenu();
 }
 
 function handleSettings() {
@@ -438,7 +512,7 @@ watch(
 );
 
 watch(activeTab, (tab) => {
-  if (tab === 'stats') loadStorage();
+  if (tab === 'stats' || tab === 'info') loadStorage();
 });
 
 useEscapeKey(() => {
