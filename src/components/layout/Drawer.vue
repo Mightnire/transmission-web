@@ -617,8 +617,7 @@ function clearGroupFilter() {
   border-radius: 3px;
 }
 
-.section-collapse-btn .fluent-icon,
-.section-collapse-btn .material-icons {
+.section-collapse-btn .fluent-icon {
   font-size: 16px;
 }
 
@@ -646,8 +645,7 @@ function clearGroupFilter() {
   color: var(--md-text-primary);
 }
 
-.clear-filter-btn .fluent-icon,
-.clear-filter-btn .material-icons {
+.clear-filter-btn .fluent-icon {
   font-size: 13px;
 }
 
@@ -670,8 +668,7 @@ function clearGroupFilter() {
   color: var(--md-text-primary);
 }
 
-.sort-toggle-btn .fluent-icon,
-.sort-toggle-btn .material-icons {
+.sort-toggle-btn .fluent-icon {
   font-size: 15px;
 }
 

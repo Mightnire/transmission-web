@@ -563,8 +563,8 @@
           </div>
         </div>
 
-        <!-- 表格列自定义组 (双行堆叠) -->
-        <div class="ribbon-group">
+        <!-- 表格列自定义组 (双行堆叠，仅表格视图可见，卡片模式自适应隐藏) -->
+        <div class="ribbon-group" v-if="state.viewMode === 'table'">
           <div class="ribbon-controls">
             <div class="btn-stack-2row">
               <button
@@ -2660,14 +2660,12 @@ function toggleTheme() {
   background: var(--fluent-bg-hover);
 }
 
-.mobile-sheet-action .fluent-icon,
-.mobile-sheet-action .material-icons {
+.mobile-sheet-action .fluent-icon {
   font-size: 22px;
   color: var(--md-text-secondary);
 }
 
-.mobile-sheet-action.danger .fluent-icon,
-.mobile-sheet-action.danger .material-icons {
+.mobile-sheet-action.danger .fluent-icon {
   color: #c62828;
 }
 
@@ -3117,8 +3115,7 @@ function toggleTheme() {
   cursor: pointer;
 }
 
-.cols-order-btn .fluent-icon,
-.cols-order-btn .material-icons { font-size: 14px; }
+.cols-order-btn .fluent-icon { font-size: 14px; }
 
 .cols-order-btn:hover:not(:disabled) { border-color: var(--fluent-accent); color: var(--fluent-accent); }
 .cols-order-btn:disabled { opacity: 0.25; cursor: default; }
@@ -3212,7 +3209,9 @@ function toggleTheme() {
 }
 
 .fluent-ribbon-root .fluent-btn-large .large-icon {
-  font-size: 18px;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
   margin-bottom: 0;
 }
 
@@ -3268,16 +3267,11 @@ function toggleTheme() {
 }
 
 .fluent-ribbon-root .ribbon-body .fluent-svg-icon,
-.fluent-ribbon-root .ribbon-body .material-icons {
+.fluent-ribbon-root .ribbon-body .fluent-icon,
+.fluent-ribbon-root .fluent-btn-large .large-icon {
   font-size: 16px !important;
   width: 16px !important;
   height: 16px !important;
-}
-
-.fluent-ribbon-root .fluent-btn-large .large-icon {
-  font-size: 20px !important;
-  width: 20px !important;
-  height: 20px !important;
 }
 
 .fluent-ribbon-root .dialog-launcher-btn {

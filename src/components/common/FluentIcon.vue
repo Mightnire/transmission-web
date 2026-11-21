@@ -1,6 +1,6 @@
 <template>
   <svg
-    class="fluent-svg-icon fluent-icon material-icons"
+    class="fluent-svg-icon fluent-icon"
     :class="iconClass"
     :style="svgStyle"
     viewBox="0 0 24 24"

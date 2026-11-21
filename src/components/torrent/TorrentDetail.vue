@@ -974,8 +974,7 @@ function handleSetLocation() {
   border-color: #e57373;
 }
 
-.banner-action-btn .fluent-icon,
-.banner-action-btn .material-icons {
+.banner-action-btn .fluent-icon {
   font-size: 14px;
 }
 
@@ -1017,8 +1016,7 @@ function handleSetLocation() {
   color: var(--md-text-primary);
 }
 
-.dock-btn .fluent-icon,
-.dock-btn .material-icons {
+.dock-btn .fluent-icon {
   font-size: 16px;
 }
 
@@ -1419,8 +1417,7 @@ function handleSetLocation() {
   font-size: 12px;
 }
 
-.empty-hint .fluent-icon,
-.empty-hint .material-icons {
+.empty-hint .fluent-icon {
   font-size: 32px;
   margin-bottom: 6px;
   opacity: 0.4;

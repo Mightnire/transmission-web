@@ -1152,8 +1152,7 @@ function getStatusBadgeClass(item: Torrent): string {
   cursor: pointer;
 }
 
-.cols-order-btn .fluent-icon,
-.cols-order-btn .material-icons { font-size: 14px; }
+.cols-order-btn .fluent-icon { font-size: 14px; }
 
 .cols-order-btn:hover:not(:disabled) { border-color: var(--fluent-accent); color: var(--fluent-accent); }
 .cols-order-btn:disabled { opacity: 0.25; cursor: default; }
@@ -1502,8 +1501,7 @@ function getStatusBadgeClass(item: Torrent): string {
   background-color: var(--fluent-bg-hover);
 }
 
-.menu-item .fluent-icon,
-.menu-item .material-icons {
+.menu-item .fluent-icon {
   font-size: 16px;
   color: var(--md-text-secondary);
 }
@@ -1551,8 +1549,7 @@ function getStatusBadgeClass(item: Torrent): string {
   pointer-events: none;
 }
 
-.column-drag-ghost .fluent-icon,
-.column-drag-ghost .material-icons {
+.column-drag-ghost .fluent-icon {
   font-size: 14px;
   color: var(--fluent-accent);
 }
