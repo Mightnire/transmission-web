@@ -742,6 +742,10 @@ export default {
     low: 'Low',
   },
   dialog: {
+    startAllTitle: 'Start All',
+    startAllConfirm: 'No torrents selected. Are you sure you want to start all torrents?',
+    pauseAllTitle: 'Pause All',
+    pauseAllConfirm: 'No torrents selected. Are you sure you want to pause all torrents?',
     setLocationTitle: 'Change Location',
     setLocationPrompt: 'Enter destination folder path:',
     moveData: 'Move already downloaded data files (Recommended)',

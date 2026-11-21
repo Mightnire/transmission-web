@@ -1344,6 +1344,14 @@ useEscapeKey(() => {
 
 .form-check input[type="checkbox"] {
   cursor: pointer;
+  margin: 0 8px 0 0; /* 旧版浏览器不支持 flex gap 时的间距兜底 */
+  flex-shrink: 0;
+}
+
+@supports (gap: 8px) {
+  .form-check input[type="checkbox"] {
+    margin-right: 0;
+  }
 }
 
 .form-vertical-switches {
@@ -1351,6 +1359,16 @@ useEscapeKey(() => {
   flex-direction: column;
   gap: 8px;
   margin-top: 4px;
+}
+
+.form-vertical-switches > * + * {
+  margin-top: 8px; /* 旧版浏览器垂直间距兜底 */
+}
+
+@supports (gap: 8px) {
+  .form-vertical-switches > * + * {
+    margin-top: 0;
+  }
 }
 
 .form-vertical-switches .form-check {
@@ -1369,6 +1387,16 @@ useEscapeKey(() => {
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+.unit-group .num-input {
+  margin-right: 5px;
+}
+
+@supports (gap: 5px) {
+  .unit-group .num-input {
+    margin-right: 0;
+  }
 }
 
 .unit-label {
@@ -1850,6 +1878,13 @@ useEscapeKey(() => {
   font-size: 14px;
   color: var(--fluent-accent);
   flex-shrink: 0;
+  margin-right: 8px;
+}
+
+@supports (gap: 8px) {
+  .dropdown-item-icon {
+    margin-right: 0;
+  }
 }
 
 .dropdown-item-info {

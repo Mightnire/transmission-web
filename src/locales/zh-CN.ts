@@ -742,6 +742,10 @@ export default {
     low: '低优先级',
   },
   dialog: {
+    startAllTitle: '全部开始',
+    startAllConfirm: '当前未选择任何任务，确定要开始所有任务吗？',
+    pauseAllTitle: '全部暂停',
+    pauseAllConfirm: '当前未选择任何任务，确定要暂停所有任务吗？',
     setLocationTitle: '更改存储路径',
     setLocationPrompt: '请输入目标保存目录路径:',
     moveData: '同时搬迁本地已下载的数据文件',

@@ -145,7 +145,7 @@
                 :title="hasSelection ? t('toolbar.start') : t('toolbar.startAll')"
               >
                 <FluentIcon name="play_arrow" class="text-success" />
-                <span>{{ hasSelection ? t('toolbar.start') : t('toolbar.startAll') }}</span>
+                <span>{{ t('toolbar.start') }}</span>
               </button>
               <button
                 class="split-arrow-btn"
@@ -165,7 +165,7 @@
                 :title="hasSelection ? t('toolbar.pause') : t('toolbar.pauseAll')"
               >
                 <FluentIcon name="pause" class="text-warning" />
-                <span>{{ hasSelection ? t('toolbar.pause') : t('toolbar.pauseAll') }}</span>
+                <span>{{ t('toolbar.pause') }}</span>
               </button>
               <button
                 class="split-arrow-btn"
@@ -1189,6 +1189,7 @@ import {
   invertSelection,
   openLocationDialog,
   openRenameDialog,
+  openConfirm,
   openConfirmRemove,
   openAboutDialog,
   openStatsDialog,
@@ -1618,7 +1619,15 @@ function handleStart() {
   if (hasSelection.value) {
     startSelected();
   } else {
-    handleStartAll();
+    if (state.torrents.length === 0) return;
+    openConfirm({
+      title: t('dialog.startAllTitle'),
+      message: t('dialog.startAllConfirm'),
+      confirmText: t('dialog.startAllTitle'),
+      onConfirm: () => {
+        handleStartAll();
+      },
+    });
   }
 }
 
@@ -1640,7 +1649,15 @@ function handleStop() {
   if (hasSelection.value) {
     stopSelected();
   } else {
-    handleStopAll();
+    if (state.torrents.length === 0) return;
+    openConfirm({
+      title: t('dialog.pauseAllTitle'),
+      message: t('dialog.pauseAllConfirm'),
+      confirmText: t('dialog.pauseAllTitle'),
+      onConfirm: () => {
+        handleStopAll();
+      },
+    });
   }
 }
 
@@ -1798,6 +1815,13 @@ function toggleTheme() {
 
 .brand-logo {
   flex-shrink: 0;
+  margin-right: 6px;
+}
+
+@supports (gap: 6px) {
+  .brand-logo {
+    margin-right: 0;
+  }
 }
 
 .brand-file-btn {
@@ -2298,6 +2322,16 @@ function toggleTheme() {
   font-size: 11px;
   color: var(--md-text-primary);
   cursor: pointer;
+}
+
+.split-main-btn .fluent-icon {
+  margin-right: 4px;
+}
+
+@supports (gap: 4px) {
+  .split-main-btn .fluent-icon {
+    margin-right: 0;
+  }
 }
 
 .split-main-btn:disabled {
