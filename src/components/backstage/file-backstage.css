@@ -561,6 +561,10 @@
     padding: 14px 16px 24px;
   }
 
+  .backstage-body.is-settings {
+    padding: 0 !important;
+  }
+
   .backstage-hero {
     padding: 12px 14px;
     flex-direction: column;

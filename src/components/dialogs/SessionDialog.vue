@@ -1245,39 +1245,51 @@ useEscapeKey(() => {
 /* 移动端适配 */
 @media (max-width: 768px) {
   .session-dialog {
-    width: calc(100vw - 16px);
-    height: 92vh;
-    margin: 8px;
+    width: 100%;
+    max-width: 100vw;
+    height: 100%;
+    margin: 0;
   }
 
   .chrome-settings-layout {
-    flex-direction: column;
+    flex-direction: column !important;
+    height: 100%;
+    min-height: 0;
   }
 
   .chrome-nav {
-    width: 100%;
-    flex-direction: row;
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--fluent-border-subtle);
-    padding: 6px 8px;
-    gap: 6px;
-    flex-shrink: 0;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 48px;
+    position: static !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--fluent-border-subtle) !important;
+    padding: 6px 10px !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .chrome-nav-btn {
-    white-space: nowrap;
-    padding: 6px 10px;
-    font-size: 11.5px;
+    white-space: nowrap !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    flex-shrink: 0 !important;
   }
 
   .chrome-scroll-container {
-    padding: 12px 14px 28px;
+    flex: 1 !important;
+    min-height: 0 !important;
+    padding: 14px 16px 36px !important;
+    overflow-y: auto !important;
   }
 
   .form-row {
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
   }
 
   .unit-group {

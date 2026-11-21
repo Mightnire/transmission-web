@@ -11,6 +11,7 @@ export interface TorrentFilter {
   search: string;
   sortBy:
     | 'queuePosition'
+    | 'status'
     | 'name'
     | 'percentDone'
     | 'rateDownload'
@@ -96,6 +97,18 @@ function loadDetailHeight(): number {
   return 380;
 }
 
+function getInitialViewMode(): 'table' | 'cards' {
+  if (typeof window === 'undefined') return 'table';
+  // 清理可能污染大屏的旧版单一 key
+  localStorage.removeItem('view_mode');
+  const isMobile = window.innerWidth < 768;
+  const key = isMobile ? 'view_mode_mobile' : 'view_mode_desktop';
+  const saved = localStorage.getItem(key) as ('table' | 'cards') | null;
+  if (saved === 'table' || saved === 'cards') return saved;
+  // 大屏设备绝对默认高效列表视图！手机默认卡片视图
+  return isMobile ? 'cards' : 'table';
+}
+
 export const state = reactive<{
   torrents: Torrent[];
   session: SessionInfo | null;
@@ -177,10 +190,22 @@ export const state = reactive<{
   detailHeight: loadDetailHeight(),
   speedHistory: [],
   isPolling: false,
-  viewMode: (typeof window !== 'undefined' && (localStorage.getItem('view_mode') as ('table' | 'cards'))) ||
-    (typeof window !== 'undefined' && window.innerWidth < 768 ? 'cards' : 'table'),
+  viewMode: getInitialViewMode(),
   compactDensity: typeof window !== 'undefined' && localStorage.getItem('compact_density') === 'true',
 });
+
+if (typeof window !== 'undefined') {
+  let lastIsMobile = window.innerWidth < 768;
+  window.addEventListener('resize', () => {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile !== lastIsMobile) {
+      lastIsMobile = isMobile;
+      const key = isMobile ? 'view_mode_mobile' : 'view_mode_desktop';
+      const saved = localStorage.getItem(key) as ('table' | 'cards') | null;
+      state.viewMode = saved === 'table' || saved === 'cards' ? saved : (isMobile ? 'cards' : 'table');
+    }
+  });
+}
 
 if (typeof window !== 'undefined') {
   (window as any).__APP_STATE__ = state;
@@ -812,11 +837,11 @@ export function openRenameDialog() {
 }
 
 export function openAboutDialog() {
-  state.aboutDialogOpen = true;
+  openFileMenu('about');
 }
 
 export function openStatsDialog() {
-  state.statsDialogOpen = true;
+  openFileMenu('stats');
 }
 
 // 通用跨环境剪贴板复制 (彻底解决 HTTP 路由器环境下 navigator.clipboard 为 undefined 的报错！)
@@ -955,6 +980,13 @@ export const filteredTorrents = computed(() => {
     let cmp = 0;
     if (sortBy === 'queuePosition') {
       cmp = (a.queuePosition ?? 999999) - (b.queuePosition ?? 999999);
+    } else if (sortBy === 'status') {
+      const aScore = a.error !== 0 ? 100 : a.status;
+      const bScore = b.error !== 0 ? 100 : b.status;
+      cmp = aScore - bScore;
+      if (cmp === 0) {
+        cmp = (b.percentDone || 0) - (a.percentDone || 0);
+      }
     } else {
       const aValue = (a as unknown as Record<string, unknown>)[sortBy];
       const bValue = (b as unknown as Record<string, unknown>)[sortBy];
@@ -970,9 +1002,16 @@ export const filteredTorrents = computed(() => {
   return list;
 });
 
+export function setViewMode(mode: 'table' | 'cards') {
+  state.viewMode = mode;
+  if (typeof window !== 'undefined') {
+    const key = window.innerWidth < 768 ? 'view_mode_mobile' : 'view_mode_desktop';
+    localStorage.setItem(key, mode);
+  }
+}
+
 export function toggleViewMode() {
-  state.viewMode = state.viewMode === 'table' ? 'cards' : 'table';
-  localStorage.setItem('view_mode', state.viewMode);
+  setViewMode(state.viewMode === 'table' ? 'cards' : 'table');
 }
 
 export function selectAllTorrents() {

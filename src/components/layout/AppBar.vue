@@ -450,11 +450,11 @@
               <span class="btn-caption">{{ t('toolbar.settings') }}</span>
             </button>
             <div class="btn-stack-2row">
-              <button class="fluent-btn-small" @click="openStatsDialog" :title="t('sidebar.stats')">
+              <button class="fluent-btn-small" @click="openFileMenu('stats')" :title="t('sidebar.stats')">
                 <FluentIcon name="insights" />
                 <span>{{ t('sidebar.stats') }}</span>
               </button>
-              <button class="fluent-btn-small" @click="openAboutDialog" :title="t('ribbon.about')">
+              <button class="fluent-btn-small" @click="openFileMenu('about')" :title="t('ribbon.about')">
                 <FluentIcon name="info" />
                 <span>{{ t('ribbon.about') }}</span>
               </button>
@@ -844,6 +844,131 @@
       </template>
     </div>
 
+    <!-- 4. 移动端吸顶微胶囊状态小栏 (紧随移动工具条下方，常驻展示) -->
+    <div class="mobile-sub-status-bar mobile-only">
+      <!-- 左侧：任务总数 / 选中汇总 (完全套用桌面状态栏逻辑) -->
+      <div class="sub-stat-summary">
+        <span class="sub-stat-count">{{ selectionText }}</span>
+      </div>
+
+      <!-- 中间：实时下载与上传速率 (点击呼出限速设置) -->
+      <div class="sub-stat-speeds">
+        <button
+          class="sub-speed-btn down"
+          :class="{
+            active: mobileSpeedFlyout.open && mobileSpeedFlyout.type === 'down',
+            'is-limited': isDownLimited,
+            'is-turtle': isTurtleActive,
+            'is-regular-limit': isDownLimited && !isTurtleActive
+          }"
+          @click.stop="toggleMobileSpeedFlyout('down')"
+          :title="downLimitTooltip"
+        >
+          <FluentIcon name="arrow_downward" class="sub-speed-icon text-info" />
+          <span class="sub-speed-val">{{ formatSpeed(currentRateDownload) }}</span>
+          <span
+            class="sub-speed-limit"
+            :class="{ 'turtle-limit': isTurtleActive, 'regular-limit': isDownLimited && !isTurtleActive }"
+            v-if="isDownLimited"
+          >
+            [{{ formatBytes(downLimitBytes) }}/s]
+          </span>
+        </button>
+
+        <button
+          class="sub-speed-btn up"
+          :class="{
+            active: mobileSpeedFlyout.open && mobileSpeedFlyout.type === 'up',
+            'is-limited': isUpLimited,
+            'is-turtle': isTurtleActive,
+            'is-regular-limit': isUpLimited && !isTurtleActive
+          }"
+          @click.stop="toggleMobileSpeedFlyout('up')"
+          :title="upLimitTooltip"
+        >
+          <FluentIcon name="arrow_upward" class="sub-speed-icon text-success" />
+          <span class="sub-speed-val">{{ formatSpeed(currentRateUpload) }}</span>
+          <span
+            class="sub-speed-limit"
+            :class="{ 'turtle-limit': isTurtleActive, 'regular-limit': isUpLimited && !isTurtleActive }"
+            v-if="isUpLimited"
+          >
+            [{{ formatBytes(upLimitBytes) }}/s]
+          </span>
+        </button>
+      </div>
+
+      <!-- 右侧：乌龟模式开关 + 视图模式切换 -->
+      <div class="sub-stat-actions">
+        <button
+          class="sub-action-btn turtle-btn"
+          :class="{ active: state.session?.['alt-speed-enabled'] }"
+          @click="toggleTurtleMode"
+          :title="t('toolbar.turtle')"
+        >
+          <FluentIcon name="speed" />
+        </button>
+
+        <div class="sub-view-switch" role="group" :aria-label="t('statusbar.tableView')">
+          <button
+            class="sub-action-btn view-btn"
+            :class="{ active: state.viewMode === 'cards' }"
+            @click="setViewMode('cards')"
+            :title="t('statusbar.cardsView')"
+          >
+            <FluentIcon name="grid_view" />
+          </button>
+          <button
+            class="sub-action-btn view-btn"
+            :class="{ active: state.viewMode === 'table' }"
+            @click="setViewMode('table')"
+            :title="t('statusbar.tableView')"
+          >
+            <FluentIcon name="table_chart" />
+          </button>
+        </div>
+      </div>
+
+      <!-- 移动端限速微型 Flyout 气泡 -->
+      <div
+        class="mobile-speed-flyout"
+        :class="mobileSpeedFlyout.type"
+        v-if="mobileSpeedFlyout.open"
+        @click.stop
+      >
+        <div class="flyout-header">
+          <span>{{ mobileSpeedFlyout.type === 'down' ? t('statusbar.downLimit') : t('statusbar.upLimit') }}</span>
+          <button class="flyout-close-btn" @click="mobileSpeedFlyout.open = false" :title="t('common.close')">
+            <FluentIcon name="close" />
+          </button>
+        </div>
+        <div class="flyout-body">
+          <label class="fluent-check-label">
+            <input type="checkbox" v-model="mobileSpeedFlyout.enabled" />
+            <span>{{ mobileSpeedFlyout.type === 'down' ? t('statusbar.downLimit') : t('statusbar.upLimit') }}</span>
+          </label>
+          <div class="flyout-input-row" v-if="mobileSpeedFlyout.enabled">
+            <input
+              type="number"
+              class="num-input flyout-num"
+              v-model.number="mobileSpeedFlyout.limit"
+              min="0"
+              step="50"
+            />
+            <span class="unit-txt">KB/s</span>
+          </div>
+        </div>
+        <div class="flyout-footer">
+          <button class="fluent-btn-mobile-sub cancel" @click="mobileSpeedFlyout.open = false">
+            {{ t('common.cancel') }}
+          </button>
+          <button class="fluent-btn-mobile-sub save" @click="saveMobileSpeedLimit">
+            {{ t('common.save') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 移动端操作面板：把 Ribbon 的常用命令收进底部弹出层 -->
     <Teleport to="body">
       <div class="mobile-sheet-backdrop" v-if="mobileMenuOpen" @click="mobileMenuOpen = false"></div>
@@ -1033,6 +1158,9 @@ import {
   reannounceSelected,
   openFileMenu,
   toggleCompactDensity,
+  setViewMode,
+  formatBytes,
+  formatSpeed,
 } from '../../stores/transmission';
 import { rpc } from '../../api/rpc';
 import { t, currentLocale, setLocale, LocaleKey } from '../../locales';
@@ -1064,6 +1192,119 @@ function closeAllMenus() {
   menus.delete = false;
   menus.lang = false;
   menus.columns = false;
+  mobileSpeedFlyout.open = false;
+}
+
+// 移动端顶部微胶囊状态条：速率与限速状态
+const selectedTorrents = computed(() => {
+  if (state.selectedIds.length === 0) return [];
+  const set = new Set(state.selectedIds);
+  return state.torrents.filter((t) => set.has(t.id));
+});
+
+const selectedSize = computed(() => {
+  return selectedTorrents.value.reduce((acc, cur) => acc + (cur.totalSize || cur.sizeWhenDone || 0), 0);
+});
+
+const selectionText = computed(() => {
+  const count = state.selectedIds.length;
+  if (count === 0) {
+    return t('statusbar.totalItems', { count: state.torrents.length });
+  }
+  return t('statusbar.selectedItems', {
+    total: state.torrents.length,
+    count,
+    size: formatBytes(selectedSize.value),
+  });
+});
+
+const currentRateDownload = computed(() => {
+  return state.stats?.downloadSpeed ?? state.torrents.reduce((acc, t) => acc + (t.rateDownload || 0), 0);
+});
+
+const currentRateUpload = computed(() => {
+  return state.stats?.uploadSpeed ?? state.torrents.reduce((acc, t) => acc + (t.rateUpload || 0), 0);
+});
+
+const isTurtleActive = computed(() => !!state.session?.['alt-speed-enabled']);
+
+const isDownLimited = computed(() => {
+  if (isTurtleActive.value) return true;
+  return !!state.session?.['speed-limit-down-enabled'];
+});
+
+const isUpLimited = computed(() => {
+  if (isTurtleActive.value) return true;
+  return !!state.session?.['speed-limit-up-enabled'];
+});
+
+const downLimitBytes = computed(() => {
+  if (isTurtleActive.value) {
+    return (state.session?.['alt-speed-down'] ?? 0) * 1024;
+  }
+  return (state.session?.['speed-limit-down'] ?? 0) * 1024;
+});
+
+const upLimitBytes = computed(() => {
+  if (isTurtleActive.value) {
+    return (state.session?.['alt-speed-up'] ?? 0) * 1024;
+  }
+  return (state.session?.['speed-limit-up'] ?? 0) * 1024;
+});
+
+const downLimitTooltip = computed(() => {
+  if (isDownLimited.value) {
+    const reason = isTurtleActive.value ? t('toolbar.turtle') : t('statusbar.downLimit');
+    return `${t('sidebar.downLimit')} · ${reason}: ${formatBytes(downLimitBytes.value)}/s`;
+  }
+  return t('sidebar.downLimit');
+});
+
+const upLimitTooltip = computed(() => {
+  if (isUpLimited.value) {
+    const reason = isTurtleActive.value ? t('toolbar.turtle') : t('statusbar.upLimit');
+    return `${t('sidebar.upLimit')} · ${reason}: ${formatBytes(upLimitBytes.value)}/s`;
+  }
+  return t('sidebar.upLimit');
+});
+
+const mobileSpeedFlyout = reactive({
+  open: false,
+  type: 'down' as 'down' | 'up',
+  enabled: false,
+  limit: 0,
+});
+
+function toggleMobileSpeedFlyout(type: 'down' | 'up') {
+  if (mobileSpeedFlyout.open && mobileSpeedFlyout.type === type) {
+    mobileSpeedFlyout.open = false;
+    return;
+  }
+  mobileSpeedFlyout.type = type;
+  if (type === 'down') {
+    mobileSpeedFlyout.enabled = !!state.session?.['speed-limit-down-enabled'];
+    mobileSpeedFlyout.limit = state.session?.['speed-limit-down'] ?? 100;
+  } else {
+    mobileSpeedFlyout.enabled = !!state.session?.['speed-limit-up-enabled'];
+    mobileSpeedFlyout.limit = state.session?.['speed-limit-up'] ?? 100;
+  }
+  mobileSpeedFlyout.open = true;
+}
+
+async function saveMobileSpeedLimit() {
+  const args: any = {};
+  if (mobileSpeedFlyout.type === 'down') {
+    args['speed-limit-down-enabled'] = mobileSpeedFlyout.enabled;
+    args['speed-limit-down'] = mobileSpeedFlyout.limit;
+  } else {
+    args['speed-limit-up-enabled'] = mobileSpeedFlyout.enabled;
+    args['speed-limit-up'] = mobileSpeedFlyout.limit;
+  }
+  if (state.session) {
+    Object.assign(state.session, args);
+  }
+  await rpc.setSession(args);
+  mobileSpeedFlyout.open = false;
 }
 
 function toggleMenu(type: 'start' | 'stop' | 'delete' | 'lang' | 'columns', event?: MouseEvent) {
@@ -2363,16 +2604,17 @@ function toggleTheme() {
 .mobile-compact-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 8px;
+  padding: 8px 10px;
   background-color: var(--fluent-bg-canvas);
   border-bottom: 1px solid var(--fluent-border-subtle);
 }
 
 .fluent-btn-mobile {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2380,6 +2622,19 @@ function toggleTheme() {
   border: 1px solid var(--fluent-border-subtle);
   color: var(--md-text-primary);
   cursor: pointer;
+  font-size: 20px;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.fluent-btn-mobile .fluent-svg-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.fluent-btn-mobile:active {
+  transform: scale(0.95);
+  background: var(--fluent-bg-hover);
 }
 
 .fluent-btn-mobile.btn-primary {
@@ -2392,12 +2647,20 @@ function toggleTheme() {
   flex: 1;
   display: flex;
   align-items: center;
-  height: 32px;
+  height: 38px;
   background-color: var(--fluent-bg-subtle);
   border: 1px solid var(--fluent-border-subtle);
-  border-radius: 4px;
-  padding: 0 8px;
-  gap: 6px;
+  border-radius: 6px;
+  padding: 0 10px;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.mobile-search-wrap .search-prefix-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--md-text-secondary);
+  flex-shrink: 0;
 }
 
 .mobile-search-input {
@@ -2405,8 +2668,24 @@ function toggleTheme() {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--md-text-primary);
+}
+
+.mobile-clear-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--md-text-secondary);
+}
+
+.mobile-clear-btn .fluent-svg-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .selection-badge {
@@ -2415,14 +2694,255 @@ function toggleTheme() {
   align-self: center;
   display: inline-flex;
   align-items: center;
-  height: 28px;
+  height: 32px;
   line-height: 1;
-  padding: 0 8px;
+  padding: 0 10px;
   background-color: rgba(0, 120, 212, 0.1);
-  border-radius: 4px;
-  font-size: 11px;
+  border-radius: 6px;
+  font-size: 12px;
   color: var(--fluent-accent);
   font-weight: 600;
+}
+
+/* 顶部吸顶微胶囊状态小栏 */
+.mobile-sub-status-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  padding: 0 10px;
+  background-color: var(--fluent-bg-subtle);
+  border-bottom: 1px solid var(--fluent-border-subtle);
+  gap: 6px;
+  font-size: 11px;
+}
+
+.sub-stat-summary {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sub-stat-count {
+  font-weight: 600;
+  color: var(--md-text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.sub-stat-speeds {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sub-speed-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--md-text-primary);
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.sub-speed-btn:hover,
+.sub-speed-btn.active {
+  border-color: var(--fluent-accent);
+  background: var(--fluent-bg-hover);
+}
+
+.sub-speed-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.sub-speed-val {
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.sub-speed-limit {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+.sub-speed-btn.is-turtle {
+  border-color: rgba(245, 124, 0, 0.45);
+  background-color: rgba(245, 124, 0, 0.08);
+}
+
+.sub-speed-btn.is-regular-limit {
+  border-color: rgba(0, 120, 212, 0.45);
+  background-color: rgba(0, 120, 212, 0.06);
+}
+
+.sub-speed-limit.turtle-limit {
+  font-size: 9px;
+  color: #b26a00;
+  background: rgba(255, 152, 0, 0.18);
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+[data-theme="dark"] .sub-speed-limit.turtle-limit {
+  color: #ffb74d;
+  background: rgba(255, 183, 77, 0.22);
+}
+
+.sub-speed-limit.regular-limit {
+  font-size: 9px;
+  color: var(--fluent-accent);
+  background: rgba(0, 120, 212, 0.12);
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+.sub-stat-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sub-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  color: var(--md-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.sub-action-btn .fluent-svg-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.sub-action-btn:hover {
+  background: var(--fluent-bg-hover);
+  color: var(--md-text-primary);
+}
+
+.sub-action-btn.turtle-btn.active {
+  color: var(--md-warning);
+  border-color: var(--md-warning);
+  background-color: rgba(245, 124, 0, 0.12);
+}
+
+.sub-view-switch {
+  display: inline-flex;
+  border-radius: 4px;
+  border: 1px solid var(--fluent-border-subtle);
+  overflow: hidden;
+  background: var(--fluent-bg-canvas);
+}
+
+.sub-view-switch .sub-action-btn {
+  border: none;
+  border-radius: 0;
+  width: 25px;
+}
+
+.sub-view-switch .sub-action-btn.active {
+  background: var(--fluent-accent);
+  color: #ffffff;
+}
+
+/* 移动端限速微型浮层 */
+.mobile-speed-flyout {
+  position: absolute;
+  top: 38px;
+  left: 10px;
+  right: 10px;
+  background: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  padding: 12px;
+  z-index: 600;
+}
+
+.mobile-speed-flyout .flyout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--fluent-accent);
+}
+
+.mobile-speed-flyout .flyout-close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  color: var(--md-text-secondary);
+}
+
+.mobile-speed-flyout .flyout-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mobile-speed-flyout .flyout-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mobile-speed-flyout .flyout-num {
+  width: 100px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.mobile-speed-flyout .flyout-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.fluent-btn-mobile-sub {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.fluent-btn-mobile-sub.cancel {
+  background: transparent;
+  border: 1px solid var(--fluent-border-subtle);
+  color: var(--md-text-primary);
+}
+
+.fluent-btn-mobile-sub.save {
+  background: var(--fluent-accent);
+  border: none;
+  color: #ffffff;
 }
 
 /* 通用 Teleport 下拉菜单 */
@@ -2551,6 +3071,26 @@ function toggleTheme() {
 @media (max-width: 767px) {
   .desktop-only {
     display: none !important;
+  }
+
+  .ribbon-header-row {
+    height: 38px;
+    padding: 0 8px;
+  }
+
+  .fluent-tool-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .fluent-tool-btn .fluent-svg-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .brand-logo {
+    width: 22px;
+    height: 22px;
   }
 }
 

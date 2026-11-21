@@ -151,6 +151,7 @@ import {
   formatBytes,
   formatSpeed,
   toggleCompactDensity,
+  setViewMode,
 } from '../../stores/transmission';
 import { TorrentStatus } from '../../api/types';
 import { rpc } from '../../api/rpc';
@@ -321,12 +322,6 @@ async function toggleTurtleMode() {
     state.session['alt-speed-enabled'] = next;
   }
   await rpc.setSession({ 'alt-speed-enabled': next });
-}
-
-// 视图切换
-function setViewMode(mode: 'table' | 'cards') {
-  state.viewMode = mode;
-  localStorage.setItem('view_mode', mode);
 }
 
 onMounted(() => {
@@ -657,6 +652,13 @@ onUnmounted(() => {
 
 @media (max-width: 860px) {
   .storage-item {
+    display: none !important;
+  }
+}
+
+/* 移动端完全隐藏底部状态栏，避免与手势区冲突 */
+@media (max-width: 768px) {
+  .app-status-bar {
     display: none !important;
   }
 }

@@ -465,7 +465,7 @@ const COLUMN_CLASS_MAP: Record<string, string> = {
 const visibleColumns = computed(() => state.columns.filter((column) => column.visible));
 
 const COLUMN_SORT_KEYS: Record<string, string> = {
-  status: 'status', queuePosition: 'queuePosition',
+  status: 'status', statustext: 'status', queuePosition: 'queuePosition',
   name: 'name', size: 'totalSize', progress: 'percentDone',
   downSpeed: 'rateDownload', upSpeed: 'rateUpload', ratio: 'uploadRatio',
   peers: 'peersConnected', downloaded: 'downloadedEver', uploaded: 'uploadedEver',
