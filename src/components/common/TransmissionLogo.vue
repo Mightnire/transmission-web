@@ -14,9 +14,9 @@
     <rect x="6.5" y="6.5" width="51" height="51" rx="8.5" fill="url(#t-panelGrad)" />
     
     <!-- 凹槽上下双向通道与黑色主箭头 -->
-    <path d="M24 24L32 16L40 24H36V28H28V24H24Z" fill="#222222" opacity="0.85" />
-    <path d="M22 36H28V28H36V36H42L32 49L22 36Z" fill="#151515" />
-    <path d="M24 37H29V29H35V37H40L32 47.5L24 37Z" fill="#262626" />
+    <path d="M24 24L32 16L40 24H36V28H28V24H24Z" fill="var(--tlogo-arrow-1, #222222)" opacity="0.85" />
+    <path d="M22 36H28V28H36V36H42L32 49L22 36Z" fill="var(--tlogo-arrow-2, #151515)" />
+    <path d="M24 37H29V29H35V37H40L32 47.5L24 37Z" fill="var(--tlogo-arrow-3, #262626)" />
 
     <!-- 垂直金属变速杆主轴 -->
     <path d="M26.5 12H37.5L36.5 30H27.5L26.5 12Z" fill="url(#t-shaftGrad)" />
@@ -48,9 +48,9 @@
 
       <!-- 内面板高光浅灰渐变 -->
       <linearGradient id="t-panelGrad" x1="6.5" y1="6.5" x2="57.5" y2="57.5" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#FFFFFF" />
-        <stop offset="0.65" stop-color="#EEEEEE" />
-        <stop offset="1" stop-color="#D5D5D5" />
+        <stop stop-color="var(--tlogo-panel-1, #FFFFFF)" />
+        <stop offset="0.65" stop-color="var(--tlogo-panel-2, #EEEEEE)" />
+        <stop offset="1" stop-color="var(--tlogo-panel-3, #D5D5D5)" />
       </linearGradient>
 
       <!-- 垂直轴金属柱 -->
@@ -103,5 +103,20 @@ withDefaults(
   vertical-align: middle;
   flex-shrink: 0;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+  --tlogo-panel-1: #FFFFFF;
+  --tlogo-panel-2: #EEEEEE;
+  --tlogo-panel-3: #D5D5D5;
+  --tlogo-arrow-1: #222222;
+  --tlogo-arrow-2: #151515;
+  --tlogo-arrow-3: #262626;
+}
+
+:global([data-theme="dark"]) .transmission-logo {
+  --tlogo-panel-1: #383838;
+  --tlogo-panel-2: #282828;
+  --tlogo-panel-3: #1c1c1c;
+  --tlogo-arrow-1: #777777;
+  --tlogo-arrow-2: #999999;
+  --tlogo-arrow-3: #666666;
 }
 </style>

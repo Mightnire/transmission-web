@@ -52,9 +52,19 @@
   <!-- 0.1 通用 Fluent 确认弹窗（替代原生 confirm） -->
   <div class="fluent-dialog-backdrop" v-if="state.confirmDialog" @click.self="closeConfirm">
     <div class="fluent-dialog action-modal" role="dialog" aria-modal="true" :aria-label="state.confirmDialog.title">
-      <div class="dialog-header" :class="{ 'danger-header': state.confirmDialog.danger }">
+      <div
+        class="dialog-header"
+        :class="{
+          'danger-header': state.confirmDialog.variant === 'danger' || state.confirmDialog.danger,
+          'success-header': state.confirmDialog.variant === 'success',
+          'warning-header': state.confirmDialog.variant === 'warning',
+        }"
+      >
         <div class="header-title">
-          <FluentIcon :name="state.confirmDialog.danger ? 'warning' : 'info'" class="title-icon" :class="state.confirmDialog.danger ? 'text-danger' : 'text-accent'" />
+          <FluentIcon
+            :name="getConfirmIcon(state.confirmDialog)"
+            :class="getConfirmIconClass(state.confirmDialog)"
+          />
           <span>{{ state.confirmDialog.title }}</span>
         </div>
         <button class="fluent-btn-icon close-btn" @click="closeConfirm">
@@ -70,7 +80,11 @@
         </button>
         <button
           class="fluent-btn-primary"
-          :class="{ 'fluent-btn-danger': state.confirmDialog.danger }"
+          :class="{
+            'fluent-btn-danger': state.confirmDialog.variant === 'danger' || state.confirmDialog.danger,
+            'fluent-btn-success': state.confirmDialog.variant === 'success',
+            'fluent-btn-warning': state.confirmDialog.variant === 'warning',
+          }"
           @click="submitConfirm"
           :disabled="isConfirmSubmitting"
         >
@@ -82,7 +96,7 @@
 
   <!-- 1. 更改存储路径弹窗 -->
   <div class="fluent-dialog-backdrop" v-if="state.locationDialogOpen" @click.self="closeLocation">
-    <div class="fluent-dialog action-modal" role="dialog">
+    <div class="fluent-dialog action-modal combobox-modal" role="dialog">
       <div class="dialog-header">
         <div class="header-title">
           <FluentIcon name="folder_open" class="title-icon text-accent" />
@@ -95,13 +109,11 @@
       <div class="dialog-body">
         <div class="form-group">
           <label class="form-label">{{ t('dialog.setLocationPrompt') }}</label>
-          <input
+          <PathCombobox
             ref="locationInput"
-            type="text"
             v-model="newLocation"
-            class="fluent-input"
-            @keyup.enter="submitLocation"
             placeholder="/mnt/..."
+            @enter="submitLocation"
           />
         </div>
         <label class="fluent-check-label">
@@ -329,12 +341,14 @@ import {
 } from '../../stores/transmission';
 import { rpc } from '../../api/rpc';
 import { t } from '../../locales';
+import FluentIcon from '../common/FluentIcon.vue';
+import PathCombobox from '../common/PathCombobox.vue';
 
 const appVersion = __APP_VERSION__;
 
 // 仅用于让模板中的 ref 类型保持简单
 const promptInput = ref<any>(null);
-const locationInput = ref<HTMLInputElement | null>(null);
+const locationInput = ref<any>(null);
 const renameInput = ref<HTMLInputElement | null>(null);
 
 const promptValue = ref('');
@@ -442,6 +456,21 @@ async function submitPrompt() {
   } finally {
     isPromptSubmitting.value = false;
   }
+}
+
+function getConfirmIcon(dialog: any): string {
+  if (dialog?.icon) return dialog.icon;
+  if (dialog?.variant === 'success') return 'play_arrow';
+  if (dialog?.variant === 'warning') return 'pause';
+  if (dialog?.variant === 'danger' || dialog?.danger) return 'warning';
+  return 'info';
+}
+
+function getConfirmIconClass(dialog: any): string {
+  if (dialog?.variant === 'danger' || dialog?.danger) return 'title-icon text-danger';
+  if (dialog?.variant === 'success') return 'title-icon text-success';
+  if (dialog?.variant === 'warning') return 'title-icon text-warning';
+  return 'title-icon text-accent';
 }
 
 async function submitConfirm() {
@@ -594,6 +623,11 @@ function formatDuration(sec = 0): string {
   animation: modalIn 0.16s cubic-bezier(0.1, 0.9, 0.2, 1);
 }
 
+.action-modal.combobox-modal,
+.action-modal.combobox-modal .dialog-body {
+  overflow: visible !important;
+}
+
 @keyframes modalIn {
   from {
     opacity: 0;
@@ -699,6 +733,22 @@ function formatDuration(sec = 0): string {
   color: var(--md-error);
 }
 
+.success-header {
+  background-color: rgba(16, 124, 65, 0.08);
+}
+
+.success-header .title-icon {
+  color: var(--fluent-status-success);
+}
+
+.warning-header {
+  background-color: rgba(255, 140, 0, 0.08);
+}
+
+.warning-header .title-icon {
+  color: var(--fluent-status-warning);
+}
+
 .fluent-check-label {
   display: flex;
   align-items: center;
@@ -773,6 +823,26 @@ function formatDuration(sec = 0): string {
 
 .fluent-btn-danger:hover:not(:disabled) {
   background-color: #b71c1c;
+}
+
+.fluent-btn-success {
+  background-color: var(--fluent-status-success);
+  border: 1px solid transparent;
+  color: #ffffff;
+}
+
+.fluent-btn-success:hover:not(:disabled) {
+  background-color: #0e6b37;
+}
+
+.fluent-btn-warning {
+  background-color: var(--fluent-status-warning);
+  border: 1px solid transparent;
+  color: #ffffff;
+}
+
+.fluent-btn-warning:hover:not(:disabled) {
+  background-color: #e67e00;
 }
 
 .fluent-btn-primary:disabled,

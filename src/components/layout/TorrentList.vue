@@ -171,4 +171,10 @@ const selectedCount = computed(() => state.selectedIds.length);
   font-size: 14px;
   color: var(--md-text-secondary);
 }
+
+@media (max-width: 768px) {
+  .cards-header-bar {
+    display: none !important;
+  }
+}
 </style>

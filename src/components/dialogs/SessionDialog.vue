@@ -34,7 +34,7 @@
         </nav>
 
         <!-- 右侧连续滚动长页 (Continuous Scroll Content) -->
-        <div class="chrome-scroll-container" ref="scrollContainer" @scroll.passive="onScroll" @click="closePathDropdown">
+        <div class="chrome-scroll-container" ref="scrollContainer" @scroll.passive="onScroll">
           <!-- 0. 界面与偏好 (Web 前端设置整合) -->
           <section id="settings-sec-ui" class="chrome-section">
             <header class="section-title">
@@ -131,48 +131,10 @@
                   <tbody>
                     <tr v-for="(rule, idx) in form.pathAliases" :key="idx">
                       <td class="alias-from-cell">
-                        <div class="alias-combobox-wrapper">
-                          <input
-                            type="text"
-                            class="alias-input combobox-input"
-                            v-model="rule.from"
-                            placeholder="/media/AiDisk_a1"
-                            @focus="openPathDropdown(idx)"
-                            @click.stop="openPathDropdown(idx)"
-                          />
-                          <button
-                            type="button"
-                            class="alias-combobox-btn"
-                            :class="{ active: activePathDropdownIndex === idx }"
-                            @click.stop="togglePathDropdown(idx)"
-                            :title="t('addDialog.selectPath')"
-                            tabindex="-1"
-                          >
-                            <FluentIcon name="expand_more" />
-                          </button>
-
-                          <!-- 下拉推荐路径列表 (复用 AddDialog 的现有物理路径) -->
-                          <div
-                            class="alias-dropdown-menu"
-                            v-if="activePathDropdownIndex === idx && getFilteredPaths(rule.from).length > 0"
-                            @click.stop
-                          >
-                            <div
-                              class="alias-dropdown-item"
-                              v-for="item in getFilteredPaths(rule.from)"
-                              :key="item.path"
-                              :class="{ selected: rule.from === item.path }"
-                              @click.stop="selectPathForAlias(idx, item.path)"
-                            >
-                              <FluentIcon name="folder" class="dropdown-item-icon" />
-                              <div class="dropdown-item-info">
-                                <span class="dropdown-item-path">{{ item.path }}</span>
-                                <span class="dropdown-item-alias" v-if="item.alias">({{ item.alias }})</span>
-                              </div>
-                              <span class="dropdown-item-badge" v-if="item.count">{{ item.count }}</span>
-                            </div>
-                          </div>
-                        </div>
+                        <PathCombobox
+                          v-model="rule.from"
+                          placeholder="/media/AiDisk_a1"
+                        />
                       </td>
                       <td class="arrow-cell">→</td>
                       <td>
@@ -472,7 +434,10 @@
               <h4 class="sub-title">{{ t('session.storage.dirs') }}</h4>
               <div class="form-group">
                 <label class="form-label">{{ t('session.storage.downloadDir') }}</label>
-                <input type="text" class="text-input" v-model="form.downloadDir" @blur="checkFreeSpace" />
+                <PathCombobox
+                  v-model="form.downloadDir"
+                  @select="checkFreeSpace"
+                />
               </div>
 
               <div class="free-space-badge" v-if="freeSpaceBytes !== null">
@@ -487,11 +452,11 @@
                     <span>{{ t('session.storage.incompleteDir') }}</span>
                   </label>
                 </div>
-                <input
-                  type="text"
-                  class="text-input mt-1"
+                <PathCombobox
+                  class="mt-1"
                   v-model="form.incompleteDir"
                   :disabled="!form.incompleteDirEnabled"
+                  placeholder="/media/AiDisk_a1/incomplete"
                 />
               </div>
 
@@ -601,7 +566,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed, onMounted } from 'vue';
+import { ref, reactive, watch, computed, onMounted, onUnmounted } from 'vue';
 import {
   state,
   fetchSession,
@@ -615,6 +580,7 @@ import { useEscapeKey } from '../../composables/useEscapeKey';
 import { t, currentLocale, setLocale, LocaleKey } from '../../locales';
 import { rpc } from '../../api/rpc';
 import FluentIcon from '../common/FluentIcon.vue';
+import PathCombobox from '../common/PathCombobox.vue';
 
 const props = defineProps<{ embedded?: boolean }>();
 const emit = defineEmits<{ (e: 'done'): void }>();
@@ -870,57 +836,6 @@ function initForm(s: any) {
   if (form.downloadDir) {
     checkFreeSpace();
   }
-}
-
-// 现有任务保存路径提取（复用 AddDialog 数据源）
-const detectedFolderGroups = computed(() => {
-  const map = new Map<string, number>();
-  const def = form.downloadDir || state.session?.['download-dir'];
-  if (def && typeof def === 'string') {
-    map.set(def, 0);
-  }
-  for (const t of state.torrents) {
-    if (t.downloadDir) {
-      map.set(t.downloadDir, (map.get(t.downloadDir) || 0) + 1);
-    }
-  }
-  return Array.from(map.entries()).map(([path, count]) => {
-    const alias = formatDisplayPath(path);
-    return {
-      path,
-      count,
-      alias: alias !== path ? alias : undefined,
-    };
-  });
-});
-
-const activePathDropdownIndex = ref<number | null>(null);
-
-function getFilteredPaths(query: string) {
-  const q = (query || '').trim().toLowerCase();
-  if (!q) return detectedFolderGroups.value;
-  return detectedFolderGroups.value.filter(
-    (item) => item.path.toLowerCase().includes(q) || (item.alias && item.alias.toLowerCase().includes(q))
-  );
-}
-
-function openPathDropdown(idx: number) {
-  activePathDropdownIndex.value = idx;
-}
-
-function togglePathDropdown(idx: number) {
-  activePathDropdownIndex.value = activePathDropdownIndex.value === idx ? null : idx;
-}
-
-function closePathDropdown() {
-  activePathDropdownIndex.value = null;
-}
-
-function selectPathForAlias(idx: number, path: string) {
-  if (form.pathAliases[idx]) {
-    form.pathAliases[idx].from = path;
-  }
-  activePathDropdownIndex.value = null;
 }
 
 function addPathAliasRule() {
@@ -1801,118 +1716,6 @@ useEscapeKey(() => {
 
 .alias-from-cell {
   position: relative;
-}
-
-.alias-combobox-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.alias-combobox-wrapper .alias-input {
-  padding-right: 28px;
-}
-
-.alias-combobox-btn {
-  position: absolute;
-  right: 2px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--fluent-text-muted);
-  width: 24px;
-  height: 24px;
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.alias-combobox-btn:hover,
-.alias-combobox-btn.active {
-  background-color: var(--fluent-bg-hover);
-  color: var(--fluent-text-primary);
-}
-
-.alias-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  width: 100%;
-  min-width: 260px;
-  max-height: 200px;
-  overflow-y: auto;
-  background-color: var(--fluent-bg-canvas);
-  border: 1px solid var(--fluent-border-divider);
-  border-radius: var(--fluent-radius);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
-  z-index: 1000;
-  padding: 4px;
-}
-
-.alias-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background-color 0.12s ease;
-}
-
-.alias-dropdown-item:hover {
-  background-color: var(--fluent-bg-hover);
-}
-
-.alias-dropdown-item.selected {
-  background-color: var(--fluent-accent-subtle);
-  color: var(--fluent-accent);
-}
-
-.dropdown-item-icon {
-  font-size: 14px;
-  color: var(--fluent-accent);
-  flex-shrink: 0;
-  margin-right: 8px;
-}
-
-@supports (gap: 8px) {
-  .dropdown-item-icon {
-    margin-right: 0;
-  }
-}
-
-.dropdown-item-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-
-.dropdown-item-path {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: monospace;
-}
-
-.dropdown-item-alias {
-  font-size: 10.5px;
-  color: var(--fluent-text-muted);
-}
-
-.dropdown-item-badge {
-  font-size: 10px;
-  background-color: rgba(0, 0, 0, 0.06);
-  padding: 0 5px;
-  border-radius: 10px;
-  color: var(--fluent-text-muted);
-  flex-shrink: 0;
 }
 
 .col-actions {

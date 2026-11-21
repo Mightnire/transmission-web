@@ -213,6 +213,19 @@
               <span class="label">{{ t('detail.general.comment') }}</span>
               <span class="value">{{ activeTorrent.comment }}</span>
             </div>
+            <div class="info-row tags-info-row">
+              <span class="label">{{ t('detail.general.labels') }}</span>
+              <div class="detail-tags-list" v-if="activeTorrent.labels && activeTorrent.labels.length > 0">
+                <span
+                  v-for="tag in activeTorrent.labels"
+                  :key="tag"
+                  class="detail-tag-chip"
+                >
+                  <span>{{ tag }}</span>
+                </span>
+              </div>
+              <span class="value text-muted" v-else>—</span>
+            </div>
           </div>
 
           <!-- 时间统计卡片 -->
@@ -1181,6 +1194,31 @@ function handleSetLocation() {
   min-width: 0;
   text-align: right;
   word-break: break-all;
+}
+
+.info-row.tags-info-row {
+  align-items: flex-start;
+}
+
+.detail-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.detail-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 10.5px;
+  background-color: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  color: var(--fluent-text-primary);
+  line-height: 1.4;
 }
 
 .remove-tr-btn {

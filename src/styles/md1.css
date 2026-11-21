@@ -18,26 +18,6 @@
   /* Theme Primary & Accent (Aligned with Fluent System) */
   --fluent-accent: #0078d4;
   --fluent-accent-hover: #106ebe;
-  --fluent-accent-active: #005a9e;
-  --md-primary: var(--fluent-accent);
-  --md-accent: var(--fluent-accent);
-
-  /* Surface & Background */
-  --md-bg: #f3f3f3;
-  --md-surface: #ffffff;
-  --md-surface-card: #ffffff;
-  
-  /* Text & Icons */
-  --md-text-primary: rgba(0, 0, 0, 0.87);
-  --md-text-secondary: rgba(0, 0, 0, 0.54);
-  --md-text-disabled: rgba(0, 0, 0, 0.38);
-  --md-divider: rgba(0, 0, 0, 0.12);
-
-  /* Semantic Status Colors */
-  --md-success: #107c41;
-  --md-warning: #ff8c00;
-  --md-error: #d13438;
-  --md-info: #0078d4;
 
   /* Fluent UI Tokens */
   --fluent-bg-subtle: #f3f3f3;
@@ -49,11 +29,31 @@
   --fluent-border-strong: rgba(0, 0, 0, 0.44);
   --fluent-radius: 4px;
 
+  /* Fluent Text & Icon Tokens */
+  --fluent-text-primary: rgba(0, 0, 0, 0.87);
+  --fluent-text-secondary: rgba(0, 0, 0, 0.60);
+  --fluent-text-muted: rgba(0, 0, 0, 0.45);
+  --fluent-text-disabled: rgba(0, 0, 0, 0.38);
+
+  /* Fluent Status Colors */
+  --fluent-status-success: #107c41;
+  --fluent-status-warning: #ff8c00;
+  --fluent-status-danger: #d13438;
+  --fluent-status-info: #0078d4;
+
+  /* Backward Compatibility Aliases (Points to Fluent Tokens) */
+  --md-text-primary: var(--fluent-text-primary);
+  --md-text-secondary: var(--fluent-text-secondary);
+  --md-text-disabled: var(--fluent-text-disabled);
+  --md-success: var(--fluent-status-success);
+  --md-warning: var(--fluent-status-warning);
+  --md-error: var(--fluent-status-danger);
+  --md-info: var(--fluent-status-info);
+
   /* Office 2016 Flat Design Tokens (Pure Flat Solid Color, Zero Gradient) */
   --ribbon-header-bg: #b71c1c;
   --ribbon-header-text: #ffffff;
   --ribbon-header-tab-hover: rgba(255, 255, 255, 0.15);
-  --ribbon-header-tab-active-bg: var(--fluent-bg-canvas);
   --ribbon-header-tab-active-text: #b71c1c;
   --ribbon-file-btn-bg: #8e1515;
   --ribbon-file-btn-hover: #7b0f0f;
@@ -64,13 +64,6 @@
 /* Dark Mode Theme */
 [data-theme="dark"] {
   color-scheme: dark;
-  --md-bg: #121212;
-  --md-surface: #1e1e1e;
-  --md-surface-card: #242424;
-  --md-text-primary: rgba(255, 255, 255, 0.87);
-  --md-text-secondary: rgba(255, 255, 255, 0.60);
-  --md-text-disabled: rgba(255, 255, 255, 0.38);
-  --md-divider: rgba(255, 255, 255, 0.12);
 
   /* Fluent UI Tokens Dark */
   --fluent-bg-subtle: #202020;
@@ -79,22 +72,30 @@
   --fluent-bg-active: rgba(255, 255, 255, 0.12);
   --fluent-accent: #2886de;
   --fluent-accent-hover: #4797e2;
-  --fluent-accent-active: #1a76c8;
-  --md-primary: var(--fluent-accent);
-  --md-accent: var(--fluent-accent);
   --fluent-border-subtle: rgba(255, 255, 255, 0.08);
   --fluent-border-divider: rgba(255, 255, 255, 0.14);
   --fluent-border-strong: rgba(255, 255, 255, 0.48);
   --fluent-radius: 4px;
 
+  /* Fluent Text & Icon Tokens Dark */
+  --fluent-text-primary: rgba(255, 255, 255, 0.87);
+  --fluent-text-secondary: rgba(255, 255, 255, 0.65);
+  --fluent-text-muted: rgba(255, 255, 255, 0.45);
+  --fluent-text-disabled: rgba(255, 255, 255, 0.38);
+
+  /* Fluent Status Colors Dark */
+  --fluent-status-success: #107c41;
+  --fluent-status-warning: #ff8c00;
+  --fluent-status-danger: #d13438;
+  --fluent-status-info: #2886de;
+
   /* Office 2016 Flat Dark */
-  --ribbon-header-bg: #222222;
+  --ribbon-header-bg: #4a1010;
   --ribbon-header-text: rgba(255, 255, 255, 0.95);
-  --ribbon-header-tab-hover: rgba(255, 255, 255, 0.10);
-  --ribbon-header-tab-active-bg: var(--fluent-bg-canvas);
+  --ribbon-header-tab-hover: rgba(255, 255, 255, 0.12);
   --ribbon-header-tab-active-text: #ff8a80;
-  --ribbon-file-btn-bg: #8e1515;
-  --ribbon-file-btn-hover: #a81c1c;
+  --ribbon-file-btn-bg: #380a0a;
+  --ribbon-file-btn-hover: #541414;
   --ribbon-contextual-border: #ffa000;
   --ribbon-contextual-bg: rgba(255, 179, 0, 0.18);
 }
@@ -133,8 +134,8 @@ option {
 }
 
 body {
-  background-color: var(--md-bg);
-  color: var(--md-text-primary);
+  background-color: var(--fluent-bg-subtle);
+  color: var(--fluent-text-primary);
   line-height: 1.5;
   overflow-x: hidden;
   user-select: none;

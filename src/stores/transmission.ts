@@ -70,6 +70,8 @@ export interface ConfirmDialogOptions {
   message: string;
   confirmText?: string;
   danger?: boolean;
+  variant?: 'danger' | 'success' | 'warning' | 'info';
+  icon?: string;
   onConfirm: () => Promise<boolean | void> | boolean | void;
 }
 

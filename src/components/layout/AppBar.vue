@@ -823,10 +823,10 @@
         <button class="fluent-btn-mobile btn-primary" @click="openFileMenu('add')" :title="t('toolbar.add')">
           <FluentIcon name="add" />
         </button>
-        <button class="fluent-btn-mobile" @click="handleStartAll" :title="t('toolbar.startAll')">
+        <button class="fluent-btn-mobile" @click="handleStart" :title="t('toolbar.start')">
           <FluentIcon name="fast_forward" class="text-success" />
         </button>
-        <button class="fluent-btn-mobile" @click="handleStopAll" :title="t('toolbar.pauseAll')">
+        <button class="fluent-btn-mobile" @click="handleStop" :title="t('toolbar.pause')">
           <FluentIcon name="pause_circle_outline" class="text-warning" />
         </button>
         <button class="fluent-btn-mobile" @click="selectAllTorrents" :title="t('ribbon.selectAll')">
@@ -860,6 +860,9 @@
         </div>
         <button class="fluent-btn-mobile" @click="selectAllTorrents" :title="t('ribbon.selectAll')">
           <FluentIcon name="select_all" />
+        </button>
+        <button class="fluent-btn-mobile" @click="invertSelection" :title="t('common.invertSelection')">
+          <FluentIcon name="invert_selection" />
         </button>
         <button class="fluent-btn-mobile" @click="state.batchTagsDialogOpen = true" :title="t('ribbon.batchTags')">
           <FluentIcon name="local_offer" class="text-accent" />
@@ -986,13 +989,14 @@
         <div class="flyout-body">
           <label class="fluent-check-label">
             <input type="checkbox" v-model="mobileSpeedFlyout.enabled" />
-            <span>{{ mobileSpeedFlyout.type === 'down' ? t('statusbar.downLimit') : t('statusbar.upLimit') }}</span>
+            <span>{{ t('common.enabled') }}</span>
           </label>
-          <div class="flyout-input-row" v-if="mobileSpeedFlyout.enabled">
+          <div class="flyout-input-row">
             <input
               type="number"
               class="num-input flyout-num"
               v-model.number="mobileSpeedFlyout.limit"
+              :disabled="!mobileSpeedFlyout.enabled"
               min="0"
               step="50"
             />
@@ -1022,20 +1026,24 @@
             <span>{{ t('toolbar.add') }}</span>
           </button>
           <button class="mobile-sheet-action" @click="runMobile(() => openFileMenu())">
-            <FluentIcon name="folder_open" />
-            <span>{{ t('backstage.title') }}</span>
+            <FluentIcon name="dashboard" />
+            <span>{{ t('backstage.backstageView') }}</span>
           </button>
-          <button class="mobile-sheet-action" @click="runMobile(handleStartAll)">
-            <FluentIcon name="fast_forward" />
-            <span>{{ t('toolbar.startAll') }}</span>
+          <button class="mobile-sheet-action" @click="runMobile(handleStart)">
+            <FluentIcon :name="hasSelection ? 'play_arrow' : 'fast_forward'" />
+            <span>{{ hasSelection ? t('common.start') : t('toolbar.startAll') }}</span>
           </button>
-          <button class="mobile-sheet-action" @click="runMobile(handleStopAll)">
-            <FluentIcon name="pause_circle_outline" />
-            <span>{{ t('toolbar.pauseAll') }}</span>
+          <button class="mobile-sheet-action" @click="runMobile(handleStop)">
+            <FluentIcon :name="hasSelection ? 'pause' : 'pause_circle_outline'" />
+            <span>{{ hasSelection ? t('common.pause') : t('toolbar.pauseAll') }}</span>
           </button>
-          <button class="mobile-sheet-action" @click="runMobile(selectAllTorrents)">
-            <FluentIcon name="select_all" />
-            <span>{{ t('ribbon.selectAll') }}</span>
+          <button class="mobile-sheet-action" @click="runMobile(isAllSelected ? clearSelection : selectAllTorrents)">
+            <FluentIcon :name="isAllSelected ? 'close' : 'select_all'" />
+            <span>{{ isAllSelected ? t('common.deselectAll') : t('ribbon.selectAll') }}</span>
+          </button>
+          <button class="mobile-sheet-action" @click="runMobile(invertSelection)">
+            <FluentIcon name="invert_selection" />
+            <span>{{ t('common.invertSelection') }}</span>
           </button>
           <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(() => (state.batchTagsDialogOpen = true))">
             <FluentIcon name="local_offer" />
@@ -1060,14 +1068,6 @@
           <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(reannounceSelected)">
             <FluentIcon name="sync" />
             <span>{{ t('ribbon.reannounce') }}</span>
-          </button>
-          <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(handleStart)">
-            <FluentIcon name="play_arrow" />
-            <span>{{ t('common.start') }}</span>
-          </button>
-          <button class="mobile-sheet-action" v-if="hasSelection" @click="runMobile(handleStop)">
-            <FluentIcon name="pause" />
-            <span>{{ t('common.pause') }}</span>
           </button>
           <button class="mobile-sheet-action danger" v-if="hasSelection" @click="runMobile(() => handleRemove(false))">
             <FluentIcon name="delete" />
@@ -1427,6 +1427,10 @@ const selectedCount = computed(() => {
   return state.selectedIds.length > 0 ? state.selectedIds.length : (state.selectedId !== null ? 1 : 0);
 });
 
+const isAllSelected = computed(() => {
+  return state.torrents.length > 0 && selectedCount.value === state.torrents.length;
+});
+
 const selectedTorrentId = computed(() => {
   if (state.selectedId !== null) return state.selectedId;
   if (state.selectedIds.length > 0) return state.selectedIds[0];
@@ -1624,6 +1628,8 @@ function handleStart() {
       title: t('dialog.startAllTitle'),
       message: t('dialog.startAllConfirm'),
       confirmText: t('dialog.startAllTitle'),
+      variant: 'success',
+      icon: 'play_arrow',
       onConfirm: () => {
         handleStartAll();
       },
@@ -1654,6 +1660,8 @@ function handleStop() {
       title: t('dialog.pauseAllTitle'),
       message: t('dialog.pauseAllConfirm'),
       confirmText: t('dialog.pauseAllTitle'),
+      variant: 'warning',
+      icon: 'pause',
       onConfirm: () => {
         handleStopAll();
       },
@@ -3059,14 +3067,16 @@ function toggleTheme() {
 /* 移动端限速微型浮层 */
 .mobile-speed-flyout {
   position: absolute;
-  top: 38px;
-  left: 10px;
-  right: 10px;
+  top: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  max-width: calc(100vw - 20px);
   background: var(--fluent-bg-canvas);
   border: 1px solid var(--fluent-border-subtle);
   border-radius: 6px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-  padding: 12px;
+  padding: 8px 10px;
   z-index: 600;
 }
 
@@ -3074,9 +3084,9 @@ function toggleTheme() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: var(--fluent-accent);
 }
 
@@ -3092,8 +3102,22 @@ function toggleTheme() {
 .mobile-speed-flyout .flyout-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.mobile-speed-flyout .fluent-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mobile-speed-flyout .fluent-check-label input[type="checkbox"] {
+  cursor: pointer;
+  margin: 0;
 }
 
 .mobile-speed-flyout .flyout-input-row {
@@ -3104,31 +3128,51 @@ function toggleTheme() {
 
 .mobile-speed-flyout .flyout-num {
   width: 100px;
-  padding: 4px 8px;
+  height: 24px;
+  padding: 2px 6px;
   font-size: 12px;
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: 3px;
+  background: var(--fluent-bg-canvas);
+  color: var(--md-text-primary);
+}
+
+.mobile-speed-flyout .flyout-num:focus {
+  border-color: var(--fluent-accent);
+  outline: none;
+}
+
+.mobile-speed-flyout .flyout-num:disabled {
+  background: var(--fluent-bg-subtle);
+  color: var(--md-text-disabled);
+}
+
+.mobile-speed-flyout .unit-txt {
+  font-size: 11px;
+  color: var(--md-text-secondary);
 }
 
 .mobile-speed-flyout .flyout-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
-.fluent-btn-mobile-sub {
-  height: 28px;
-  padding: 0 12px;
+.mobile-speed-flyout .fluent-btn-mobile-sub {
+  height: 22px;
+  padding: 0 10px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
 }
 
-.fluent-btn-mobile-sub.cancel {
+.mobile-speed-flyout .fluent-btn-mobile-sub.cancel {
   background: transparent;
   border: 1px solid var(--fluent-border-subtle);
   color: var(--md-text-primary);
 }
 
-.fluent-btn-mobile-sub.save {
+.mobile-speed-flyout .fluent-btn-mobile-sub.save {
   background: var(--fluent-accent);
   border: none;
   color: #ffffff;

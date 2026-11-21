@@ -77,7 +77,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: var(--md-bg);
+  background-color: var(--fluent-bg-subtle);
 }
 
 .app-body {

@@ -40,7 +40,36 @@
         </div>
 
         <template v-if="mode !== 'clear'">
-          <!-- 当前待应用的标签 Tags 预览池 -->
+          <!-- 1. 所选任务现有标签 (可点 × 标记移除，实现合并追加时的删除能力) -->
+          <div class="form-section" v-if="selectedTasksTags.length > 0 && mode !== 'replace'">
+            <label class="section-label">
+              <span>{{ t('batchTags.currentSelectedTags') }}</span>
+            </label>
+            <div class="tags-chips-container selected-existing-pool">
+              <span
+                v-for="item in selectedTasksTags"
+                :key="item.tag"
+                class="tag-chip"
+                :class="{
+                  'tag-chip-to-remove': tagsToRemove.includes(item.tag),
+                  'tag-chip-current': !tagsToRemove.includes(item.tag)
+                }"
+              >
+                <span class="chip-tag-name">{{ item.tag }}</span>
+                <span class="chip-count-badge" v-if="targetIds.length > 1">({{ item.count }})</span>
+                <button
+                  type="button"
+                  class="chip-remove-btn"
+                  @click="toggleTagRemoval(item.tag)"
+                  :title="tagsToRemove.includes(item.tag) ? t('batchTags.undoRemove') : t('batchTags.markRemove')"
+                >
+                  <FluentIcon :name="tagsToRemove.includes(item.tag) ? 'undo' : 'close'" size="12" />
+                </button>
+              </span>
+            </div>
+          </div>
+
+          <!-- 2. 当前待应用的标签 Tags 预览池 -->
           <div class="form-section">
             <label class="section-label">{{ t('batchTags.activeTags') }}</label>
             <div class="tags-chips-container">
@@ -60,7 +89,7 @@
             </div>
           </div>
 
-          <!-- 新增自定义标签输入框 -->
+          <!-- 3. 新增自定义标签输入框 -->
           <div class="form-section">
             <label class="section-label">{{ t('batchTags.addCustomTag') }}</label>
             <div class="tag-input-row">
@@ -79,7 +108,7 @@
             </div>
           </div>
 
-          <!-- 现有所有已用标签库 (快捷点击点选) -->
+          <!-- 4. 现有所有已用标签库 (快捷点击点选) -->
           <div class="form-section" v-if="existingTags.length > 0">
             <label class="section-label">{{ t('batchTags.existingTags') }}</label>
             <div class="tags-chips-container existing-pool">
@@ -87,11 +116,11 @@
                 v-for="tag in existingTags"
                 :key="tag"
                 class="tag-chip selectable-chip"
-                :class="{ selected: activeTags.includes(tag) }"
-                @click="toggleTag(tag)"
+                :class="{ selected: isTagSelectedInPool(tag) }"
+                @click="onPoolTagClick(tag)"
               >
-                <FluentIcon :name="activeTags.includes(tag) ? 'check' : 'add'" size="12" class="chip-icon" />
                 <span>{{ tag }}</span>
+                <FluentIcon :name="isTagSelectedInPool(tag) ? 'check' : 'add'" size="12" class="chip-icon" />
               </button>
             </div>
           </div>
@@ -108,7 +137,11 @@
         <button class="fluent-btn-secondary" @click="close">
           {{ t('common.cancel') }}
         </button>
-        <button class="fluent-btn-primary" @click="applyTags" :disabled="targetIds.length === 0 || isSubmitting || (mode !== 'clear' && activeTags.length === 0)">
+        <button
+          class="fluent-btn-primary"
+          @click="applyTags"
+          :disabled="isSubmitDisabled"
+        >
           {{ isSubmitting ? t('common.loading') : t('common.save') }}
         </button>
       </div>
@@ -123,6 +156,7 @@ import { t } from '../../locales';
 
 const mode = ref<'append' | 'replace' | 'clear'>('append');
 const activeTags = ref<string[]>([]);
+const tagsToRemove = ref<string[]>([]);
 const newTagInput = ref('');
 const newTagInputRef = ref<HTMLInputElement | null>(null);
 const isSubmitting = ref(false);
@@ -135,7 +169,26 @@ const targetIds = computed(() => {
     : [];
 });
 
-// 从当前所有种子中聚合所有已存在标签
+// 从当前所有选中的种子中聚合各自包含的标签及频次
+const selectedTasksTags = computed(() => {
+  const map = new Map<string, number>();
+  for (const id of targetIds.value) {
+    const torrent = state.torrents.find((t) => t.id === id);
+    for (const l of torrent?.labels || []) {
+      const tr = l.trim();
+      if (tr) map.set(tr, (map.get(tr) || 0) + 1);
+    }
+  }
+  return Array.from(map.entries())
+    .map(([tag, count]) => ({
+      tag,
+      count,
+      isCommonToAll: count === targetIds.value.length,
+    }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+});
+
+// 从当前全局所有种子中聚合所有已存在标签
 const existingTags = computed(() => {
   const set = new Set<string>();
   for (const item of state.torrents) {
@@ -149,22 +202,40 @@ const existingTags = computed(() => {
   return Array.from(set).sort();
 });
 
-// 当弹窗打开时，预填当前选中任务已有标签
+const isSubmitDisabled = computed(() => {
+  if (targetIds.value.length === 0 || isSubmitting.value) return true;
+  if (mode.value === 'clear' || mode.value === 'replace') return false;
+  // append 模式：只要有添加或有移除即可提交
+  return activeTags.value.length === 0 && tagsToRemove.value.length === 0;
+});
+
+function toggleTagRemoval(tag: string) {
+  if (tagsToRemove.value.includes(tag)) {
+    tagsToRemove.value = tagsToRemove.value.filter((t) => t !== tag);
+  } else {
+    tagsToRemove.value.push(tag);
+  }
+}
+
+function isTagSelectedInPool(tag: string): boolean {
+  return activeTags.value.includes(tag);
+}
+
+function onPoolTagClick(tag: string) {
+  toggleTag(tag);
+}
+
+// 当弹窗打开时，重置状态
 watch(
   () => state.batchTagsDialogOpen,
   (open) => {
     if (open) {
       mode.value = 'append';
       newTagInput.value = '';
+      tagsToRemove.value = [];
       isSubmitting.value = false;
 
-      // 如果只选中了 1 个任务，默认带出其现有标签
-      if (targetIds.value.length === 1) {
-        const item = state.torrents.find((t) => t.id === targetIds.value[0]);
-        activeTags.value = item?.labels ? [...item.labels] : [];
-      } else {
-        activeTags.value = [];
-      }
+      activeTags.value = [];
 
       nextTick(() => newTagInputRef.value?.focus());
     }
@@ -173,9 +244,12 @@ watch(
 
 function addCustomTag() {
   const tag = newTagInput.value.trim();
-  if (tag && !activeTags.value.includes(tag)) {
+  if (!tag) return;
+  if (!activeTags.value.includes(tag)) {
     activeTags.value.push(tag);
   }
+  // 如果之前被标记了待移除，则取消待移除
+  tagsToRemove.value = tagsToRemove.value.filter((t) => t !== tag);
   newTagInput.value = '';
 }
 
@@ -188,6 +262,7 @@ function toggleTag(tag: string) {
     removeTag(tag);
   } else {
     activeTags.value.push(tag);
+    tagsToRemove.value = tagsToRemove.value.filter((t) => t !== tag);
   }
 }
 
@@ -199,7 +274,7 @@ async function applyTags() {
   if (targetIds.value.length === 0) return;
   isSubmitting.value = true;
   try {
-    // 先为每个任务算出最终标签集合，再交给 store 合并 RPC 并只刷新一次列表
+    // 为每个任务计算应用后的最终标签集合
     const updates = targetIds.value.map((id) => {
       const torrent = state.torrents.find((item) => item.id === id);
       let finalLabels: string[] = [];
@@ -209,8 +284,14 @@ async function applyTags() {
       } else if (mode.value === 'replace') {
         finalLabels = [...activeTags.value];
       } else {
+        // 合并修改 (append)：以任务原有标签为基础，排除 tagsToRemove，追加 activeTags
         const set = new Set<string>(torrent?.labels || []);
-        for (const tag of activeTags.value) set.add(tag);
+        for (const rTag of tagsToRemove.value) {
+          set.delete(rTag);
+        }
+        for (const aTag of activeTags.value) {
+          set.add(aTag);
+        }
         finalLabels = Array.from(set);
       }
 
@@ -353,9 +434,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown, true));
 .mode-radio-group {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
   background-color: var(--fluent-bg-subtle);
-  padding: 8px 12px;
+  padding: 8px 24px;
   border-radius: 6px;
 }
 
@@ -414,6 +495,45 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown, true));
 .empty-hint {
   font-size: 12px;
   color: var(--md-text-disabled);
+}
+
+.selected-existing-pool {
+  background-color: var(--fluent-bg-subtle);
+  border: 1px dashed var(--fluent-border-divider);
+}
+
+.tag-chip-current {
+  background-color: var(--fluent-bg-canvas);
+  border: 1px solid var(--fluent-border-subtle);
+  color: var(--fluent-text-primary);
+}
+
+.tag-chip-current .chip-remove-btn {
+  color: var(--fluent-text-secondary);
+}
+
+.tag-chip-current .chip-remove-btn:hover {
+  color: var(--fluent-status-danger);
+}
+
+.tag-chip-to-remove {
+  background-color: rgba(209, 52, 56, 0.12) !important;
+  border: 1px solid rgba(209, 52, 56, 0.4) !important;
+  color: var(--fluent-status-danger) !important;
+}
+
+.tag-chip-to-remove .chip-tag-name {
+  text-decoration: line-through;
+}
+
+.tag-chip-to-remove .chip-remove-btn {
+  color: var(--fluent-status-danger);
+}
+
+.chip-count-badge {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: 2px;
 }
 
 .existing-pool {
