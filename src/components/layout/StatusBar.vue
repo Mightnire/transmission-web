@@ -359,11 +359,8 @@ onUnmounted(() => {
 .status-section {
   display: flex;
   align-items: center;
+  gap: 6px;
   white-space: nowrap;
-}
-
-.status-section > * + * {
-  margin-left: 6px;
 }
 
 .status-left {
@@ -383,11 +380,8 @@ onUnmounted(() => {
 .status-right {
   display: flex;
   align-items: center;
+  gap: 4px;
   flex-shrink: 0;
-}
-
-.status-right > * + * {
-  margin-left: 4px;
 }
 
 .status-icon {
@@ -423,12 +417,9 @@ onUnmounted(() => {
 .status-item {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   padding: 2px 6px;
   border-radius: 2px;
-}
-
-.status-item > * + * {
-  margin-left: 4px;
 }
 
 .storage-item {
@@ -448,6 +439,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
   height: 20px;
   padding: 0 5px;
   border: 1px solid transparent;
@@ -457,10 +449,6 @@ onUnmounted(() => {
   font-size: 11px;
   cursor: pointer;
   transition: all 0.1s ease;
-}
-
-.status-btn > * + * {
-  margin-left: 3px;
 }
 
 .status-btn:hover {
@@ -551,10 +539,7 @@ onUnmounted(() => {
   border-radius: 2px;
   padding: 1px;
   background: var(--fluent-bg-subtle);
-}
-
-.view-switch-group > * + * {
-  margin-left: 1px;
+  gap: 1px;
 }
 
 .view-switch-group .view-mode-btn {
@@ -623,20 +608,14 @@ onUnmounted(() => {
 .flyout-body {
   display: flex;
   flex-direction: column;
+  gap: 6px;
   margin-bottom: 8px;
-}
-
-.flyout-body > * + * {
-  margin-top: 6px;
 }
 
 .flyout-input-row {
   display: flex;
   align-items: center;
-}
-
-.flyout-input-row > * + * {
-  margin-left: 6px;
+  gap: 6px;
 }
 
 .flyout-num {
@@ -653,12 +632,9 @@ onUnmounted(() => {
 .fluent-check-label {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   font-size: 11px;
   cursor: pointer;
-}
-
-.fluent-check-label > * + * {
-  margin-left: 6px;
 }
 
 .fluent-check-label input[type="checkbox"] {
@@ -668,10 +644,7 @@ onUnmounted(() => {
 .flyout-footer {
   display: flex;
   justify-content: flex-end;
-}
-
-.flyout-footer > * + * {
-  margin-left: 6px;
+  gap: 6px;
 }
 
 .md-btn.mini {

@@ -1062,14 +1062,11 @@ function getStatusBadgeClass(item: Torrent): string {
 .th-content {
   display: flex;
   align-items: center;
+  gap: 4px;
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.th-content > * + * {
-  margin-left: 4px;
 }
 
 .col-resizer {
@@ -1111,45 +1108,33 @@ function getStatusBadgeClass(item: Torrent): string {
 .cols-menu-list {
   display: flex;
   flex-direction: column;
-}
-
-.cols-menu-list > * + * {
-  margin-top: 2px;
+  gap: 2px;
 }
 
 .cols-menu-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 4px 6px;
   font-size: 11px;
   border-radius: var(--fluent-radius);
   transition: background-color 0.12s;
 }
 
-.cols-menu-item > * + * {
-  margin-left: 8px;
-}
-
 .cols-menu-label {
   display: flex;
   align-items: center;
+  gap: 6px;
   flex: 1;
   cursor: pointer;
   padding: 2px 0;
 }
 
-.cols-menu-label > * + * {
-  margin-left: 6px;
-}
-
 .cols-order-buttons {
   display: inline-flex;
+  gap: 1px;
   opacity: 0.45;
-}
-
-.cols-order-buttons > * + * {
-  margin-left: 1px;
 }
 
 .cols-menu-item:hover .cols-order-buttons { opacity: 1; }
@@ -1249,12 +1234,9 @@ function getStatusBadgeClass(item: Torrent): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
   min-width: 0;
   width: 100%;
-}
-
-.name-cell-wrapper > * + * {
-  margin-left: 6px;
 }
 
 .name-cell-wrapper .name-text {
@@ -1311,6 +1293,7 @@ function getStatusBadgeClass(item: Torrent): string {
 .fluent-error-pill {
   display: inline-flex;
   align-items: center;
+  gap: 3px;
   margin-top: 2px;
   padding: 1px 6px;
   background-color: rgba(244, 67, 54, 0.12);
@@ -1320,10 +1303,6 @@ function getStatusBadgeClass(item: Torrent): string {
   font-size: 11px;
   line-height: 1.3;
   max-width: 100%;
-}
-
-.fluent-error-pill > * + * {
-  margin-left: 3px;
 }
 
 .pill-icon {
@@ -1358,10 +1337,7 @@ function getStatusBadgeClass(item: Torrent): string {
 .fluent-progress-cell {
   display: flex;
   align-items: center;
-}
-
-.fluent-progress-cell > * + * {
-  margin-left: 8px;
+  gap: 8px;
 }
 
 .fluent-progress-track {
@@ -1512,16 +1488,13 @@ function getStatusBadgeClass(item: Torrent): string {
 .menu-item {
   display: flex;
   align-items: center;
+  gap: 8px;
   padding: 5px 10px;
   border-radius: var(--fluent-radius);
   font-size: 12px;
   color: var(--md-text-primary);
   cursor: pointer;
   transition: background-color 0.12s;
-}
-
-.menu-item > * + * {
-  margin-left: 8px;
 }
 
 .menu-item:hover {
@@ -1565,6 +1538,7 @@ function getStatusBadgeClass(item: Torrent): string {
   z-index: 10000;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 5px 9px;
   border: 1px solid var(--fluent-border-divider);
   border-radius: 4px;
@@ -1573,10 +1547,6 @@ function getStatusBadgeClass(item: Torrent): string {
   font-size: 11px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
   pointer-events: none;
-}
-
-.column-drag-ghost > * + * {
-  margin-left: 6px;
 }
 
 .column-drag-ghost .fluent-icon {

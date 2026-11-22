@@ -558,10 +558,7 @@ function clearGroupFilter() {
 /* 紧凑模式高密度支持 (高度压缩 ~24%，单屏容纳更多分组项) */
 .fluent-navigation-pane.compact-density .nav-pane-inner {
   padding: 4px;
-}
-
-.fluent-navigation-pane.compact-density .nav-pane-inner > * + * {
-  margin-top: 6px;
+  gap: 6px;
 }
 
 .fluent-navigation-pane.compact-density .section-header-flex {
@@ -576,11 +573,8 @@ function clearGroupFilter() {
 .fluent-navigation-pane.compact-density .fluent-nav-item {
   height: 26px;
   padding: 0 6px;
+  gap: 6px;
   font-size: 11.5px;
-}
-
-.fluent-navigation-pane.compact-density .fluent-nav-item > * + * {
-  margin-left: 6px;
 }
 
 .fluent-navigation-pane.compact-density .nav-icon {
@@ -599,6 +593,7 @@ function clearGroupFilter() {
 }
 
 .fluent-navigation-pane.compact-density .sort-list {
+  gap: 0;
   padding: 0 2px;
 }
 
@@ -613,6 +608,7 @@ function clearGroupFilter() {
   padding: 8px 6px;
   overflow-y: auto;
   overflow-x: hidden;
+  gap: 12px;
   scrollbar-width: thin;
   scrollbar-color: var(--fluent-border-divider) transparent;
 }
@@ -635,26 +631,16 @@ function clearGroupFilter() {
   background: var(--fluent-accent);
 }
 
-.nav-pane-inner > * + * {
-  margin-top: 12px;
-}
-
 .nav-section {
   display: flex;
   flex-direction: column;
-}
-
-.nav-section > * + * {
-  margin-top: 2px;
+  gap: 2px;
 }
 
 .nav-items-group {
   display: flex;
   flex-direction: column;
-}
-
-.nav-items-group > * + * {
-  margin-top: 2px;
+  gap: 2px;
 }
 
 .section-label {
@@ -704,10 +690,7 @@ function clearGroupFilter() {
 .header-actions {
   display: flex;
   align-items: center;
-}
-
-.header-actions > * + * {
-  margin-left: 4px;
+  gap: 4px;
 }
 
 .clear-filter-btn {
@@ -768,10 +751,7 @@ function clearGroupFilter() {
   font-size: 12px;
   font-weight: 400;
   transition: all 0.12s ease;
-}
-
-.fluent-nav-item > * + * {
-  margin-left: 10px;
+  gap: 10px;
 }
 
 .fluent-nav-item:hover {
@@ -860,26 +840,20 @@ function clearGroupFilter() {
 .sort-list {
   display: flex;
   flex-direction: column;
+  gap: 1px;
   padding: 0 6px;
-}
-
-.sort-list > * + * {
-  margin-top: 1px;
 }
 
 .fluent-radio-row {
   display: flex;
   align-items: center;
+  gap: 8px;
   padding: 4px 6px;
   border-radius: var(--fluent-radius);
   cursor: pointer;
   font-size: 12px;
   color: var(--md-text-secondary);
   transition: background-color 0.12s;
-}
-
-.fluent-radio-row > * + * {
-  margin-left: 8px;
 }
 
 .fluent-radio-row:hover {
@@ -960,10 +934,7 @@ function clearGroupFilter() {
 .drawer-brand {
   display: flex;
   align-items: center;
-}
-
-.drawer-brand > * + * {
-  margin-left: 8px;
+  gap: 8px;
 }
 
 .drawer-brand .brand-icon {
