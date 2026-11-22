@@ -223,7 +223,7 @@ export default {
     pollTorrents: '任务刷新:',
     pollStats: '统计刷新:',
     customizeCols: '自定义列...',
-    resetCols: '重置列宽',
+    resetCols: '重置列',
     moveColumnUp: '上移该列',
     moveColumnDown: '下移该列',
     colsMenuTitle: '选择可见列',
