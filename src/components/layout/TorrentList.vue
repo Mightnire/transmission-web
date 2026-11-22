@@ -105,9 +105,12 @@ const selectedCount = computed(() => state.selectedIds.length);
 .select-all-label {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   cursor: pointer;
   font-weight: 500;
+}
+
+.select-all-label > * + * {
+  margin-left: 8px;
 }
 
 .select-all-text {
@@ -118,13 +121,15 @@ const selectedCount = computed(() => state.selectedIds.length);
 .cards-selection-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+}
+
+.cards-selection-actions > * + * {
+  margin-left: 6px;
 }
 
 .cards-action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
   padding: 3px 8px;
   border: 1px solid var(--fluent-border-subtle);
   border-radius: var(--fluent-radius);
@@ -133,6 +138,10 @@ const selectedCount = computed(() => state.selectedIds.length);
   font-size: 11px;
   cursor: pointer;
   transition: all 0.12s ease;
+}
+
+.cards-action-btn > * + * {
+  margin-left: 4px;
 }
 
 .cards-action-btn:hover {
@@ -148,8 +157,11 @@ const selectedCount = computed(() => state.selectedIds.length);
 .cards-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   padding-bottom: 24px;
+}
+
+.cards-wrapper > * + * {
+  margin-top: 8px;
 }
 
 .empty-state {
