@@ -651,6 +651,7 @@ export default {
       general: '外观与语言',
       language: '界面语言:',
       compactDensity: '紧凑模式',
+      showSpeedInTitle: '在网页标题显示传输速度',
       sidebarGroups: '侧栏分组显示',
       showTrackers: '显示服务器分组',
       showTags: '显示标签分组',

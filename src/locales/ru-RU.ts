@@ -651,6 +651,7 @@ export default {
       general: 'Внешний вид и язык',
       language: 'Язык:',
       compactDensity: 'Компактный режим',
+      showSpeedInTitle: 'Показывать скорость в заголовке вкладки',
       sidebarGroups: 'Группы боковой панели',
       showTrackers: 'Группа трекеров',
       showTags: 'Группа меток',

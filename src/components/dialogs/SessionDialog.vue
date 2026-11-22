@@ -59,6 +59,12 @@
                   <span>{{ t('session.ui.compactDensity') }}</span>
                 </label>
               </div>
+              <div class="form-row mt-2">
+                <label class="form-check">
+                  <input type="checkbox" v-model="form.showSpeedInTitle" />
+                  <span>{{ t('session.ui.showSpeedInTitle') }}</span>
+                </label>
+              </div>
 
               <div class="divider"></div>
 
@@ -664,6 +670,7 @@ const form = reactive({
   // Web 前端专属偏好
   appLocale: (localStorage.getItem('locale') as LocaleKey) || 'zh-CN',
   compactDensity: state.compactDensity,
+  showSpeedInTitle: state.uiPreferences.showSpeedInTitle !== false,
   showTrackerGroup: state.uiPreferences.showTrackerGroup,
   showTagGroup: state.uiPreferences.showTagGroup,
   showFolderGroup: state.uiPreferences.showFolderGroup,
@@ -777,6 +784,7 @@ async function updateBlocklist() {
 function initForm(s: any) {
   form.appLocale = (localStorage.getItem('locale') as LocaleKey) || 'zh-CN';
   form.compactDensity = state.compactDensity;
+  form.showSpeedInTitle = state.uiPreferences.showSpeedInTitle !== false;
   form.showTrackerGroup = state.uiPreferences.showTrackerGroup;
   form.showTagGroup = state.uiPreferences.showTagGroup;
   form.showFolderGroup = state.uiPreferences.showFolderGroup;
@@ -972,6 +980,7 @@ async function saveSettings() {
   state.uiPreferences.showTrackerGroup = form.showTrackerGroup;
   state.uiPreferences.showTagGroup = form.showTagGroup;
   state.uiPreferences.showFolderGroup = form.showFolderGroup;
+  state.uiPreferences.showSpeedInTitle = form.showSpeedInTitle;
   state.uiPreferences.pollIntervalTorrents = Math.max(1, form.pollIntervalTorrents || 3);
   state.uiPreferences.pollIntervalStats = Math.max(1, form.pollIntervalStats || 3);
   state.uiPreferences.pathAliases = form.pathAliases.filter((r) => r.from && r.from.trim());

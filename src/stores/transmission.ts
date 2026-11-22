@@ -49,6 +49,7 @@ export interface UIPreferences {
   pollIntervalTorrents: number;
   pollIntervalStats: number;
   pathAliases: PathAliasRule[];
+  showSpeedInTitle?: boolean;
 }
 
 export type ToastType = 'info' | 'success' | 'error';
@@ -88,6 +89,7 @@ const DEFAULT_UI_PREFS: UIPreferences = {
   pollIntervalTorrents: 3,
   pollIntervalStats: 3,
   pathAliases: [],
+  showSpeedInTitle: true,
 };
 
 function loadSavedUIPreferences(): UIPreferences {

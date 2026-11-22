@@ -651,6 +651,7 @@ export default {
       general: 'Appearance & Language',
       language: 'Language:',
       compactDensity: 'Compact Mode',
+      showSpeedInTitle: 'Show transfer speeds in page title',
       sidebarGroups: 'Sidebar Groups',
       showTrackers: 'Show Trackers',
       showTags: 'Show Tags',

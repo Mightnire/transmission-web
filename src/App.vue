@@ -39,8 +39,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watchEffect } from 'vue';
 import { state, startPolling, stopPolling } from './stores/transmission';
+import { formatSpeed } from './core/format';
 import { t } from './locales';
 import AppBar from './components/layout/AppBar.vue';
 import Drawer from './components/layout/Drawer.vue';
@@ -63,6 +64,19 @@ onMounted(() => {
 
   // 启动 3 秒高频平滑轮询
   startPolling(3000);
+});
+
+// 动态同步页面标题传输速度：有速度时 [↓ 12.5 MB/s, ↑ 1.2 MB/s] Transmission Web，均为 0 或关闭时恢复纯净标题
+watchEffect(() => {
+  const show = state.uiPreferences.showSpeedInTitle !== false;
+  const down = state.stats?.downloadSpeed || 0;
+  const up = state.stats?.uploadSpeed || 0;
+
+  if (show && (down > 0 || up > 0)) {
+    document.title = `[↓ ${formatSpeed(down)}, ↑ ${formatSpeed(up)}] Transmission Web`;
+  } else {
+    document.title = 'Transmission Web';
+  }
 });
 
 onUnmounted(() => {
