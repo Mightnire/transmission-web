@@ -424,7 +424,8 @@ async function refreshActiveDetail() {
     if (propOverride && Date.now() <= propOverride.expires) {
       Object.assign(detail, propOverride.props);
     }
-    state.activeTorrentDetail = { ...(basic || {}), ...detail };
+    const latestBasic = state.torrents.find((t) => t.id === state.selectedId) || basic;
+    state.activeTorrentDetail = { ...detail, ...(latestBasic || {}) };
   }
 }
 
@@ -470,7 +471,15 @@ export async function fetchTorrents() {
       }
     }
 
-    if (reqEpoch > latestAppliedEpoch) {
+    if (reqEpoch >= latestAppliedEpoch) {
+      // 1. 同步将列表最新动态数据更新至当前选中的详情对象中
+      if (state.selectedId !== null && state.activeTorrentDetail && state.activeTorrentDetail.id === state.selectedId) {
+        const basic = state.torrents.find((t) => t.id === state.selectedId);
+        if (basic) {
+          Object.assign(state.activeTorrentDetail, basic);
+        }
+      }
+      // 2. 若详情面板开启，向 RPC 轮询更新完整单个任务元数据 (Peers, Trackers, Files)
       await refreshActiveDetail();
     }
   } catch (e) {
@@ -617,7 +626,8 @@ export function selectTorrent(id: number, multi = false) {
     rpc.getTorrentDetail(state.selectedId).then((detail) => {
       const basic = state.torrents.find((t) => t.id === state.selectedId);
       if (detail) {
-        state.activeTorrentDetail = { ...(basic || {}), ...detail };
+        const latestBasic = state.torrents.find((t) => t.id === state.selectedId) || basic;
+    state.activeTorrentDetail = { ...detail, ...(latestBasic || {}) };
       }
     });
   }
@@ -635,7 +645,8 @@ export function toggleDetail(id?: number) {
     rpc.getTorrentDetail(state.selectedId).then((detail) => {
       const basic = state.torrents.find((t) => t.id === state.selectedId);
       if (detail) {
-        state.activeTorrentDetail = { ...(basic || {}), ...detail };
+        const latestBasic = state.torrents.find((t) => t.id === state.selectedId) || basic;
+    state.activeTorrentDetail = { ...detail, ...(latestBasic || {}) };
       }
     });
   }

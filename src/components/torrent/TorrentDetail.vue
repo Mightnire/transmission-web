@@ -528,10 +528,11 @@ import PieceMap from './PieceMap.vue';
 const currentTab = ref<'general' | 'files' | 'pieces' | 'peers' | 'trackers'>('general');
 
 const activeTorrent = computed(() => {
+  const basic = state.torrents.find((t) => t.id === state.selectedId);
   if (state.activeTorrentDetail && state.activeTorrentDetail.id === state.selectedId) {
-    return state.activeTorrentDetail;
+    return { ...state.activeTorrentDetail, ...(basic || {}) };
   }
-  return state.torrents.find((t) => t.id === state.selectedId) || null;
+  return basic || null;
 });
 
 const hasTrackerSitename = computed(() => {
