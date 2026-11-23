@@ -472,7 +472,7 @@
               <div class="form-row">
                 <span>{{ t('session.storage.cacheSize') }}</span>
                 <div class="unit-group">
-                  <input type="number" class="num-input" v-model.number="form.cacheSizeMb" min="1" max="1024" />
+                  <input type="number" class="num-input" v-model.number="form.cacheSizeMb" min="0" max="1024" />
                   <span class="unit-label">MB</span>
                 </div>
               </div>
@@ -831,7 +831,7 @@ function initForm(s: any) {
   form.downloadDir = s['download-dir'] || '';
   form.incompleteDirEnabled = s['incomplete-dir-enabled'] || false;
   form.incompleteDir = s['incomplete-dir'] || '';
-  form.cacheSizeMb = s['cache-size-mb'] || 16;
+  form.cacheSizeMb = s['cache-size-mb'] ?? 16;
   form.renamePartialFiles = s['rename-partial-files'] ?? true;
   form.trashOriginalTorrentFiles = s['trash-original-torrent-files'] || false;
 
@@ -971,9 +971,9 @@ async function saveSettings() {
     return;
   }
 
-  // 5. 磁盘缓存大小校验 (1 ~ 1024 MB)
-  if (isNaN(form.cacheSizeMb) || form.cacheSizeMb < 1 || form.cacheSizeMb > 1024) {
-    showToast(t('common.failed', { error: '写入缓存大小必须在 1 ~ 1024 MB 之间！' }), 'error');
+  // 5. 磁盘缓存大小校验 (0 ~ 1024 MB，0 表示禁用内存缓存直接写盘)
+  if (isNaN(form.cacheSizeMb) || form.cacheSizeMb < 0 || form.cacheSizeMb > 1024) {
+    showToast(t('common.failed', { error: '写入缓存大小必须在 0 ~ 1024 MB 之间！' }), 'error');
     return;
   }
 
