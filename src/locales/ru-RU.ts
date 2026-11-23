@@ -62,6 +62,7 @@ export default {
     added: 'Торрент добавлен',
     saved: 'Настройки сохранены',
     trackerRemoved: 'Трекер удален',
+    columnsReset: 'Столбцы и ширина сброшены по умолчанию',
   },
   tableCols: {
     statusText: 'Текст статуса',
@@ -224,6 +225,8 @@ export default {
     pollStats: 'Опрос статистики:',
     customizeCols: 'Настройка столбцов...',
     resetCols: 'Сбросить столбцы',
+    resetColsConfirmTitle: 'Сбросить столбцы',
+    resetColsConfirm: 'Вы уверены, что хотите восстановить стандартную раскладку и ширину столбцов?',
     moveColumnUp: 'Переместить столбец вверх',
     moveColumnDown: 'Переместить столбец вниз',
     colsMenuTitle: 'Выбор столбцов',
@@ -609,6 +612,7 @@ export default {
   },
   props: {
     title: 'Свойства торрента: {name}',
+    batchTitle: 'Свойства торрентов (выбрано: {count})',
     bandwidth: 'Приоритет и канал',
     priority: 'Приоритет канала:',
     high: 'Высокий',

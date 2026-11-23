@@ -876,7 +876,7 @@
         <button class="fluent-btn-mobile" @click="handleRemove(false)" :title="t('common.delete')">
           <FluentIcon name="delete" class="text-danger" />
         </button>
-        <button class="fluent-btn-mobile" v-if="selectedCount === 1" @click="openProps" :title="t('ribbon.tabs.torrentProps')">
+        <button class="fluent-btn-mobile" v-if="selectedCount >= 1" @click="openProps" :title="t('ribbon.tabs.torrentProps')">
           <FluentIcon name="tune" />
         </button>
         <button class="fluent-btn-mobile clear-sel-btn" @click="clearSelection" :title="t('common.cancel')">
@@ -895,8 +895,8 @@
         <span class="sub-stat-count">{{ selectionText }}</span>
       </div>
 
-      <!-- 中间：实时下载与上传速率 (点击呼出限速设置) -->
-      <div class="sub-stat-speeds">
+      <!-- 中间：实时下载与上传速率 (点击呼出限速设置，选中多项任务时隐藏以腾出排版空间) -->
+      <div class="sub-stat-speeds" v-if="!hasSelection">
         <button
           class="sub-speed-btn down"
           :class="{
@@ -1072,6 +1072,14 @@
           <button class="mobile-sheet-action danger" v-if="hasSelection" @click="runMobile(() => handleRemove(false))">
             <FluentIcon name="delete" />
             <span>{{ t('common.delete') }}</span>
+          </button>
+          <button class="mobile-sheet-action" v-if="state.viewMode === 'table'" @click="runMobile(() => (state.columnsDialogOpen = true))">
+            <FluentIcon name="view_column" />
+            <span>{{ t('ribbon.customizeCols') }}</span>
+          </button>
+          <button class="mobile-sheet-action" v-if="state.viewMode === 'table'" @click="runMobile(handleResetColumns)">
+            <FluentIcon name="arrow_undo" />
+            <span>{{ t('ribbon.resetCols') }}</span>
           </button>
         </div>
       </div>
@@ -1396,8 +1404,17 @@ function moveColumn(index: number, delta: number) {
 }
 
 function handleResetColumns() {
-  resetColumns();
   menus.columns = false;
+  openConfirm({
+    title: t('ribbon.resetColsConfirmTitle'),
+    message: t('ribbon.resetColsConfirm'),
+    confirmText: t('ribbon.resetCols'),
+    danger: true,
+    onConfirm: () => {
+      resetColumns();
+      showToast(t('toast.columnsReset'), 'success');
+    },
+  });
 }
 
 function selectLocale(loc: LocaleKey) {
@@ -1688,8 +1705,9 @@ function copyMagnet() {
 }
 
 function openProps() {
-  if (selectedTorrentId.value) {
-    openTorrentProps(selectedTorrentId.value);
+  const ids = state.selectedIds.length > 0 ? state.selectedIds : (selectedTorrentId.value ? [selectedTorrentId.value] : []);
+  if (ids.length > 0) {
+    openTorrentProps(ids[0], ids);
   }
 }
 

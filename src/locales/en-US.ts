@@ -62,6 +62,7 @@ export default {
     added: 'Torrent added',
     saved: 'Settings saved',
     trackerRemoved: 'Tracker removed',
+    columnsReset: 'Table columns and widths have been reset',
   },
   tableCols: {
     statusText: 'Status Text',
@@ -224,6 +225,8 @@ export default {
     pollStats: 'Stats Poll:',
     customizeCols: 'Custom Columns...',
     resetCols: 'Reset Columns',
+    resetColsConfirmTitle: 'Reset Columns',
+    resetColsConfirm: 'Are you sure you want to restore default table columns and widths?',
     moveColumnUp: 'Move column up',
     moveColumnDown: 'Move column down',
     colsMenuTitle: 'Select Columns',
@@ -609,6 +612,7 @@ export default {
   },
   props: {
     title: 'Torrent Properties: {name}',
+    batchTitle: 'Torrent Properties ({count} selected)',
     bandwidth: 'Bandwidth & Priority',
     priority: 'Bandwidth Priority:',
     high: 'High',

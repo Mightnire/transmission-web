@@ -1,10 +1,11 @@
 <template>
-  <div class="md-dialog-overlay" v-if="isOpen && torrent" @click.self="close">
+  <div class="md-dialog-overlay" v-if="isOpen && (torrent || isBatch)" @click.self="close">
     <div class="md-dialog props-dialog">
       <div class="dialog-header">
         <div class="header-title-row">
           <FluentIcon name="tune" class="header-icon" />
-          <h2 class="md-dialog-title">{{ t('props.title', { name: torrent.name }) }}</h2>
+          <h2 class="md-dialog-title" v-if="isBatch">{{ t('props.batchTitle', { count: targetIds.length }) }}</h2>
+          <h2 class="md-dialog-title" v-else-if="torrent">{{ t('props.title', { name: torrent.name }) }}</h2>
         </div>
         <button class="md-icon-button" @click="close" :title="t('common.close')">
           <FluentIcon name="close" />
@@ -144,10 +145,18 @@ import { Priority, SeedRatioMode, SeedIdleMode } from '../../api/types';
 import { t } from '../../locales';
 import { rpc } from '../../api/rpc';
 
-const props = defineProps<{
-  torrentId: number | null;
-  modelValue: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    torrentId?: number | null;
+    torrentIds?: number[];
+    modelValue: boolean;
+  }>(),
+  {
+    torrentId: null,
+    torrentIds: () => [],
+    modelValue: false,
+  }
+);
 
 const emit = defineEmits(['update:modelValue']);
 
@@ -156,9 +165,19 @@ const isOpen = computed({
   set: (v) => emit('update:modelValue', v),
 });
 
+const targetIds = computed(() => {
+  if (props.torrentIds && props.torrentIds.length > 0) return props.torrentIds;
+  if (props.torrentId) return [props.torrentId];
+  return [];
+});
+
+const isBatch = computed(() => targetIds.value.length > 1);
+
+const primaryId = computed(() => targetIds.value[0] || props.torrentId || null);
+
 const torrent = computed(() => {
-  if (!props.torrentId) return null;
-  return state.torrents.find((t) => t.id === props.torrentId) || null;
+  if (!primaryId.value) return null;
+  return state.torrents.find((t) => t.id === primaryId.value) || null;
 });
 
 const form = reactive({
@@ -176,6 +195,8 @@ const form = reactive({
 });
 
 const labelsStr = ref('');
+let initialSnapshot: any = {};
+let initialLabelsStr = '';
 
 function syncFormFromData(data: any) {
   if (!data) return;
@@ -192,11 +213,17 @@ function syncFormFromData(data: any) {
   form.seedIdleLimit = data.seedIdleLimit ?? 30;
   if (Array.isArray(data.labels)) {
     labelsStr.value = data.labels.join(', ');
+  } else {
+    labelsStr.value = '';
   }
+
+  // 记录初始快照，用于多选批量修改时仅提交实际修改过的脏字段
+  initialSnapshot = { ...form };
+  initialLabelsStr = labelsStr.value;
 }
 
 watch(
-  [() => props.torrentId, () => props.modelValue],
+  [() => primaryId.value, () => props.modelValue],
   async ([id, open]) => {
     if (!id || !open) return;
     const local =
@@ -208,8 +235,13 @@ watch(
     }
     try {
       const detail = await rpc.getTorrentDetail(id);
-      if (detail && isOpen.value && props.torrentId === id) {
-        syncFormFromData(detail);
+      if (detail && isOpen.value && primaryId.value === id) {
+        const isDirty =
+          Object.keys(initialSnapshot).some((k) => (form as any)[k] !== initialSnapshot[k]) ||
+          labelsStr.value !== initialLabelsStr;
+        if (!isDirty) {
+          syncFormFromData(detail);
+        }
       }
     } catch (e) {
       console.warn('Failed to fetch torrent detail for dialog:', e);
@@ -227,32 +259,80 @@ useEscapeKey(() => {
 });
 
 async function saveProps() {
-  if (!props.torrentId) return;
+  if (targetIds.value.length === 0) return;
 
-  const labels = labelsStr.value
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const patch: any = {};
 
-  const patch = {
-    bandwidthPriority: form.bandwidthPriority,
-    'peer-limit': form.peerLimit,
-    peerLimit: form.peerLimit,
-    downloadLimit: form.downloadLimit,
-    downloadLimited: form.downloadLimited,
-    uploadLimit: form.uploadLimit,
-    uploadLimited: form.uploadLimited,
-    honorsSessionLimits: form.honorsSessionLimits,
-    seedRatioMode: form.seedRatioMode,
-    seedRatioLimit: form.seedRatioLimit,
-    seedIdleMode: form.seedIdleMode,
-    seedIdleLimit: form.seedIdleLimit,
-    labels,
-  };
+  if (isBatch.value) {
+    // 批量模式：仅提交用户在本次弹窗中实际修改过的脏字段
+    if (form.bandwidthPriority !== initialSnapshot.bandwidthPriority) {
+      patch.bandwidthPriority = form.bandwidthPriority;
+    }
+    if (form.peerLimit !== initialSnapshot.peerLimit) {
+      patch['peer-limit'] = form.peerLimit;
+      patch.peerLimit = form.peerLimit;
+    }
+    if (form.downloadLimit !== initialSnapshot.downloadLimit) {
+      patch.downloadLimit = form.downloadLimit;
+    }
+    if (form.downloadLimited !== initialSnapshot.downloadLimited) {
+      patch.downloadLimited = form.downloadLimited;
+    }
+    if (form.uploadLimit !== initialSnapshot.uploadLimit) {
+      patch.uploadLimit = form.uploadLimit;
+    }
+    if (form.uploadLimited !== initialSnapshot.uploadLimited) {
+      patch.uploadLimited = form.uploadLimited;
+    }
+    if (form.honorsSessionLimits !== initialSnapshot.honorsSessionLimits) {
+      patch.honorsSessionLimits = form.honorsSessionLimits;
+    }
+    if (form.seedRatioMode !== initialSnapshot.seedRatioMode) {
+      patch.seedRatioMode = form.seedRatioMode;
+    }
+    if (form.seedRatioLimit !== initialSnapshot.seedRatioLimit) {
+      patch.seedRatioLimit = form.seedRatioLimit;
+    }
+    if (form.seedIdleMode !== initialSnapshot.seedIdleMode) {
+      patch.seedIdleMode = form.seedIdleMode;
+    }
+    if (form.seedIdleLimit !== initialSnapshot.seedIdleLimit) {
+      patch.seedIdleLimit = form.seedIdleLimit;
+    }
+    if (labelsStr.value !== initialLabelsStr) {
+      patch.labels = labelsStr.value
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+
+    if (Object.keys(patch).length === 0) {
+      close();
+      return;
+    }
+  } else {
+    // 单任务模式：完整提交表单所有字段
+    patch.bandwidthPriority = form.bandwidthPriority;
+    patch['peer-limit'] = form.peerLimit;
+    patch.peerLimit = form.peerLimit;
+    patch.downloadLimit = form.downloadLimit;
+    patch.downloadLimited = form.downloadLimited;
+    patch.uploadLimit = form.uploadLimit;
+    patch.uploadLimited = form.uploadLimited;
+    patch.honorsSessionLimits = form.honorsSessionLimits;
+    patch.seedRatioMode = form.seedRatioMode;
+    patch.seedRatioLimit = form.seedRatioLimit;
+    patch.seedIdleMode = form.seedIdleMode;
+    patch.seedIdleLimit = form.seedIdleLimit;
+    patch.labels = labelsStr.value
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
 
   close();
   try {
-    await updateTorrentPropsOptimistically([props.torrentId], patch);
+    await updateTorrentPropsOptimistically(targetIds.value, patch);
     showToast(t('toast.saved'), 'success');
   } catch (err: any) {
     showToast(t('common.failed', { error: describeError(err) }), 'error');

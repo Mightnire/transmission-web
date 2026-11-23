@@ -422,6 +422,8 @@ import {
   openLocationDialog,
   openRenameDialog,
   openConfirmRemove,
+  openConfirm,
+  showToast,
   copyTorrentMagnet,
   copyTorrentMagnets,
   startTorrentsAction,
@@ -451,8 +453,17 @@ function openHeaderContextMenu(e: MouseEvent) {
 }
 
 function handleResetColumns() {
-  resetColumns();
   headerMenu.open = false;
+  openConfirm({
+    title: t('ribbon.resetColsConfirmTitle'),
+    message: t('ribbon.resetColsConfirm'),
+    confirmText: t('ribbon.resetCols'),
+    danger: true,
+    onConfirm: () => {
+      resetColumns();
+      showToast(t('toast.columnsReset'), 'success');
+    },
+  });
 }
 
 const isQueueEnabled = computed(() => {
@@ -867,7 +878,7 @@ async function handleAction(action: string) {
       toggleDetail(ids[0]);
       break;
     case 'props':
-      openTorrentProps(ids[0]);
+      openTorrentProps(ids[0], ids);
       break;
     case 'copy-magnet':
       if (ids.length > 0) {

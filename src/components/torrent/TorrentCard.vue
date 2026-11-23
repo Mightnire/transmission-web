@@ -166,6 +166,7 @@ import {
   formatBytes,
   formatSpeed,
   formatETA,
+  openTorrentProps,
   openConfirmRemove,
   startTorrentsAction,
   stopTorrentsAction,
@@ -292,8 +293,7 @@ function openDetail() {
 }
 
 function openProps() {
-  state.propsTorrentId = props.torrent.id;
-  state.propsDialogOpen = true;
+  openTorrentProps(props.torrent.id);
 }
 
 async function togglePlay() {

@@ -163,6 +163,7 @@ export const state = reactive<{
   detailOpen: boolean;
   propsDialogOpen: boolean;
   propsTorrentId: number | null;
+  propsTorrentIds: number[];
   batchTagsDialogOpen: boolean;
   locationDialogOpen: boolean;
   renameDialogOpen: boolean;
@@ -209,6 +210,7 @@ export const state = reactive<{
   detailOpen: false,
   propsDialogOpen: false,
   propsTorrentId: null,
+  propsTorrentIds: [],
   batchTagsDialogOpen: false,
   locationDialogOpen: false,
   renameDialogOpen: false,
@@ -654,10 +656,12 @@ export function toggleDetail(id?: number) {
   }
 }
 
-export function openTorrentProps(id: number) {
-  state.propsTorrentId = id;
+export function openTorrentProps(id?: number, ids?: number[]) {
+  const targetIds = ids && ids.length > 0 ? ids : (id ? [id] : (state.selectedIds.length > 0 ? state.selectedIds : []));
+  if (targetIds.length === 0) return;
+  state.propsTorrentIds = [...targetIds];
+  state.propsTorrentId = targetIds[0];
   state.propsDialogOpen = true;
-  selectTorrent(id);
 }
 
 function selectionIds(): number[] {

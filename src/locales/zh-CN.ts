@@ -62,6 +62,7 @@ export default {
     added: '任务已添加',
     saved: '设置已保存',
     trackerRemoved: 'Tracker 已移除',
+    columnsReset: '表格列排版与宽度已重置',
   },
   tableCols: {
     statusText: '状态文本',
@@ -224,6 +225,8 @@ export default {
     pollStats: '统计刷新:',
     customizeCols: '自定义列...',
     resetCols: '重置列',
+    resetColsConfirmTitle: '重置列',
+    resetColsConfirm: '确定要恢复默认表格列排版与宽度吗？',
     moveColumnUp: '上移该列',
     moveColumnDown: '下移该列',
     colsMenuTitle: '选择可见列',
@@ -609,6 +612,7 @@ export default {
   },
   props: {
     title: '任务属性: {name}',
+    batchTitle: '任务属性 (已选 {count} 项)',
     bandwidth: '独立带宽与优先级',
     priority: '带宽优先级:',
     high: '高优先级',

@@ -33,8 +33,8 @@
     <!-- Fluent 动作弹窗与 Toast (彻底消除任何原生 prompt/alert/confirm) -->
     <FluentActionDialogs />
 
-    <!-- 单任务独立属性配置弹窗 -->
-    <TorrentPropsDialog :torrentId="state.propsTorrentId" v-model="state.propsDialogOpen" />
+    <!-- 任务属性配置弹窗（支持单任务与多选批量） -->
+    <TorrentPropsDialog :torrentId="state.propsTorrentId" :torrentIds="state.propsTorrentIds" v-model="state.propsDialogOpen" />
   </div>
 </template>
 
