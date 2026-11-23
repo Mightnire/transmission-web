@@ -1,0 +1,88 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run build check
+        run: npm run build
+
+      - name: Determine version and release eligibility
+        id: prep
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG_NAME="${{ github.ref_name }}"
+            SHOULD_RELEASE=true
+          else
+            PKG_VERSION=$(node -p "require('./package.json').version")
+            TAG_NAME="v${PKG_VERSION}"
+            
+            # 检查 GitHub 是否已经存在该版本的 Release
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/tags/${TAG_NAME}")
+            
+            if [ "$STATUS" = "404" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              SHOULD_RELEASE=true
+            else
+              SHOULD_RELEASE=false
+              echo "Release for ${TAG_NAME} already exists (HTTP $STATUS), skipping release step."
+            fi
+          fi
+
+          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "should_release=${SHOULD_RELEASE}" >> $GITHUB_OUTPUT
+
+      - name: Package distribution archives
+        if: steps.prep.outputs.should_release == 'true'
+        run: |
+          TAG="${{ steps.prep.outputs.tag_name }}"
+          cd dist
+          zip -r "../transmission-web-${TAG}.zip" ./*
+          tar -czf "../transmission-web-${TAG}.tar.gz" ./*
+          cd ..
+          ls -lh transmission-web-*
+
+      - name: Publish GitHub Release
+        if: steps.prep.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.prep.outputs.tag_name }}
+          name: ${{ steps.prep.outputs.tag_name }}
+          files: |
+            transmission-web-*.zip
+            transmission-web-*.tar.gz
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
